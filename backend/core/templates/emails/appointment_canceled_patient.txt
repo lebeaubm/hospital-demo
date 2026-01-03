@@ -1,0 +1,22 @@
+Your Appointment Has Been Canceled
+
+Dear {{ patient_name }},
+
+We're writing to inform you that your appointment has been canceled.
+
+Appointment Details:
+- Originally Scheduled: {{ scheduled_start|default:requested_start }}
+{% if doctor %}- Doctor: {{ doctor }}{% endif %}
+- Reason: {{ reason }}
+
+{% if staff_notes %}Cancellation Notes:
+{{ staff_notes }}
+{% endif %}
+If this cancellation was unexpected or if you'd like to reschedule, please contact us or request a new appointment through our website.
+
+We apologize for any inconvenience this may cause.
+
+Appointment ID: #{{ appointment_id }}
+
+Best regards,
+Hospital Demo Team

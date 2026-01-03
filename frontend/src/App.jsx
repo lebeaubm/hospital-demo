@@ -10,7 +10,13 @@ import Services from './pages/Services'
 import Profile from './pages/Profile'
 import Appointments from './pages/Appointments'
 import RequestAppointment from './pages/RequestAppointment'
+import MedicalRecords from './pages/MedicalRecords'
+import Payments from './pages/Payments'
+import PaymentSuccess from './pages/PaymentSuccess'
+import PaymentCancel from './pages/PaymentCancel'
 import StaffDashboard from './pages/StaffDashboard'
+import StaffEmails from './pages/StaffEmails'
+import StaffPatientRecord from './pages/StaffPatientRecord'
 import ProtectedRoute from './components/ProtectedRoute'
 import StaffProtectedRoute from './components/StaffProtectedRoute'
 import { useAuth } from './context/AuthContext'
@@ -84,6 +90,11 @@ function App() {
                         </NavLink>
                       </li>
                       <li className="nav-item">
+                        <NavLink className="nav-link" to="/staff/emails">
+                          Email Logs
+                        </NavLink>
+                      </li>
+                      <li className="nav-item">
                         <NavLink className="nav-link" to="/portal/profile">
                           My Profile
                         </NavLink>
@@ -99,6 +110,16 @@ function App() {
                       <li className="nav-item">
                         <NavLink className="nav-link" to="/portal/appointments">
                           My Appointments
+                        </NavLink>
+                      </li>
+                      <li className="nav-item">
+                        <NavLink className="nav-link" to="/portal/records">
+                          Medical Records
+                        </NavLink>
+                      </li>
+                      <li className="nav-item">
+                        <NavLink className="nav-link" to="/portal/payments">
+                          Payments
                         </NavLink>
                       </li>
                     </>
@@ -153,10 +174,44 @@ function App() {
             }
           />
           <Route
+            path="/portal/records"
+            element={
+              <ProtectedRoute>
+                <MedicalRecords />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/portal/payments"
+            element={
+              <ProtectedRoute>
+                <Payments />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/cancel" element={<PaymentCancel />} />
+          <Route
             path="/staff/dashboard"
             element={
               <StaffProtectedRoute>
                 <StaffDashboard />
+              </StaffProtectedRoute>
+            }
+          />
+          <Route
+            path="/staff/emails"
+            element={
+              <StaffProtectedRoute>
+                <StaffEmails />
+              </StaffProtectedRoute>
+            }
+          />
+          <Route
+            path="/staff/patients/:patientId/record"
+            element={
+              <StaffProtectedRoute>
+                <StaffPatientRecord />
               </StaffProtectedRoute>
             }
           />

@@ -97,4 +97,29 @@ api.interceptors.response.use(
   },
 )
 
+// Payment API functions
+export const createCheckoutSession = async (appointmentId = null) => {
+  const { data } = await api.post('/api/payments/checkout-session/', {
+    appointment_id: appointmentId
+  })
+  return data
+}
+
+export const verifyPayment = async (sessionId) => {
+  const { data } = await api.get(`/api/payments/verify/?session_id=${sessionId}`)
+  return data
+}
+
+export const getPaymentHistory = async () => {
+  const { data } = await api.get('/api/payments/my/')
+  return data
+}
+
+export const downloadInvoice = async (paymentId) => {
+  const response = await api.get(`/api/payments/${paymentId}/invoice/`, {
+    responseType: 'blob'
+  })
+  return response.data
+}
+
 export { api, clearTokens, getAccessToken, setTokens, logout }

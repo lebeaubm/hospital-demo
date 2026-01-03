@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import Loading from '../components/Loading'
 import ErrorAlert from '../components/ErrorAlert'
 
 export default function StaffDashboard() {
+  const navigate = useNavigate()
   const [appointments, setAppointments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -19,6 +21,25 @@ export default function StaffDashboard() {
   const [editData, setEditData] = useState({})
   const [saving, setSaving] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+
+  const handleEmailPatient = (appointment) => {
+    // Navigate to email page with pre-filled data
+    navigate('/staff/emails', {
+      state: {
+        prefill: {
+          to_email: appointment.patient_email,
+          subject: `Regarding Your Appointment #${appointment.id}`,
+          appointment_id: appointment.id,
+          body: `Dear ${appointment.patient_name},\n\n`
+        }
+      }
+    })
+  }
+
+  const handleViewRecord = (appointment) => {
+    // Navigate to patient medical record
+    navigate(`/staff/patients/${appointment.patient_id}/record`)
+  }
 
   useEffect(() => {
     fetchDoctors()
@@ -369,12 +390,28 @@ export default function StaffDashboard() {
                             </button>
                           </div>
                         ) : (
-                          <button
-                            className="btn btn-sm btn-primary"
-                            onClick={() => handleEdit(appointment)}
-                          >
-                            Edit
-                          </button>
+                          <div className="d-flex gap-1">
+                            <button
+                              className="btn btn-sm btn-primary"
+                              onClick={() => handleEdit(appointment)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="btn btn-sm btn-info"
+                              onClick={() => handleViewRecord(appointment)}
+                              title="View Medical Record"
+                            >
+                              📋 Record
+                            </button>
+                            <button
+                              className="btn btn-sm btn-outline-secondary"
+                              onClick={() => handleEmailPatient(appointment)}
+                              title="Email Patient"
+                            >
+                              ✉️
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>

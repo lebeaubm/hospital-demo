@@ -1,7 +1,19 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import Appointment, Doctor, PatientProfile, StaffProfile, User
+from .models import (
+    Appointment,
+    Doctor,
+    Invoice,
+    MedicalDocument,
+    MedicalNote,
+    MedicalRecord,
+    NotificationLog,
+    PatientProfile,
+    Payment,
+    StaffProfile,
+    User,
+)
 
 
 @admin.register(User)
@@ -55,3 +67,126 @@ class AppointmentAdmin(admin.ModelAdmin):
     list_filter = ("status",)
     search_fields = ("patient__email", "reason")
     autocomplete_fields = ("patient",)
+
+
+@admin.register(NotificationLog)
+class NotificationLogAdmin(admin.ModelAdmin):
+    list_display = ("id", "event_type", "to_email", "status", "sent_by", "created_at")
+    list_filter = ("event_type", "status", "created_at")
+    search_fields = ("to_email", "subject", "body_text")
+    readonly_fields = ("created_at", "updated_at")
+    autocomplete_fields = ("sent_by", "related_appointment")
+    date_hierarchy = "created_at"
+    
+    fieldsets = (
+        ("Email Details", {
+            "fields": ("event_type", "to_email", "cc_emails", "subject", "body_text")
+        }),
+        ("Status & Tracking", {
+            "fields": ("status", "error", "sent_by", "related_appointment")
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at")
+        }),
+    )
+
+
+@admin.register(MedicalRecord)
+class MedicalRecordAdmin(admin.ModelAdmin):
+    list_display = ("id", "patient", "created_at", "updated_at")
+    search_fields = ("patient__user__email", "patient__user__first_name", "patient__user__last_name")
+    autocomplete_fields = ("patient",)
+    readonly_fields = ("created_at", "updated_at")
+
+    fieldsets = (
+        ("Patient", {
+            "fields": ("patient",)
+        }),
+        ("Medical Information", {
+            "fields": ("history_text", "allergies_text", "medications_text")
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at")
+        }),
+    )
+
+
+@admin.register(MedicalNote)
+class MedicalNoteAdmin(admin.ModelAdmin):
+    list_display = ("id", "record", "author", "note_type", "visibility", "created_at")
+    list_filter = ("note_type", "visibility", "created_at")
+    search_fields = ("record__patient__user__email", "author__email", "content")
+    autocomplete_fields = ("record", "author", "shared_by")
+    readonly_fields = ("created_at", "updated_at")
+
+    fieldsets = (
+        ("Note Details", {
+            "fields": ("record", "author", "note_type", "content")
+        }),
+        ("Visibility & Sharing", {
+            "fields": ("visibility", "shared_at", "shared_by")
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at")
+        }),
+    )
+
+
+@admin.register(MedicalDocument)
+class MedicalDocumentAdmin(admin.ModelAdmin):
+    list_display = ("id", "original_name", "category", "visibility", "uploaded_by", "size_bytes", "created_at")
+    list_filter = ("category", "visibility", "created_at")
+    search_fields = ("record__patient__user__email", "uploaded_by__email", "original_name")
+    autocomplete_fields = ("record", "uploaded_by")
+    readonly_fields = ("original_name", "mime_type", "size_bytes", "created_at", "updated_at")
+
+    fieldsets = (
+        ("Document Details", {
+            "fields": ("record", "uploaded_by", "category", "visibility")
+        }),
+        ("File Information", {
+            "fields": ("file", "original_name", "mime_type", "size_bytes")
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at")
+        }),
+    )
+
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ("id", "patient", "amount", "currency", "status", "paid_at", "created_at")
+    list_filter = ("status", "currency", "paid_at", "created_at")
+    search_fields = ("patient__email", "stripe_checkout_session_id", "stripe_payment_intent_id")
+    readonly_fields = ("stripe_checkout_session_id", "stripe_payment_intent_id", "receipt_url", "paid_at", "created_at", "updated_at")
+    autocomplete_fields = ("patient", "appointment")
+
+    fieldsets = (
+        ("Payment Details", {
+            "fields": ("patient", "appointment", "amount", "currency", "status")
+        }),
+        ("Stripe Information", {
+            "fields": ("stripe_checkout_session_id", "stripe_payment_intent_id", "receipt_url")
+        }),
+        ("Timestamps", {
+            "fields": ("paid_at", "created_at", "updated_at")
+        }),
+    )
+
+
+@admin.register(Invoice)
+class InvoiceAdmin(admin.ModelAdmin):
+    list_display = ("id", "invoice_number", "payment", "generated_at")
+    list_filter = ("generated_at",)
+    search_fields = ("invoice_number", "payment__patient__email")
+    readonly_fields = ("invoice_number", "generated_at")
+    autocomplete_fields = ("payment",)
+
+    fieldsets = (
+        ("Invoice Details", {
+            "fields": ("payment", "invoice_number", "pdf_file")
+        }),
+        ("Timestamps", {
+            "fields": ("generated_at",)
+        }),
+    )

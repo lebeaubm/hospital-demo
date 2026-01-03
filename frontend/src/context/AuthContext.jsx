@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { getAccessToken } from '../api/client'
+import { getUserInfo } from '../utils/auth'
+import { api } from '../api/client'
 
 const AuthContext = createContext(null)
 
@@ -12,15 +14,22 @@ export const AuthProvider = ({ children }) => {
     const token = getAccessToken()
     if (token) {
       setIsAuthenticated(true)
-      // Try to load user from localStorage
-      const savedUser = localStorage.getItem('user')
-      if (savedUser) {
+      // Try to get user info from the token
+      const loadUser = async () => {
         try {
-          setUser(JSON.parse(savedUser))
-        } catch (e) {
-          console.error('Failed to parse saved user:', e)
+          const userInfo = await getUserInfo(api)
+          if (userInfo) {
+            setUser(userInfo)
+            localStorage.setItem('user', JSON.stringify(userInfo))
+          }
+        } catch (error) {
+          console.error('Failed to load user info:', error)
+          // If token is invalid, clear authentication
+          setIsAuthenticated(false)
+          setUser(null)
         }
       }
+      loadUser()
     }
   }, [])
 

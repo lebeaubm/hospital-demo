@@ -1,0 +1,18 @@
+New Appointment Request
+
+A new appointment has been requested by a patient.
+
+Patient: {{ patient_name }} ({{ patient_email }})
+Requested Date/Time: {{ requested_start }}
+Reason: {{ reason }}
+{% if doctor %}Doctor: {{ doctor }}{% endif %}
+
+Patient Notes:
+{{ patient_notes|default:"No additional notes provided." }}
+
+Please log in to the staff dashboard to review and confirm this appointment.
+
+Appointment ID: #{{ appointment_id }}
+
+---
+Hospital Demo System

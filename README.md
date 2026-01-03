@@ -1,13 +1,20 @@
 # Hospital Demo
 
-A full-stack hospital management application with role-based access control (RBAC), featuring appointment scheduling, patient profiles, and staff dashboard.
+A full-stack hospital management application with role-based access control (RBAC), featuring appointment scheduling, patient profiles, staff dashboard, and comprehensive medical records management.
 
 ## Features
 
 - **Role-Based Access Control (RBAC)**: Patient, Staff, and Admin roles
 - **JWT Authentication**: Secure token-based auth with refresh tokens
-- **Patient Portal**: Profile management and appointment requests
-- **Staff Dashboard**: View and manage all appointments
+- **Patient Portal**: Profile management, appointment requests, and medical records
+- **Medical Records System**: 
+  - Secure document management with staff-controlled visibility
+  - Clinical notes with sharing capabilities
+  - Patient document uploads
+  - Staff-only deletion
+- **Staff Dashboard**: View and manage all appointments with patient record access
+- **Email Notification System**: Automated emails for appointment lifecycle events
+- **Staff Email Management**: Send custom emails to patients and view email logs
 - **Real-time Updates**: React frontend with instant UI feedback
 - **REST API**: Comprehensive Django REST Framework API
 
@@ -17,6 +24,7 @@ A full-stack hospital management application with role-based access control (RBA
 - Django 5.0+ with Django REST Framework
 - JWT authentication (SimpleJWT)
 - SQLite (dev) / PostgreSQL (prod)
+- Secure file storage with permission-checked downloads
 - drf-spectacular for API docs
 
 **Frontend:**
@@ -58,6 +66,21 @@ The app works locally without configuration using sensible defaults (SQLite data
 - `ALLOWED_HOSTS` - Comma-separated hosts (default: `localhost,127.0.0.1`)
 - `DATABASE_URL` - PostgreSQL connection string (default: SQLite)
 - `CORS_ALLOWED_ORIGINS` - Comma-separated origins (default: `http://localhost:5173`)
+- **Email Settings** (optional for real email sending):
+  - `EMAIL_BACKEND` - Email backend (default: `django.core.mail.backends.console.EmailBackend`)
+  - `EMAIL_HOST` - SMTP server (e.g., `smtp.gmail.com`)
+  - `EMAIL_PORT` - SMTP port (default: `587`)
+  - `EMAIL_USE_TLS` - Use TLS (default: `True`)
+  - `EMAIL_HOST_USER` - SMTP username
+  - `EMAIL_HOST_PASSWORD` - SMTP password
+  - `DEFAULT_FROM_EMAIL` - From email address (default: `noreply@hospitaldemo.com`)
+  - `STAFF_INBOX_EMAIL` - Staff notification inbox for appointment requests
+- **Stripe Payment Settings** (for payment functionality):
+  - `STRIPE_SECRET_KEY` - Stripe secret key (test mode: starts with `sk_test_`)
+  - `STRIPE_PUBLISHABLE_KEY` - Stripe publishable key (test mode: starts with `pk_test_`)
+  - `STRIPE_WEBHOOK_SECRET` - Stripe webhook signing secret (optional for local dev)
+  - `STRIPE_CONSULTATION_FEE` - Consultation fee in cents (default: `5000` = $50.00)
+  - `STRIPE_CURRENCY` - Currency code (default: `usd`)
 
 **Frontend** (optional `.env` in `frontend/`):
 - `VITE_API_URL` - Backend API URL (default: `http://127.0.0.1:8000`)
@@ -69,6 +92,91 @@ Copy `.env.example` files to `.env` and customize as needed. See [DEPLOYMENT.md]
 Seeded test accounts:
 - **Patient**: `patient@example.com` / `Pass1234!`
 - **Staff**: `staff@example.com` / `StaffPass123!`
+
+## Stripe Payment Testing (Browser-Only)
+
+The application includes Stripe integration for consultation fee payments with browser-only testing (no webhooks required for local development).
+
+### Test Mode Setup
+
+1. **Get Stripe Test Keys** (free, no credit card required):
+   - Sign up at https://stripe.com
+   - Navigate to Developers → API keys
+   - Copy your test keys (they start with `sk_test_` and `pk_test_`)
+
+2. **Configure Backend** (`backend/.env`):
+   ```env
+   STRIPE_SECRET_KEY=sk_test_your_key_here
+   STRIPE_PUBLISHABLE_KEY=pk_test_your_key_here
+   STRIPE_CONSULTATION_FEE=5000
+   STRIPE_CURRENCY=usd
+   ```
+
+3. **Restart Backend**:
+   ```powershell
+   cd backend
+   python manage.py runserver
+   ```
+
+**Note**: If Stripe keys are not configured, payment buttons will show an error message: "Stripe is not configured. Please set STRIPE_SECRET_KEY in your environment variables." This is expected - payments require valid Stripe API keys to function.
+
+### Testing Payment Flow
+
+1. **Login as Patient**:
+   - Go to http://localhost:5173/login
+   - Use: `patient@example.com` / `Pass1234!`
+
+2. **View Appointments**:
+   - Navigate to "My Appointments"
+   - Click "💳 Pay Consultation Fee" on any appointment
+
+3. **Complete Payment**:
+   - You'll be redirected to Stripe Checkout
+   - Use Stripe test card: `4242 4242 4242 4242`
+   - Any future expiry date (e.g., 12/34)
+   - Any 3-digit CVC (e.g., 123)
+   - Any valid billing details
+
+4. **Verify Payment**:
+   - After successful payment, you'll be redirected to the success page
+   - The browser will automatically verify payment with Stripe
+   - View payment history at "Payments" in the navigation menu
+
+5. **Download Invoice**:
+   - Go to "Payments" page
+   - Click "📄 Download Invoice" on paid payments
+   - PDF invoice will download automatically
+
+### Test Cards
+
+Stripe provides various test cards for different scenarios:
+
+- **Success**: `4242 4242 4242 4242`
+- **Decline**: `4000 0000 0000 0002`
+- **Insufficient Funds**: `4000 0000 0000 9995`
+- **3D Secure Required**: `4000 0025 0000 3155`
+
+More test cards: https://stripe.com/docs/testing
+
+### Browser-Only Verification
+
+The application uses a browser fallback verification system:
+- When you return from Stripe, the success page calls `/api/payments/verify/?session_id=...`
+- This endpoint fetches the payment status directly from Stripe
+- No webhook configuration needed for local testing
+- Works perfectly for development and testing
+
+### Payment Features
+
+- ✅ Secure Stripe Checkout integration
+- ✅ Consultation fee payments ($50.00 default)
+- ✅ Payment history for patients
+- ✅ Automatic invoice generation (PDF)
+- ✅ Invoice download
+- ✅ Browser-only verification (no webhook setup required)
+- ✅ Test mode for safe development
+
+**Note**: For production deployment with webhooks, see [DEPLOYMENT.md](DEPLOYMENT.md) for webhook configuration.
 
 ## API Documentation
 
@@ -100,11 +208,14 @@ GET  /api/doctors/{id}/      - Get doctor details
 
 ### Patient Endpoints (Requires Authentication)
 ```
-GET   /api/patients/me/      - Get my profile
-PATCH /api/patients/me/      - Update my profile
-POST  /api/appointments/     - Create appointment request
-GET   /api/appointments/my/  - List my appointments
-GET   /api/appointments/{id}/ - Get my appointment detail
+GET   /api/patients/me/            - Get my profile
+PATCH /api/patients/me/            - Update my profile
+POST  /api/appointments/           - Create appointment request
+GET   /api/appointments/my/        - List my appointments
+GET   /api/appointments/{id}/      - Get my appointment detail
+GET   /api/records/me/             - Get my medical record (with shared notes & documents)
+POST  /api/records/me/documents/   - Upload document to my record (multipart/form-data)
+GET   /api/documents/{id}/download/ - Download document (with permission check)
 ```
 
 ### Staff Endpoints (Requires Staff/Admin Role)
@@ -120,6 +231,42 @@ GET   /api/staff/appointments/        - List all appointments (with filters & pa
                                         - page: Page number (default: 1)
                                         - page_size: Results per page (default: 20, max: 100)
 PATCH /api/staff/appointments/{id}/   - Update appointment (status, doctor, scheduled_start, staff_notes)
+GET   /api/staff/emails/              - List all email notification logs (with filters & pagination)
+                                        Query params:
+                                        - event_type: Filter by type (WELCOME, APPT_REQUESTED, etc.)
+                                        - status: Filter by status (PENDING, SENT, FAILED)
+                                        - to_email: Search by recipient email
+                                        - date_from: Filter by created_at >= date (YYYY-MM-DD)
+                                        - date_to: Filter by created_at <= date (YYYY-MM-DD)
+                                        - page: Page number (default: 1)
+                                        - page_size: Results per page (default: 50, max: 200)
+GET   /api/staff/emails/{id}/         - Get email notification log details
+POST  /api/staff/emails/send/         - Send custom email
+                                        Body: {
+                                          "to_email": "recipient@example.com",
+                                          "subject": "Email subject",
+                                          "body": "Email body text",
+                                          "appointment_id": 123 (optional),
+                                          "cc": ["cc1@example.com"] (optional)
+                                        }
+
+# Medical Records API (Staff/Admin)
+GET   /api/staff/patients/{id}/record/     - Get patient's full medical record
+PATCH /api/staff/patients/{id}/record/     - Update medical record summary
+POST  /api/staff/patients/{id}/notes/      - Add note to patient record
+POST  /api/staff/patients/{id}/documents/  - Upload document to patient record
+PATCH /api/staff/notes/{id}/               - Update note visibility (share/hide from patient)
+DELETE /api/staff/documents/{id}/          - Delete document (staff only)
+
+# Payment API (Patient Only)
+POST /api/payments/checkout-session/   - Create Stripe Checkout Session
+                                         Body: { "appointment_id": 123 (optional) }
+                                         Returns: { "url": "...", "session_id": "...", "payment_id": 1 }
+GET  /api/payments/verify/              - Verify payment (browser fallback)
+                                         Query: ?session_id=cs_test_...
+POST /api/payments/webhook/             - Stripe webhook endpoint (production only)
+GET  /api/payments/my/                  - Get payment history
+GET  /api/payments/{id}/invoice/        - Download invoice PDF
 ```
 
 ## Testing the API
@@ -784,6 +931,261 @@ npm run dev
    - Doctor name and specialty should appear in the Doctor column
 
 10. **Verify API Calls**
+    - Open Browser DevTools → Network tab
+    - Apply filters → should see GET `/api/staff/appointments/?status=REQUESTED&page=1`
+    - Expect paginated JSON response with filtering applied correctly
+
+---
+
+## Testing Email Notification System
+
+The email notification system automatically sends emails for key appointment lifecycle events and allows staff to send custom emails to patients.
+
+### Email Configuration (Development Mode)
+
+By default, the app uses Django's **console email backend**, which prints emails to the terminal/console instead of sending real emails. This is perfect for development and testing without needing SMTP credentials.
+
+**To see emails in development:**
+1. Make sure the backend server is running: `python manage.py runserver`
+2. Emails will appear in the console output where the backend is running
+
+**To send real emails (optional):**
+Set these environment variables in `backend/.env`:
+```env
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your-email@gmail.com
+EMAIL_HOST_PASSWORD=your-app-password
+DEFAULT_FROM_EMAIL=noreply@hospitaldemo.com
+STAFF_INBOX_EMAIL=staff@hospitaldemo.com
+```
+
+### Browser-Only Verification Steps
+
+#### Test 1: Welcome Email on Patient Registration
+
+1. **Register a new patient:**
+   - Go to `/register` in the browser
+   - Fill in email, password, first name, last name
+   - Click "Register"
+
+2. **Verify email log:**
+   - Login as staff: `staff@example.com` / `StaffPass123!`
+   - Navigate to "Email Logs" from the navbar
+   - Look for a `WELCOME` email to the new patient's email
+   - Status should be `SENT`
+   - Click "View" to see the full email body
+
+3. **Check console output (if using console backend):**
+   - Look in the terminal where `python manage.py runserver` is running
+   - You should see the welcome email printed
+
+#### Test 2: Appointment Request Notification to Staff
+
+**Note:** This requires `STAFF_INBOX_EMAIL` to be set in environment variables.
+
+1. **Set STAFF_INBOX_EMAIL (optional):**
+   - In `backend/.env` add: `STAFF_INBOX_EMAIL=staff@hospitaldemo.com`
+   - Restart the backend server
+
+2. **Request an appointment as a patient:**
+   - Login as patient: `patient@example.com` / `Pass1234!`
+   - Navigate to "My Appointments"
+   - Click "Request Appointment"
+   - Fill in date, reason, and submit
+
+3. **Verify email log:**
+   - Logout and login as staff: `staff@example.com` / `StaffPass123!`
+   - Go to "Email Logs"
+   - Filter by event type: `APPT_REQUESTED`
+   - Look for email to the staff inbox with subject "New Appointment Request"
+   - Click "View" to see patient details and appointment info
+
+#### Test 3: Appointment Status Change Emails
+
+1. **Confirm an appointment:**
+   - Login as staff
+   - Go to "Staff Dashboard"
+   - Find a `REQUESTED` appointment
+   - Click "Edit"
+   - Change status to `CONFIRMED`
+   - Set scheduled start time
+   - Add staff notes (optional)
+   - Click "Save"
+
+2. **Verify confirmation email:**
+   - Go to "Email Logs"
+   - Look for `APPT_CONFIRMED` email to the patient
+   - Status should be `SENT`
+   - Click "View" to see the confirmation message
+
+3. **Complete an appointment:**
+   - In "Staff Dashboard", edit the same appointment
+   - Change status to `COMPLETED`
+   - Click "Save"
+
+4. **Verify completion email:**
+   - Go to "Email Logs"
+   - Look for `APPT_COMPLETED` email to the patient
+   - Email should thank them for their visit
+
+5. **Cancel an appointment:**
+   - Edit another appointment
+   - Change status to `CANCELED`
+   - Add cancellation reason in staff notes
+   - Click "Save"
+
+6. **Verify cancellation email:**
+   - Go to "Email Logs"
+   - Look for `APPT_CANCELED` email to the patient
+
+#### Test 4: No Duplicate Emails on Same Status
+
+1. **Edit an appointment without changing status:**
+   - Find a `CONFIRMED` appointment
+   - Click "Edit"
+   - Update only staff notes (leave status as `CONFIRMED`)
+   - Click "Save"
+
+2. **Verify no new email:**
+   - Go to "Email Logs"
+   - Count the `APPT_CONFIRMED` emails for that appointment
+   - Should be only ONE (not duplicated)
+
+#### Test 5: Staff Send Custom Email
+
+1. **Compose a custom email:**
+   - Login as staff
+   - Go to "Email Logs"
+   - Click "Compose Email" button
+   - Fill in:
+     - To Email: `patient@example.com`
+     - Subject: `Test Custom Email`
+     - Body: `This is a test email from staff.`
+     - Appointment ID: (optionally link to an appointment)
+     - CC: (optionally add CC recipients)
+   - Click "Send Email"
+
+2. **Verify email was sent:**
+   - Should see success message
+   - Email log should refresh automatically
+   - Look for `STAFF_CUSTOM` email with your subject
+   - "Sent By" column should show staff email
+   - Click "View" to see full body
+
+3. **Verify in console:**
+   - Check backend terminal for email output
+
+#### Test 6: Email Patient Button from Staff Dashboard
+
+1. **Use quick email link:**
+   - Go to "Staff Dashboard"
+   - Find any appointment
+   - Click the envelope icon (📧) in the Actions column
+
+2. **Verify compose modal opens:**
+   - Should redirect to "Email Logs" page
+   - Compose modal should open automatically
+   - To Email should be pre-filled with patient email
+   - Subject should reference the appointment ID
+   - Appointment ID field should be pre-filled
+
+3. **Send the email:**
+   - Fill in the body
+   - Click "Send Email"
+   - Verify it appears in the log
+
+#### Test 7: Patient Cannot Access Staff Email Features
+
+1. **Login as patient:**
+   - Email: `patient@example.com` / `Pass1234!`
+
+2. **Try to access email logs:**
+   - Manually navigate to `/staff/emails` in the browser
+   - Should be redirected to home or see "Access Denied"
+
+3. **Verify API protection:**
+   - Open Browser DevTools → Console
+   - Try: `fetch('http://127.0.0.1:8000/api/staff/emails/', {headers: {'Authorization': 'Bearer ' + localStorage.getItem('accessToken')}})`
+   - Should get 403 Forbidden response
+
+#### Test 8: Email Log Filtering and Search
+
+1. **Test filters:**
+   - Go to "Email Logs" as staff
+   - Filter by Event Type: `WELCOME` - should show only welcome emails
+   - Filter by Status: `SENT` - should show only sent emails
+   - Filter by Status: `FAILED` - should show any failed sends
+   - Search by Recipient Email: `patient@example.com`
+   - Click "Apply Filters"
+
+2. **View details:**
+   - Click "View" on any email log
+   - Modal should show:
+     - Full email body (formatted)
+     - Subject, To, CC
+     - Sent by (staff member or "System")
+     - Related appointment ID (if linked)
+     - Timestamps
+     - Error message (if failed)
+
+#### Test 9: Django Admin Verification
+
+1. **Access Django Admin:**
+   - Go to `http://127.0.0.1:8000/admin/`
+   - Login as superuser (create one with `python manage.py createsuperuser`)
+
+2. **View NotificationLog:**
+   - Click "Notification logs" under CORE
+   - Should see all email logs
+   - Filters available: event type, status, created date
+   - Click any entry to see full details
+
+3. **Verify log structure:**
+   - Check that each log has:
+     - Event type (WELCOME, APPT_REQUESTED, etc.)
+     - To email, CC emails
+     - Subject and body text
+     - Status (PENDING, SENT, FAILED)
+     - Sent by user (if custom email)
+     - Related appointment (if linked)
+     - Timestamps
+
+### Backend Tests
+
+Run automated tests to verify email functionality:
+
+```powershell
+cd backend
+python manage.py test core.tests.EmailNotificationTests --verbosity=2
+```
+
+**Tests included:**
+- ✅ Staff can send custom emails
+- ✅ Patients cannot access staff email endpoints
+- ✅ Appointment status change creates email log
+- ✅ No duplicate emails on same status
+- ✅ Staff can view email logs
+- ✅ Patients cannot view email logs
+
+All 18 tests should pass (including 6 email notification tests + 12 existing tests).
+
+### Email Templates
+
+Email templates are located in `backend/core/templates/emails/`:
+- `welcome.txt` - Welcome email for new patients
+- `appointment_requested_staff.txt` - Staff notification for new appointment request
+- `appointment_confirmed_patient.txt` - Patient confirmation email
+- `appointment_completed_patient.txt` - Post-visit thank you email
+- `appointment_canceled_patient.txt` - Appointment cancellation notice
+
+Templates use Django template syntax and can be customized with HTML/plain text.
+
+---
+
+## Development Notes
     - Open DevTools (F12) → Network tab
     - Apply filters and check the API call:
       - `/api/staff/appointments/?status=REQUESTED&doctor=1&date_from=2024-01-01&date_to=2024-12-31&page=1`

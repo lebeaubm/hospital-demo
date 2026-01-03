@@ -1,0 +1,22 @@
+Your Appointment is Complete
+
+Dear {{ patient_name }},
+
+Thank you for your recent visit to Hospital Demo.
+
+Appointment Details:
+- Date/Time: {{ scheduled_start }}
+{% if doctor %}- Doctor: {{ doctor }}{% endif %}
+- Reason: {{ reason }}
+
+{% if staff_notes %}Notes from your visit:
+{{ staff_notes }}
+{% endif %}
+If you have any follow-up questions or concerns, please don't hesitate to contact us or schedule another appointment.
+
+We hope you're feeling better and look forward to serving you again.
+
+Appointment ID: #{{ appointment_id }}
+
+Best regards,
+Hospital Demo Team
