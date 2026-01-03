@@ -1,4 +1,4 @@
-import { NavLink, Route, Routes } from 'react-router-dom'
+import { NavLink, Route, Routes, useNavigate } from 'react-router-dom'
 import './App.css'
 import Contact from './pages/Contact'
 import DoctorDetail from './pages/DoctorDetail'
@@ -6,8 +6,19 @@ import DoctorsList from './pages/DoctorsList'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Services from './pages/Services'
+import { useAuth } from './context/AuthContext'
+import { clearTokens } from './api/client'
 
 function App() {
+  const { isAuthenticated, logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    clearTokens()
+    logout()
+    navigate('/')
+  }
+
   return (
     <div className="app-shell">
       <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
@@ -43,11 +54,23 @@ function App() {
                   Contact
                 </NavLink>
               </li>
-              <li className="nav-item">
-                <NavLink className="nav-link" to="/login">
-                  Login
-                </NavLink>
-              </li>
+              {!isAuthenticated ? (
+                <li className="nav-item">
+                  <NavLink className="nav-link" to="/login">
+                    Login
+                  </NavLink>
+                </li>
+              ) : (
+                <li className="nav-item">
+                  <button 
+                    className="nav-link btn btn-link" 
+                    onClick={handleLogout}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    Logout
+                  </button>
+                </li>
+              )}
             </ul>
           </div>
         </div>

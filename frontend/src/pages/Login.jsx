@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api, setTokens } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -9,6 +10,7 @@ export default function Login() {
   const [success, setSuccess] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const navigate = useNavigate()
+  const { login } = useAuth()
 
   const handleSubmit = async (event) => {
     event.preventDefault()
@@ -22,8 +24,9 @@ export default function Login() {
         password,
       })
       setTokens({ access: data.access, refresh: data.refresh })
+      login()
       setSuccess('Logged in successfully.')
-      navigate('/doctors')
+      navigate('/')
     } catch (err) {
       setError('Login failed. Check your credentials and try again.')
     } finally {
