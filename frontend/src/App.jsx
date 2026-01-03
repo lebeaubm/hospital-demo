@@ -135,14 +135,6 @@ function App() {
               <ProtectedRoute>
                 <Appointments />
               </ProtectedRoute>
-          <Route
-            path="/staff/dashboard"
-            element={
-              <StaffProtectedRoute>
-                <StaffDashboard />
-              </StaffProtectedRoute>
-            }
-          />
             }
           />
           <Route
@@ -151,6 +143,14 @@ function App() {
               <ProtectedRoute>
                 <RequestAppointment />
               </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/staff/dashboard"
+            element={
+              <StaffProtectedRoute>
+                <StaffDashboard />
+              </StaffProtectedRoute>
             }
           />
         </Routes>
