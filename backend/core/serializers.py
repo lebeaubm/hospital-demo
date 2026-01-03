@@ -21,7 +21,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 class DoctorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Doctor
-        fields = ("id", "name", "specialty", "bio", "years_experience")
+        fields = ("id", "name", "specialty", "bio", "years_experience", "location")
 
 
 class PatientProfileSerializer(serializers.ModelSerializer):
@@ -102,6 +102,9 @@ class StaffProfileSerializer(serializers.ModelSerializer):
 class AppointmentSerializer(serializers.ModelSerializer):
     patient_email = serializers.EmailField(source="patient.email", read_only=True)
     patient_name = serializers.SerializerMethodField()
+    doctor_id = serializers.IntegerField(source="doctor.id", read_only=True, allow_null=True)
+    doctor_name = serializers.CharField(source="doctor.name", read_only=True, allow_null=True)
+    doctor_specialty = serializers.CharField(source="doctor.specialty", read_only=True, allow_null=True)
 
     class Meta:
         model = Appointment
@@ -109,6 +112,9 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "id",
             "patient_email",
             "patient_name",
+            "doctor_id",
+            "doctor_name",
+            "doctor_specialty",
             "status",
             "requested_start",
             "scheduled_start",
@@ -122,6 +128,9 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "id",
             "patient_email",
             "patient_name",
+            "doctor_id",
+            "doctor_name",
+            "doctor_specialty",
             "status",
             "scheduled_start",
             "staff_notes",
@@ -137,4 +146,4 @@ class AppointmentSerializer(serializers.ModelSerializer):
 class StaffAppointmentUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appointment
-        fields = ("status", "scheduled_start", "staff_notes")
+        fields = ("status", "scheduled_start", "staff_notes", "doctor")

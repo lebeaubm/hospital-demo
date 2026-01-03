@@ -72,7 +72,13 @@ POST /api/auth/refresh/      - Refresh access token
 
 ### Doctors (Public)
 ```
-GET  /api/doctors/           - List all doctors
+GET  /api/doctors/           - List all doctors (with pagination, search, filters)
+                               Query params:
+                               - search: Text search in name & specialty
+                               - specialty: Filter by exact specialty
+                               - location: Filter by location (contains)
+                               - page: Page number (default: 1)
+                               - page_size: Results per page (default: 10, max: 100)
 GET  /api/doctors/{id}/      - Get doctor details
 ```
 
@@ -89,8 +95,15 @@ GET   /api/appointments/{id}/ - Get my appointment detail
 ```
 GET   /api/staff/me/                  - Get staff profile
 PATCH /api/staff/me/                  - Update staff profile
-GET   /api/staff/appointments/        - List all appointments (with filters)
-PATCH /api/staff/appointments/{id}/   - Update appointment status
+GET   /api/staff/appointments/        - List all appointments (with filters & pagination)
+                                        Query params:
+                                        - status: Filter by status (REQUESTED, CONFIRMED, COMPLETED, CANCELED)
+                                        - doctor: Filter by doctor ID
+                                        - date_from: Filter by requested_start >= date (YYYY-MM-DD)
+                                        - date_to: Filter by requested_start <= date (YYYY-MM-DD)
+                                        - page: Page number (default: 1)
+                                        - page_size: Results per page (default: 20, max: 100)
+PATCH /api/staff/appointments/{id}/   - Update appointment (status, doctor, scheduled_start, staff_notes)
 ```
 
 ## Testing the API
@@ -121,7 +134,20 @@ Write-Host "Access Token: $($TOKEN.Substring(0,20))..."
 ### 3. Get Doctor List (Public Endpoint)
 
 ```powershell
+# Get all doctors (paginated)
 Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/doctors/"
+
+# Search by name or specialty
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/doctors/?search=cardio"
+
+# Filter by specialty
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/doctors/?specialty=Cardiology"
+
+# Filter by location
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/doctors/?location=New York"
+
+# Combined filters with pagination
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/doctors/?specialty=Cardiology&location=New York&page=1"
 ```
 
 ### 4. View/Update Patient Profile
@@ -153,18 +179,27 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/appointments/my/" -Headers @{"
 $staffResponse = Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/auth/login/" -Method POST -ContentType "application/json" -Body '{"email":"staff@example.com","password":"StaffPass123!"}'
 $STAFF_TOKEN = $staffResponse.access
 
-# List all appointments (staff only)
+# List all appointments (paginated, 20 per page)
 Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/staff/appointments/" -Headers @{"Authorization"="Bearer $STAFF_TOKEN"}
 
 # Filter by status
 Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/staff/appointments/?status=REQUESTED" -Headers @{"Authorization"="Bearer $STAFF_TOKEN"}
+
+# Filter by doctor ID
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/staff/appointments/?doctor=1" -Headers @{"Authorization"="Bearer $STAFF_TOKEN"}
+
+# Filter by date range
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/staff/appointments/?date_from=2024-01-01&date_to=2024-12-31" -Headers @{"Authorization"="Bearer $STAFF_TOKEN"}
+
+# Combined filters with pagination
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/staff/appointments/?status=CONFIRMED&doctor=1&date_from=2024-01-01&page=2" -Headers @{"Authorization"="Bearer $STAFF_TOKEN"}
 ```
 
-### 8. Staff Update Appointment Status
+### 8. Staff Update Appointment
 
 ```powershell
-# Get appointment ID from previous list, then update it
-Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/staff/appointments/1/" -Method PATCH -Headers @{"Authorization"="Bearer $STAFF_TOKEN"} -ContentType "application/json" -Body '{"status":"CONFIRMED","scheduled_start":"2026-01-15T10:30:00","staff_notes":"Confirmed by staff"}'
+# Update appointment status, doctor, schedule, and notes
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/staff/appointments/1/" -Method PATCH -Headers @{"Authorization"="Bearer $STAFF_TOKEN"} -ContentType "application/json" -Body '{"status":"CONFIRMED","doctor":1,"scheduled_start":"2026-01-15T10:30:00","staff_notes":"Confirmed with Dr. Smith"}'
 ```
 
 ## Running Tests
@@ -575,6 +610,140 @@ Terminal 2:
 cd frontend
 npm run dev
 ```
+
+## Browser Verification Steps
+
+### Testing Doctor Search, Filter & Pagination
+
+1. **Start both backend and frontend** (see commands above)
+
+2. **Navigate to Doctors Page**
+   - Open browser to `http://localhost:5173`
+   - Click "Doctors" in navigation bar
+   - You should see a list of doctors with pagination controls
+
+3. **Test Search Functionality**
+   - Type "cardio" in the search box
+   - Results should filter to show only doctors with "cardio" in name or specialty
+   - Clear search to see all doctors again
+
+4. **Test Specialty Filter**
+   - Select "Cardiology" from the Specialty dropdown
+   - Only cardiologists should appear
+   - Change to "All Specialties" to reset
+
+5. **Test Location Filter**
+   - Type "New York" in the Location field
+   - Only doctors in New York should appear
+   - Clear to see all doctors
+
+6. **Test Combined Filters**
+   - Apply both specialty and location filters together
+   - Search should work in combination with filters
+   - Click "Reset" button to clear all filters
+
+7. **Test Pagination** (if you have more than 10 doctors)
+   - Click "Next" to go to page 2
+   - URL should update with `?page=2`
+   - Click "Previous" to go back
+   - Page counter should show "Page X of Y"
+
+8. **Verify No Console Errors**
+   - Open browser DevTools (F12)
+   - Check Console tab - should be clean (no red errors)
+   - Check Network tab - API calls should show correct query params:
+     - `/api/doctors/?search=cardio`
+     - `/api/doctors/?specialty=Cardiology&location=New York&page=1`
+
+9. **Test Empty Results**
+   - Search for something that doesn't exist (e.g., "xyz123")
+   - Should show "No doctors found" message
+   - No errors should appear
+
+**Expected Behavior:**
+- ✅ Filters update results instantly
+- ✅ Pagination shows correct page numbers
+- ✅ URL reflects current filters/page
+- ✅ Loading spinner shows during requests
+- ✅ Results count displays correctly
+- ✅ Reset button clears all filters
+- ✅ No console errors
+- ✅ Network requests show proper query parameters
+
+### Testing Staff Appointment Filtering & Pagination
+
+1. **Login as Staff User**
+   - Navigate to `http://localhost:5173/login`
+   - Login with: `staff@example.com` / `StaffPass123!`
+   - Should redirect to Staff Dashboard
+
+2. **View Appointments**
+   - You should see a paginated list of appointments (20 per page)
+   - Each appointment shows: Patient, Doctor (if assigned), Status, Dates, Reason, Notes
+
+3. **Test Status Filter**
+   - Select "Requested" from Status dropdown
+   - Only requested appointments should appear
+   - Try other statuses: Confirmed, Completed, Canceled
+   - Select "All Statuses" to reset
+
+4. **Test Doctor Filter**
+   - Select a doctor from the Doctor dropdown
+   - Only appointments for that doctor should appear
+   - Note: Also shows unassigned appointments if "All Doctors" is selected
+
+5. **Test Date Range Filters**
+   - Set "Date From" to filter appointments starting from that date
+   - Set "Date To" to filter appointments up to that date
+   - Use both together to get appointments in a specific date range
+   - Clear dates to reset
+
+6. **Test Combined Filters**
+   - Apply Status + Doctor + Date Range together
+   - Example: Show "Confirmed" appointments for "Dr. Smith" between "2024-01-01" and "2024-12-31"
+   - All filters should work in combination
+
+7. **Test Pagination** (if more than 20 appointments exist)
+   - Pagination controls appear at bottom
+   - Shows "Showing X of Y appointments"
+   - Click "Next" to go to page 2
+   - Click "Previous" to go back
+   - Page number displays: "Page X of Y"
+
+8. **Test Appointment Editing**
+   - Click "Edit" on any appointment
+   - You can change:
+     - Status (dropdown)
+     - Doctor assignment (dropdown)
+     - Scheduled start time (datetime picker)
+     - Staff notes (text area)
+   - Click "Save" - should see success message
+   - Click "Cancel" to abort changes
+   - Verify changes persist after page refresh
+
+9. **Test Doctor Assignment**
+   - Edit an appointment
+   - Select a doctor from the dropdown
+   - Save changes
+   - Doctor name and specialty should appear in the Doctor column
+
+10. **Verify API Calls**
+    - Open DevTools (F12) → Network tab
+    - Apply filters and check the API call:
+      - `/api/staff/appointments/?status=REQUESTED&doctor=1&date_from=2024-01-01&date_to=2024-12-31&page=1`
+    - Should see proper query parameters
+    - Response should be paginated: `{count, next, previous, results}`
+
+**Expected Behavior:**
+- ✅ Filters work independently and in combination
+- ✅ Pagination controls appear when needed
+- ✅ Changing filters resets to page 1
+- ✅ Edit mode works for status, doctor, date, and notes
+- ✅ Success messages appear after updates
+- ✅ Page reloads show updated data
+- ✅ No console errors
+- ✅ Date filters use requested_start field
+- ✅ Network requests show proper query parameters
 
 ---
 

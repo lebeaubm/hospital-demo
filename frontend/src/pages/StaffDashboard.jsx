@@ -6,25 +6,57 @@ export default function StaffDashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
+  const [doctorFilter, setDoctorFilter] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalCount, setTotalCount] = useState(0)
+  const [doctors, setDoctors] = useState([])
   const [editingId, setEditingId] = useState(null)
   const [editData, setEditData] = useState({})
   const [saving, setSaving] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
 
   useEffect(() => {
+    fetchDoctors()
+  }, [])
+
+  useEffect(() => {
     fetchAppointments()
-  }, [statusFilter])
+  }, [statusFilter, doctorFilter, dateFrom, dateTo, currentPage])
+
+  const fetchDoctors = async () => {
+    try {
+      const { data } = await api.get('/api/doctors/')
+      setDoctors(data.results || data)
+    } catch (err) {
+      console.error('Failed to load doctors:', err)
+    }
+  }
 
   const fetchAppointments = async () => {
     setLoading(true)
     setError('')
     try {
-      const params = {}
-      if (statusFilter) {
-        params.status = statusFilter
-      }
+      const params = { page: currentPage }
+      if (statusFilter) params.status = statusFilter
+      if (doctorFilter) params.doctor = doctorFilter
+      if (dateFrom) params.date_from = dateFrom
+      if (dateTo) params.date_to = dateTo
+
       const { data } = await api.get('/api/staff/appointments/', { params })
-      setAppointments(data)
+      
+      // Handle paginated response
+      if (data.results) {
+        setAppointments(data.results)
+        setTotalCount(data.count)
+        setTotalPages(Math.ceil(data.count / 20))
+      } else {
+        setAppointments(data)
+        setTotalCount(data.length)
+        setTotalPages(1)
+      }
     } catch (err) {
       setError('Failed to load appointments.')
     } finally {
@@ -40,6 +72,7 @@ export default function StaffDashboard() {
         ? new Date(appointment.scheduled_start).toISOString().slice(0, 16)
         : '',
       staff_notes: appointment.staff_notes || '',
+      doctor: appointment.doctor_id || '',
     })
     setSuccessMessage('')
   }
@@ -63,6 +96,11 @@ export default function StaffDashboard() {
       // Only include scheduled_start if it has a value
       if (editData.scheduled_start) {
         updateData.scheduled_start = new Date(editData.scheduled_start).toISOString()
+      }
+
+      // Include doctor if it has a value
+      if (editData.doctor) {
+        updateData.doctor = editData.doctor
       }
 
       await api.patch(`/api/staff/appointments/${id}/`, updateData)
@@ -118,8 +156,8 @@ export default function StaffDashboard() {
       <div className="card shadow-sm mb-4">
         <div className="card-body">
           <h5 className="card-title">Filters</h5>
-          <div className="row">
-            <div className="col-md-4">
+          <div className="row g-3">
+            <div className="col-md-3">
               <label className="form-label" htmlFor="statusFilter">
                 Status
               </label>
@@ -127,7 +165,10 @@ export default function StaffDashboard() {
                 id="statusFilter"
                 className="form-select"
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value)
+                  setCurrentPage(1)
+                }}
               >
                 <option value="">All Statuses</option>
                 <option value="REQUESTED">Requested</option>
@@ -135,6 +176,57 @@ export default function StaffDashboard() {
                 <option value="COMPLETED">Completed</option>
                 <option value="CANCELED">Canceled</option>
               </select>
+            </div>
+            <div className="col-md-3">
+              <label className="form-label" htmlFor="doctorFilter">
+                Doctor
+              </label>
+              <select
+                id="doctorFilter"
+                className="form-select"
+                value={doctorFilter}
+                onChange={(e) => {
+                  setDoctorFilter(e.target.value)
+                  setCurrentPage(1)
+                }}
+              >
+                <option value="">All Doctors</option>
+                {doctors.map((doctor) => (
+                  <option key={doctor.id} value={doctor.id}>
+                    Dr. {doctor.first_name} {doctor.last_name} - {doctor.specialty}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-md-3">
+              <label className="form-label" htmlFor="dateFrom">
+                Date From
+              </label>
+              <input
+                id="dateFrom"
+                type="date"
+                className="form-control"
+                value={dateFrom}
+                onChange={(e) => {
+                  setDateFrom(e.target.value)
+                  setCurrentPage(1)
+                }}
+              />
+            </div>
+            <div className="col-md-3">
+              <label className="form-label" htmlFor="dateTo">
+                Date To
+              </label>
+              <input
+                id="dateTo"
+                type="date"
+                className="form-control"
+                value={dateTo}
+                onChange={(e) => {
+                  setDateTo(e.target.value)
+                  setCurrentPage(1)
+                }}
+              />
             </div>
           </div>
         </div>
@@ -163,6 +255,7 @@ export default function StaffDashboard() {
                   <tr>
                     <th>ID</th>
                     <th>Patient</th>
+                    <th>Doctor</th>
                     <th>Status</th>
                     <th>Requested</th>
                     <th>Scheduled</th>
@@ -181,6 +274,31 @@ export default function StaffDashboard() {
                           <strong>{appointment.patient_name}</strong>
                         </div>
                         <small className="text-muted">{appointment.patient_email}</small>
+                      </td>
+                      <td>
+                        {editingId === appointment.id ? (
+                          <select
+                            className="form-select form-select-sm"
+                            value={editData.doctor}
+                            onChange={(e) =>
+                              setEditData({ ...editData, doctor: e.target.value })
+                            }
+                          >
+                            <option value="">Unassigned</option>
+                            {doctors.map((doctor) => (
+                              <option key={doctor.id} value={doctor.id}>
+                                Dr. {doctor.first_name} {doctor.last_name}
+                              </option>
+                            ))}
+                          </select>
+                        ) : appointment.doctor_name ? (
+                          <div>
+                            <div><strong>{appointment.doctor_name}</strong></div>
+                            <small className="text-muted">{appointment.doctor_specialty}</small>
+                          </div>
+                        ) : (
+                          <span className="text-muted">Unassigned</span>
+                        )}
                       </td>
                       <td>
                         {editingId === appointment.id ? (
@@ -269,6 +387,36 @@ export default function StaffDashboard() {
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {!loading && totalPages > 1 && (
+        <div className="d-flex justify-content-between align-items-center mt-3">
+          <div>
+            <small className="text-muted">
+              Showing {appointments.length} of {totalCount} appointment{totalCount !== 1 ? 's' : ''}
+            </small>
+          </div>
+          <div className="btn-group" role="group">
+            <button
+              className="btn btn-outline-primary"
+              onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+            >
+              &laquo; Previous
+            </button>
+            <button className="btn btn-outline-secondary" disabled>
+              Page {currentPage} of {totalPages}
+            </button>
+            <button
+              className="btn btn-outline-primary"
+              onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+            >
+              Next &raquo;
+            </button>
           </div>
         </div>
       )}

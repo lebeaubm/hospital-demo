@@ -48,6 +48,7 @@ class Doctor(models.Model):
     specialty = models.CharField(max_length=200)
     bio = models.TextField(blank=True)
     years_experience = models.PositiveIntegerField(default=0)
+    location = models.CharField(max_length=200, blank=True, default='')
 
     def __str__(self):
         return f"{self.name} ({self.specialty})"
@@ -90,6 +91,7 @@ class Appointment(models.Model):
         CANCELED = "CANCELED", "Canceled"
 
     patient = models.ForeignKey(User, on_delete=models.CASCADE, related_name="appointments")
+    doctor = models.ForeignKey(Doctor, on_delete=models.SET_NULL, null=True, blank=True, related_name="appointments")
     requested_start = models.DateTimeField()
     scheduled_start = models.DateTimeField(null=True, blank=True)
     reason = models.CharField(max_length=255)
