@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getPaymentHistory, downloadInvoice } from '../api/client'
-import Loading from '../components/Loading'
+import { SkeletonList } from '../components/SkeletonLoader'
 import ErrorAlert from '../components/ErrorAlert'
 
 export default function Payments() {
@@ -79,7 +79,7 @@ export default function Payments() {
     return (
       <div className="py-4">
         <h1 className="mb-3">Payment History</h1>
-        <Loading message="Loading payments..." />
+        <SkeletonList />
       </div>
     )
   }

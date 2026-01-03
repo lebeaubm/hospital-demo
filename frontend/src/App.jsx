@@ -19,6 +19,7 @@ import StaffEmails from './pages/StaffEmails'
 import StaffPatientRecord from './pages/StaffPatientRecord'
 import ProtectedRoute from './components/ProtectedRoute'
 import StaffProtectedRoute from './components/StaffProtectedRoute'
+import ThemeToggle from './components/ThemeToggle'
 import { useAuth } from './context/AuthContext'
 import { clearTokens } from './api/client'
 
@@ -217,6 +218,7 @@ function App() {
           />
         </Routes>
       </main>
+      <ThemeToggle />
     </div>
   )
 }

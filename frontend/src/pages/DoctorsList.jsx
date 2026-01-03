@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
-import Loading from '../components/Loading'
+import { SkeletonDoctorCard } from '../components/SkeletonLoader'
 import ErrorAlert from '../components/ErrorAlert'
 
 export default function DoctorsList() {
@@ -152,7 +152,15 @@ export default function DoctorsList() {
       )}
 
       {/* Loading State */}
-      {loading && <Loading message="Loading doctors..." />}
+      {loading && (
+        <div className="row g-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div className="col-md-4" key={i}>
+              <SkeletonDoctorCard />
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Error State */}
       {error && <ErrorAlert error={error} onRetry={() => fetchDoctors(pagination.currentPage)} />}

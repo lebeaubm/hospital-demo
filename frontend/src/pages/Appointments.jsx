@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, createCheckoutSession } from '../api/client'
-import Loading from '../components/Loading'
+import { SkeletonAppointmentCard } from '../components/SkeletonLoader'
 import ErrorAlert from '../components/ErrorAlert'
 
 export default function Appointments() {
@@ -77,7 +77,13 @@ export default function Appointments() {
     return (
       <div className="py-4">
         <h1 className="mb-3">My Appointments</h1>
-        <Loading message="Loading appointments..." />
+        <div className="row g-3">
+          {[1, 2, 3].map((i) => (
+            <div className="col-12" key={i}>
+              <SkeletonAppointmentCard />
+            </div>
+          ))}
+        </div>
       </div>
     )
   }

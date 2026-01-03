@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
-import Loading from '../components/Loading'
+import { SkeletonList } from '../components/SkeletonLoader'
 import ErrorAlert from '../components/ErrorAlert'
 
 function MedicalRecords() {
@@ -127,7 +127,12 @@ function MedicalRecords() {
     })
   }
 
-  if (loading) return <Loading />
+  if (loading) return (
+    <div className="container my-4">
+      <h2 className="mb-4">My Medical Records</h2>
+      <SkeletonList />
+    </div>
+  )
   if (error) return <ErrorAlert message={error} />
 
   return (
