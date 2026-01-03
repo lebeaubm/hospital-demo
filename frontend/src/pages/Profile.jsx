@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import Loading from '../components/Loading'
+import ErrorAlert from '../components/ErrorAlert'
 
 export default function Profile() {
   const { isStaff } = useAuth()
@@ -23,7 +25,7 @@ export default function Profile() {
   })
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(null)
   const [success, setSuccess] = useState('')
 
   useEffect(() => {
@@ -31,6 +33,8 @@ export default function Profile() {
   }, [])
 
   const fetchProfile = async () => {
+    setLoading(true)
+    setError(null)
     try {
       const endpoint = isStaff ? '/api/staff/me/' : '/api/patients/me/'
       const { data } = await api.get(endpoint)
@@ -67,9 +71,9 @@ export default function Profile() {
           office_location: '',
         })
       }
-      setLoading(false)
     } catch (err) {
-      setError('Unable to load profile.')
+      setError(err)
+    } finally {
       setLoading(false)
     }
   }
@@ -83,7 +87,7 @@ export default function Profile() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError('')
+    setError(null)
     setSuccess('')
     setSubmitting(true)
 
@@ -93,7 +97,7 @@ export default function Profile() {
       setProfile(data)
       setSuccess('Profile updated successfully!')
     } catch (err) {
-      setError('Failed to update profile. Please try again.')
+      setError(err)
     } finally {
       setSubmitting(false)
     }
@@ -103,7 +107,16 @@ export default function Profile() {
     return (
       <div className="py-4">
         <h1 className="mb-3">My Profile</h1>
-        <p>Loading profile...</p>
+        <Loading message="Loading profile..." />
+      </div>
+    )
+  }
+
+  if (error && !profile) {
+    return (
+      <div className="py-4">
+        <h1 className="mb-3">My Profile</h1>
+        <ErrorAlert error={error} onRetry={fetchProfile} />
       </div>
     )
   }
@@ -317,7 +330,7 @@ export default function Profile() {
           </>
         )}
 
-        {error && <div className="alert alert-danger">{error}</div>}
+        {error && <ErrorAlert error={error} />}
         {success && <div className="alert alert-success">{success}</div>}
         
         <button className="btn btn-primary" type="submit" disabled={submitting}>

@@ -206,26 +206,66 @@ Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/staff/appointments/1/" -Method
 
 ### Backend Tests
 
+The backend includes comprehensive API tests covering security and business logic:
+
 ```powershell
+# Windows PowerShell
+cd backend
+python manage.py test
+```
+
+```bash
+# Linux/Mac
 cd backend
 python manage.py test
 ```
 
 **Test Coverage:**
-- RBAC permissions (patients can only see own appointments)
-- Staff can view/update all appointments
-- Authentication and authorization flows
-- Appointment filtering and status updates
+- **RBAC (Role-Based Access Control):**
+  - Patients can only see their own appointments
+  - Patients cannot retrieve another patient's appointment (404)
+  - Staff can list all appointments and update status
+  - Patients cannot access staff-only endpoints (403)
+  
+- **Appointment Creation Security:**
+  - Appointment creation assigns patient from JWT token
+  - Patient field is ignored if sent in request body
+  - Patients cannot create appointments for other patients
+  
+- **Filtering & Pagination:**
+  - Staff can filter appointments by status, doctor, date range
+  - Pagination works correctly on staff endpoints
 
-### Test Results Expected:
+- **Authentication:**
+  - Unauthenticated users cannot access protected endpoints (401)
+
+**Expected Output:**
 ```
-Creating test database...
-..........
+Found 12 test(s).
+Creating test database for alias 'default'...
+System check identified no issues (0 silenced).
+............
 ----------------------------------------------------------------------
-Ran 10 tests in X.XXs
+Ran 12 tests in 9.073s
 
 OK
+Destroying test database for alias 'default'...
 ```
+
+### Continuous Integration
+
+The project includes a GitHub Actions workflow (`.github/workflows/ci.yml`) that automatically:
+- ✅ Sets up Python 3.11
+- ✅ Installs dependencies
+- ✅ Runs database migrations
+- ✅ Executes all tests
+- ✅ Checks for missing migrations
+
+CI runs automatically on:
+- Pushes to `main`, `branch-1`, `branch-2`
+- Pull requests to `main`
+
+View CI status: Check the "Actions" tab on GitHub
 
 ## Running Both Backend and Frontend
 

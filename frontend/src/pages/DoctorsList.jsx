@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
+import Loading from '../components/Loading'
+import ErrorAlert from '../components/ErrorAlert'
 
 export default function DoctorsList() {
   const [doctors, setDoctors] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(null)
   const [search, setSearch] = useState('')
   const [specialty, setSpecialty] = useState('')
   const [location, setLocation] = useState('')
@@ -28,7 +30,7 @@ export default function DoctorsList() {
 
   const fetchDoctors = async (page = 1) => {
     setLoading(true)
-    setError('')
+    setError(null)
     
     try {
       const params = new URLSearchParams()
@@ -47,7 +49,7 @@ export default function DoctorsList() {
         currentPage: page
       })
     } catch (err) {
-      setError('Unable to load doctors.')
+      setError(err)
     } finally {
       setLoading(false)
     }
@@ -142,7 +144,7 @@ export default function DoctorsList() {
       </div>
 
       {/* Results Count */}
-      {!loading && (
+      {!loading && !error && (
         <div className="mb-3 text-muted">
           Showing {doctors.length} of {pagination.count} doctors
           {pagination.count > 10 && ` (Page ${pagination.currentPage} of ${totalPages})`}
@@ -150,17 +152,10 @@ export default function DoctorsList() {
       )}
 
       {/* Loading State */}
-      {loading && (
-        <div className="text-center py-5">
-          <div className="spinner-border text-primary" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
-          <p className="mt-2">Loading doctors...</p>
-        </div>
-      )}
+      {loading && <Loading message="Loading doctors..." />}
 
       {/* Error State */}
-      {error && <div className="alert alert-danger">{error}</div>}
+      {error && <ErrorAlert error={error} onRetry={() => fetchDoctors(pagination.currentPage)} />}
 
       {/* Doctors Grid */}
       {!loading && !error && (

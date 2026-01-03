@@ -3,11 +3,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { api, setTokens } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { getUserInfo } from '../utils/auth'
+import ErrorAlert from '../components/ErrorAlert'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [error, setError] = useState(null)
   const [success, setSuccess] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const navigate = useNavigate()
@@ -15,7 +16,7 @@ export default function Login() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    setError('')
+    setError(null)
     setSuccess('')
     setSubmitting(true)
 
@@ -39,7 +40,7 @@ export default function Login() {
         navigate('/')
       }
     } catch (err) {
-      setError('Login failed. Check your credentials and try again.')
+      setError(err)
     } finally {
       setSubmitting(false)
     }
@@ -72,7 +73,7 @@ export default function Login() {
             required
           />
         </div>
-        {error && <div className="alert alert-danger">{error}</div>}
+        {error && <ErrorAlert error={error} />}
         {success && <div className="alert alert-success">{success}</div>}
         <button className="btn btn-primary mb-3" type="submit" disabled={submitting}>
           {submitting ? 'Signing in...' : 'Sign in'}

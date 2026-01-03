@@ -1,23 +1,27 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
+import Loading from '../components/Loading'
+import ErrorAlert from '../components/ErrorAlert'
 
 export default function Appointments() {
   const [appointments, setAppointments] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchAppointments()
   }, [])
 
   const fetchAppointments = async () => {
+    setLoading(true)
+    setError(null)
     try {
       const { data } = await api.get('/api/appointments/my/')
       setAppointments(data)
-      setLoading(false)
     } catch (err) {
-      setError('Unable to load appointments.')
+      setError(err)
+    } finally {
       setLoading(false)
     }
   }
@@ -50,7 +54,16 @@ export default function Appointments() {
     return (
       <div className="py-4">
         <h1 className="mb-3">My Appointments</h1>
-        <p>Loading appointments...</p>
+        <Loading message="Loading appointments..." />
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="py-4">
+        <h1 className="mb-3">My Appointments</h1>
+        <ErrorAlert error={error} onRetry={fetchAppointments} />
       </div>
     )
   }
@@ -64,9 +77,7 @@ export default function Appointments() {
         </Link>
       </div>
 
-      {error && <div className="alert alert-danger">{error}</div>}
-
-      {!error && appointments.length === 0 && (
+      {appointments.length === 0 && (
         <div className="alert alert-info">
           You have no appointments yet.{' '}
           <Link to="/portal/appointments/request">Request one now</Link>.

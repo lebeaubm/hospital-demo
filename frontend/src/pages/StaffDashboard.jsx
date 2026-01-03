@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
+import Loading from '../components/Loading'
+import ErrorAlert from '../components/ErrorAlert'
 
 export default function StaffDashboard() {
   const [appointments, setAppointments] = useState([])
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(null)
   const [statusFilter, setStatusFilter] = useState('')
   const [doctorFilter, setDoctorFilter] = useState('')
   const [dateFrom, setDateFrom] = useState('')
@@ -37,7 +39,7 @@ export default function StaffDashboard() {
 
   const fetchAppointments = async () => {
     setLoading(true)
-    setError('')
+    setError(null)
     try {
       const params = { page: currentPage }
       if (statusFilter) params.status = statusFilter
@@ -58,7 +60,7 @@ export default function StaffDashboard() {
         setTotalPages(1)
       }
     } catch (err) {
-      setError('Failed to load appointments.')
+      setError(err)
     } finally {
       setLoading(false)
     }
@@ -110,15 +112,7 @@ export default function StaffDashboard() {
       // Refresh the list
       fetchAppointments()
     } catch (err) {
-      if (err.response?.data) {
-        const errorData = err.response.data
-        const errorMessages = Object.entries(errorData)
-          .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
-          .join('. ')
-        setError(errorMessages || 'Failed to update appointment.')
-      } else {
-        setError('Failed to update appointment.')
-      }
+      setError(err)
     } finally {
       setSaving(false)
     }
@@ -233,11 +227,12 @@ export default function StaffDashboard() {
       </div>
 
       {/* Messages */}
-      {error && <div className="alert alert-danger">{error}</div>}
+      {/* Messages */}
+      {error && <ErrorAlert error={error} onRetry={fetchAppointments} />}
       {successMessage && <div className="alert alert-success">{successMessage}</div>}
 
       {/* Loading State */}
-      {loading && <p>Loading appointments...</p>}
+      {loading && <Loading message="Loading appointments..." />}
 
       {/* Appointments Table */}
       {!loading && !error && appointments.length === 0 && (
@@ -246,7 +241,7 @@ export default function StaffDashboard() {
         </div>
       )}
 
-      {!loading && appointments.length > 0 && (
+      {!loading && !error && appointments.length > 0 && (
         <div className="card shadow-sm">
           <div className="card-body">
             <div className="table-responsive">

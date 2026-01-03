@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { api, setTokens } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { getUserInfo } from '../utils/auth'
+import ErrorAlert from '../components/ErrorAlert'
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -11,7 +12,7 @@ export default function Register() {
     first_name: '',
     last_name: '',
   })
-  const [error, setError] = useState('')
+  const [error, setError] = useState(null)
   const [success, setSuccess] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const navigate = useNavigate()
@@ -26,7 +27,7 @@ export default function Register() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
-    setError('')
+    setError(null)
     setSuccess('')
     setSubmitting(true)
 
@@ -41,26 +42,14 @@ export default function Register() {
       })
       
       setTokens({ access: data.access, refresh: data.refresh })
-      
-      // Fetch user info to get role
-      const userInfo = await getUserInfo(api)
-      
-      login(userInfo)
+      login()
       setSuccess('Registration successful!')
       
       setTimeout(() => {
         navigate('/portal/profile')
       }, 500)
     } catch (err) {
-      if (err.response?.data) {
-        const errorData = err.response.data
-        const errorMessages = Object.entries(errorData)
-          .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
-          .join('. ')
-        setError(errorMessages || 'Registration failed. Please try again.')
-      } else {
-        setError('Registration failed. Please try again.')
-      }
+      setError(err)
     } finally {
       setSubmitting(false)
     }
@@ -125,7 +114,7 @@ export default function Register() {
             onChange={handleChange}
           />
         </div>
-        {error && <div className="alert alert-danger">{error}</div>}
+        {error && <ErrorAlert error={error} />}
         {success && <div className="alert alert-success">{success}</div>}
         <button className="btn btn-primary mb-3" type="submit" disabled={submitting}>
           {submitting ? 'Registering...' : 'Register'}

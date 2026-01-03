@@ -88,9 +88,13 @@ class RBACTests(TestCase):
 
         response = self.client.get('/api/staff/appointments/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Staff endpoint is now paginated
+        results = response.data.get('results', response.data)
+        
         # Check that at least our test appointments are returned
-        self.assertGreaterEqual(len(response.data), 2)
-        appointment_ids = [item['id'] for item in response.data]
+        self.assertGreaterEqual(len(results), 2)
+        appointment_ids = [item['id'] for item in results]
         self.assertIn(self.appointment1.id, appointment_ids)
         self.assertIn(self.appointment2.id, appointment_ids)
 
@@ -138,10 +142,14 @@ class RBACTests(TestCase):
         # Filter by CONFIRMED - should at least have appointment1
         response = self.client.get('/api/staff/appointments/?status=CONFIRMED')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        appointment_ids = [item['id'] for item in response.data]
+        
+        # Staff endpoint is now paginated
+        results = response.data.get('results', response.data)
+        
+        appointment_ids = [item['id'] for item in results]
         self.assertIn(self.appointment1.id, appointment_ids)
         # Verify all returned appointments have CONFIRMED status
-        for appointment in response.data:
+        for appointment in results:
             self.assertEqual(appointment['status'], 'CONFIRMED')
 
     def test_unauthenticated_cannot_access_appointments(self):
@@ -150,4 +158,95 @@ class RBACTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
         response = self.client.get('/api/staff/appointments/')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class AppointmentCreationTests(TestCase):
+    """Test appointment creation security and behavior"""
+
+    def setUp(self):
+        self.client = APIClient()
+
+        # Create test users
+        self.patient1 = User.objects.create_user(
+            email="patient1@test.com",
+            password="TestPass123!",
+            role=User.Role.PATIENT
+        )
+        self.patient2 = User.objects.create_user(
+            email="patient2@test.com",
+            password="TestPass123!",
+            role=User.Role.PATIENT
+        )
+
+    def _get_token(self, email, password):
+        """Helper to get JWT access token"""
+        response = self.client.post('/api/auth/login/', {
+            'email': email,
+            'password': password
+        })
+        return response.data['access']
+
+    def test_appointment_creation_assigns_patient_from_token(self):
+        """Test that appointment creation uses the authenticated user as patient"""
+        token = self._get_token('patient1@test.com', 'TestPass123!')
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
+
+        response = self.client.post('/api/appointments/', {
+            'requested_start': '2026-01-20T10:00:00Z',
+            'reason': 'Annual checkup',
+            'patient_notes': 'First time patient'
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # Check patient_email instead of patient ID
+        self.assertEqual(response.data['patient_email'], self.patient1.email)
+        
+        # Verify the appointment exists in the database with correct patient
+        appointment = Appointment.objects.get(id=response.data['id'])
+        self.assertEqual(appointment.patient.id, self.patient1.id)
+
+    def test_appointment_creation_ignores_patient_field_if_sent(self):
+        """Test that patient field is ignored if sent - token determines the patient"""
+        token = self._get_token('patient1@test.com', 'TestPass123!')
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
+
+        # Try to create appointment for patient2 while authenticated as patient1
+        response = self.client.post('/api/appointments/', {
+            'requested_start': '2026-01-20T11:00:00Z',
+            'reason': 'Checkup',
+            'patient_notes': 'Test notes',
+            'patient': self.patient2.id  # This should be ignored
+        })
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        # The appointment should be assigned to patient1 (from token), not patient2
+        self.assertEqual(response.data['patient_email'], self.patient1.email)
+        
+        appointment = Appointment.objects.get(id=response.data['id'])
+        self.assertEqual(appointment.patient.id, self.patient1.id)
+        self.assertNotEqual(appointment.patient.id, self.patient2.id)
+
+    def test_patient_cannot_create_appointment_for_another_patient(self):
+        """Verify that patients cannot create appointments for other patients"""
+        token = self._get_token('patient1@test.com', 'TestPass123!')
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {token}')
+
+        # Even if explicitly trying to set another patient ID
+        response = self.client.post('/api/appointments/', {
+            'requested_start': '2026-01-20T12:00:00Z',
+            'reason': 'Follow-up',
+            'patient': self.patient2.id
+        })
+
+        # Should succeed but create for patient1
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['patient_email'], self.patient1.email)
+
+    def test_unauthenticated_cannot_create_appointment(self):
+        """Test that unauthenticated users cannot create appointments"""
+        response = self.client.post('/api/appointments/', {
+            'requested_start': '2026-01-20T13:00:00Z',
+            'reason': 'Test'
+        })
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

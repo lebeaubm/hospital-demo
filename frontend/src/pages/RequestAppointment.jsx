@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
+import ErrorAlert from '../components/ErrorAlert'
 
 export default function RequestAppointment() {
   const [formData, setFormData] = useState({
@@ -9,7 +10,7 @@ export default function RequestAppointment() {
     patient_notes: '',
   })
   const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(null)
   const [success, setSuccess] = useState('')
   const navigate = useNavigate()
 
@@ -22,7 +23,7 @@ export default function RequestAppointment() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setError('')
+    setError(null)
     setSuccess('')
     setSubmitting(true)
 
@@ -40,15 +41,7 @@ export default function RequestAppointment() {
         navigate('/portal/appointments')
       }, 1000)
     } catch (err) {
-      if (err.response?.data) {
-        const errorData = err.response.data
-        const errorMessages = Object.entries(errorData)
-          .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(', ') : messages}`)
-          .join('. ')
-        setError(errorMessages || 'Failed to request appointment.')
-      } else {
-        setError('Failed to request appointment. Please try again.')
-      }
+      setError(err)
     } finally {
       setSubmitting(false)
     }
@@ -112,7 +105,7 @@ export default function RequestAppointment() {
           />
         </div>
 
-        {error && <div className="alert alert-danger">{error}</div>}
+        {error && <ErrorAlert error={error} />}
         {success && <div className="alert alert-success">{success}</div>}
 
         <div className="d-flex gap-2">

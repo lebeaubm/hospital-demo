@@ -1,38 +1,30 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
+import Loading from '../components/Loading'
+import ErrorAlert from '../components/ErrorAlert'
 
 export default function DoctorDetail() {
   const { id } = useParams()
   const [doctor, setDoctor] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
+  const [error, setError] = useState(null)
+
+  const fetchDoctor = async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const { data } = await api.get(`/api/doctors/${id}/`)
+      setDoctor(data)
+    } catch (err) {
+      setError(err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    let isMounted = true
-
-    const fetchDoctor = async () => {
-      try {
-        const { data } = await api.get(`/api/doctors/${id}/`)
-        if (isMounted) {
-          setDoctor(data)
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError('Unable to load doctor details.')
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
-    }
-
     fetchDoctor()
-
-    return () => {
-      isMounted = false
-    }
   }, [id])
 
   return (
@@ -40,8 +32,8 @@ export default function DoctorDetail() {
       <Link className="btn btn-link px-0" to="/doctors">
         Back to doctors
       </Link>
-      {loading && <p>Loading doctor...</p>}
-      {error && <div className="alert alert-danger">{error}</div>}
+      {loading && <Loading message="Loading doctor details..." />}
+      {error && <ErrorAlert error={error} onRetry={fetchDoctor} />}
       {!loading && !error && doctor && (
         <div className="card shadow-sm">
           <div className="card-body">

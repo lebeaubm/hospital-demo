@@ -23,6 +23,14 @@ const clearTokens = () => {
   localStorage.removeItem('refreshToken')
 }
 
+const logout = () => {
+  clearTokens()
+  // Clear user data from localStorage
+  localStorage.removeItem('user')
+  // Redirect to login page
+  window.location.href = '/login'
+}
+
 let refreshPromise = null
 
 api.interceptors.request.use((config) => {
@@ -39,7 +47,17 @@ api.interceptors.response.use(
     const originalRequest = error.config
     const refreshToken = getRefreshToken()
 
-    if (error.response?.status === 401 && refreshToken && !originalRequest._retry) {
+    // Don't try to refresh if:
+    // 1. Not a 401 error
+    // 2. No refresh token available
+    // 3. Already retried
+    // 4. Request is to the refresh endpoint itself
+    if (
+      error.response?.status === 401 && 
+      refreshToken && 
+      !originalRequest._retry &&
+      !originalRequest.url?.includes('/api/auth/refresh/')
+    ) {
       originalRequest._retry = true
 
       try {
@@ -56,16 +74,27 @@ api.interceptors.response.use(
           setTokens({ access: data.access })
           originalRequest.headers.Authorization = `Bearer ${data.access}`
           return api(originalRequest)
+        } else {
+          // No access token in response, logout
+          logout()
+          return Promise.reject(error)
         }
       } catch (refreshError) {
+        // Refresh failed, logout user
         refreshPromise = null
-        clearTokens()
+        console.error('Token refresh failed:', refreshError)
+        logout()
         return Promise.reject(refreshError)
       }
+    }
+
+    // For 401 errors that can't be refreshed, logout
+    if (error.response?.status === 401 && originalRequest._retry) {
+      logout()
     }
 
     return Promise.reject(error)
   },
 )
 
-export { api, clearTokens, getAccessToken, setTokens }
+export { api, clearTokens, getAccessToken, setTokens, logout }
