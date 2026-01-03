@@ -11,6 +11,7 @@ import Profile from './pages/Profile'
 import Appointments from './pages/Appointments'
 import RequestAppointment from './pages/RequestAppointment'
 import StaffDashboard from './pages/StaffDashboard'
+import StaffEmails from './pages/StaffEmails'
 import ProtectedRoute from './components/ProtectedRoute'
 import StaffProtectedRoute from './components/StaffProtectedRoute'
 import { useAuth } from './context/AuthContext'
@@ -81,6 +82,11 @@ function App() {
                       <li className="nav-item">
                         <NavLink className="nav-link" to="/staff/dashboard">
                           Staff Dashboard
+                        </NavLink>
+                      </li>
+                      <li className="nav-item">
+                        <NavLink className="nav-link" to="/staff/emails">
+                          Email Logs
                         </NavLink>
                       </li>
                       <li className="nav-item">
@@ -157,6 +163,14 @@ function App() {
             element={
               <StaffProtectedRoute>
                 <StaffDashboard />
+              </StaffProtectedRoute>
+            }
+          />
+          <Route
+            path="/staff/emails"
+            element={
+              <StaffProtectedRoute>
+                <StaffEmails />
               </StaffProtectedRoute>
             }
           />

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import Appointment, Doctor, PatientProfile, StaffProfile, User
+from .models import Appointment, Doctor, NotificationLog, PatientProfile, StaffProfile, User
 
 
 @admin.register(User)
@@ -55,3 +55,25 @@ class AppointmentAdmin(admin.ModelAdmin):
     list_filter = ("status",)
     search_fields = ("patient__email", "reason")
     autocomplete_fields = ("patient",)
+
+
+@admin.register(NotificationLog)
+class NotificationLogAdmin(admin.ModelAdmin):
+    list_display = ("id", "event_type", "to_email", "status", "sent_by", "created_at")
+    list_filter = ("event_type", "status", "created_at")
+    search_fields = ("to_email", "subject", "body_text")
+    readonly_fields = ("created_at", "updated_at")
+    autocomplete_fields = ("sent_by", "related_appointment")
+    date_hierarchy = "created_at"
+    
+    fieldsets = (
+        ("Email Details", {
+            "fields": ("event_type", "to_email", "cc_emails", "subject", "body_text")
+        }),
+        ("Status & Tracking", {
+            "fields": ("status", "error", "sent_by", "related_appointment")
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at")
+        }),
+    )

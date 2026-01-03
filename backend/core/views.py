@@ -1,20 +1,30 @@
 from django.db.models import Q
 from django.utils.dateparse import parse_datetime
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from .models import Appointment, Doctor, PatientProfile, StaffProfile
+from .models import Appointment, Doctor, NotificationLog, PatientProfile, StaffProfile
+from .notifications import (
+    send_appointment_canceled_notification,
+    send_appointment_completed_notification,
+    send_appointment_confirmed_notification,
+    send_appointment_requested_notification,
+    send_email_notification,
+    send_welcome_email,
+)
 from .permissions import IsAppointmentOwner, IsPatientUser, IsStaffUser
 from .serializers import (
     AppointmentSerializer,
     DoctorSerializer,
+    NotificationLogSerializer,
     PatientProfileSerializer,
     RegisterSerializer,
     StaffAppointmentUpdateSerializer,
     StaffProfileSerializer,
+    StaffSendEmailSerializer,
 )
 from .serializers_jwt import CustomTokenObtainPairSerializer
 
@@ -55,6 +65,12 @@ class APIRootView(APIView):
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
+
+    def perform_create(self, serializer):
+        user = serializer.save()
+        # Send welcome email to newly registered patient (only for PATIENT role)
+        if user.role == user.Role.PATIENT:
+            send_welcome_email(user)
 
 
 class LoginView(TokenObtainPairView):
@@ -129,12 +145,14 @@ class AppointmentCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated, IsPatientUser]
 
     def perform_create(self, serializer):
-        serializer.save(
+        appointment = serializer.save(
             patient=self.request.user,
             status=Appointment.Status.REQUESTED,
             scheduled_start=None,
             staff_notes="",
         )
+        # Notify staff about the new appointment request
+        send_appointment_requested_notification(appointment)
 
 
 class MyAppointmentListView(generics.ListAPIView):
@@ -210,3 +228,135 @@ class StaffAppointmentUpdateView(generics.UpdateAPIView):
     permission_classes = [permissions.IsAuthenticated, IsStaffUser]
     queryset = Appointment.objects.all()
     http_method_names = ["patch"]
+
+    def perform_update(self, serializer):
+        # Get the original status before update
+        original_status = self.get_object().status
+        
+        # Save the updated appointment
+        appointment = serializer.save()
+        
+        # Only send notifications if status actually changed
+        new_status = appointment.status
+        if original_status != new_status:
+            if new_status == Appointment.Status.CONFIRMED:
+                send_appointment_confirmed_notification(appointment)
+            elif new_status == Appointment.Status.COMPLETED:
+                send_appointment_completed_notification(appointment)
+            elif new_status == Appointment.Status.CANCELED:
+                send_appointment_canceled_notification(appointment)
+
+
+class EmailLogPagination(PageNumberPagination):
+    page_size = 50
+    page_size_query_param = 'page_size'
+    max_page_size = 200
+
+
+class StaffEmailLogListView(generics.ListAPIView):
+    """List all email notification logs (staff/admin only)."""
+    serializer_class = NotificationLogSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    pagination_class = EmailLogPagination
+
+    def get_queryset(self):
+        from django.db.models import Q
+        
+        qs = NotificationLog.objects.select_related("sent_by", "related_appointment").all()
+        
+        # Role-based filtering: Staff can only see their own emails + system emails
+        # Admins can see all emails
+        if self.request.user.role == self.request.user.Role.STAFF:
+            # Staff can see: emails they sent OR system-generated emails (sent_by is null)
+            qs = qs.filter(Q(sent_by=self.request.user) | Q(sent_by__isnull=True))
+        # If user is ADMIN, no additional filtering - they see all emails
+        
+        # Filter by event_type
+        event_type = self.request.query_params.get("event_type")
+        if event_type:
+            qs = qs.filter(event_type=event_type.upper())
+        
+        # Filter by status
+        status_param = self.request.query_params.get("status")
+        if status_param:
+            qs = qs.filter(status=status_param.upper())
+        
+        # Filter by to_email
+        to_email = self.request.query_params.get("to_email")
+        if to_email:
+            qs = qs.filter(to_email__icontains=to_email)
+        
+        # Filter by date range
+        date_from = self.request.query_params.get("date_from")
+        date_to = self.request.query_params.get("date_to")
+        
+        if date_from:
+            try:
+                from datetime import datetime
+                date_obj = datetime.strptime(date_from, "%Y-%m-%d")
+                qs = qs.filter(created_at__date__gte=date_obj.date())
+            except ValueError:
+                pass
+        
+        if date_to:
+            try:
+                from datetime import datetime
+                date_obj = datetime.strptime(date_to, "%Y-%m-%d")
+                qs = qs.filter(created_at__date__lte=date_obj.date())
+            except ValueError:
+                pass
+        
+        return qs.order_by("-created_at")
+
+
+class StaffEmailLogDetailView(generics.RetrieveAPIView):
+    """Retrieve a specific email log entry (staff/admin only)."""
+    serializer_class = NotificationLogSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    
+    def get_queryset(self):
+        from django.db.models import Q
+        
+        qs = NotificationLog.objects.all()
+        
+        # Role-based filtering: Staff can only see their own emails + system emails
+        # Admins can see all emails
+        if self.request.user.role == self.request.user.Role.STAFF:
+            qs = qs.filter(Q(sent_by=self.request.user) | Q(sent_by__isnull=True))
+        
+        return qs
+
+
+class StaffSendEmailView(APIView):
+    """Allow staff/admin to send custom emails (staff/admin only)."""
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def post(self, request):
+        serializer = StaffSendEmailSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        data = serializer.validated_data
+        
+        # Get related appointment if provided
+        related_appointment = None
+        if data.get("appointment_id"):
+            related_appointment = Appointment.objects.get(id=data["appointment_id"])
+        
+        # Send the email using notification service
+        log = send_email_notification(
+            event_type=NotificationLog.EventType.STAFF_CUSTOM,
+            to_email=data["to_email"],
+            subject=data["subject"],
+            body_text=data["body"],
+            cc_emails=data.get("cc", []),
+            sent_by=request.user,
+            related_appointment=related_appointment,
+        )
+        
+        # Return the created log entry
+        return Response(
+            NotificationLogSerializer(log).data,
+            status=status.HTTP_201_CREATED
+        )

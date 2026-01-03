@@ -42,6 +42,15 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
+    def get_full_name(self):
+        """Return the full name or email if name is not set"""
+        full_name = f"{self.first_name} {self.last_name}".strip()
+        return full_name if full_name else self.email
+
+    def get_short_name(self):
+        """Return the first name or email"""
+        return self.first_name or self.email
+
 
 class Doctor(models.Model):
     name = models.CharField(max_length=200)
@@ -106,3 +115,41 @@ class Appointment(models.Model):
 
     def __str__(self):
         return f"Appointment #{self.pk} - {self.patient.email} - {self.status}"
+
+
+class NotificationLog(models.Model):
+    class EventType(models.TextChoices):
+        WELCOME = "WELCOME", "Welcome"
+        APPT_REQUESTED = "APPT_REQUESTED", "Appointment Requested"
+        APPT_CONFIRMED = "APPT_CONFIRMED", "Appointment Confirmed"
+        APPT_COMPLETED = "APPT_COMPLETED", "Appointment Completed"
+        APPT_CANCELED = "APPT_CANCELED", "Appointment Canceled"
+        STAFF_CUSTOM = "STAFF_CUSTOM", "Staff Custom Email"
+
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        SENT = "SENT", "Sent"
+        FAILED = "FAILED", "Failed"
+
+    event_type = models.CharField(max_length=20, choices=EventType.choices)
+    to_email = models.EmailField()
+    cc_emails = models.TextField(blank=True, help_text="Comma-separated email addresses")
+    subject = models.CharField(max_length=255)
+    body_text = models.TextField()
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    error = models.TextField(blank=True, null=True)
+    sent_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="sent_emails")
+    related_appointment = models.ForeignKey(Appointment, on_delete=models.SET_NULL, null=True, blank=True, related_name="email_logs")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+        indexes = [
+            models.Index(fields=["-created_at"]),
+            models.Index(fields=["event_type"]),
+            models.Index(fields=["status"]),
+        ]
+
+    def __str__(self):
+        return f"{self.event_type} to {self.to_email} - {self.status}"

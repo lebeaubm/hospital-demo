@@ -1,0 +1,22 @@
+Your Appointment Has Been Confirmed
+
+Dear {{ patient_name }},
+
+Great news! Your appointment has been confirmed.
+
+Appointment Details:
+- Date/Time: {{ scheduled_start }}
+{% if doctor %}- Doctor: {{ doctor }}{% endif %}
+- Reason: {{ reason }}
+
+{% if staff_notes %}Staff Notes:
+{{ staff_notes }}
+{% endif %}
+Please arrive 15 minutes early to complete any necessary paperwork.
+
+If you need to cancel or reschedule, please contact us as soon as possible.
+
+Appointment ID: #{{ appointment_id }}
+
+Best regards,
+Hospital Demo Team

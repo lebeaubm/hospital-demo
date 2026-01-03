@@ -13,7 +13,10 @@ from .views import (
     RegisterView,
     StaffAppointmentListView,
     StaffAppointmentUpdateView,
+    StaffEmailLogDetailView,
+    StaffEmailLogListView,
     StaffMeView,
+    StaffSendEmailView,
 )
 
 urlpatterns = [
@@ -34,4 +37,7 @@ urlpatterns = [
         StaffAppointmentUpdateView.as_view(),
         name="staff_appointment_update",
     ),
+    path("staff/emails/", StaffEmailLogListView.as_view(), name="staff_email_log_list"),
+    path("staff/emails/<int:pk>/", StaffEmailLogDetailView.as_view(), name="staff_email_log_detail"),
+    path("staff/emails/send/", StaffSendEmailView.as_view(), name="staff_send_email"),
 ]

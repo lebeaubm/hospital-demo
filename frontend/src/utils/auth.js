@@ -21,32 +21,31 @@ export function decodeJWT(token) {
 }
 
 /**
- * Get user role from token by fetching user details from backend
- * Since default JWT doesn't include role, we need to fetch it
+ * Get user info from JWT token
+ * The token now includes user_id, email, and role
  */
 export async function getUserInfo(api) {
   try {
-    // Try to get patient profile first
-    const { data } = await api.get('/api/patients/me/')
-    return {
-      email: data.email,
-      role: 'PATIENT',
-      firstName: data.first_name,
-      lastName: data.last_name,
-    }
-  } catch (error) {
-    // If patient endpoint fails, user might be staff/admin
-    // We'll need to add a general /me endpoint or decode from token
-    // For now, we'll check if we can access staff endpoints
-    try {
-      await api.get('/api/staff/appointments/')
-      // If this succeeds, user is staff or admin
-      return {
-        role: 'STAFF',
-      }
-    } catch {
-      // If both fail, return null
+    // Get token from localStorage
+    const token = localStorage.getItem('accessToken')
+    if (!token) {
       return null
     }
+    
+    // Decode the token to get user info
+    const payload = decodeJWT(token)
+    if (!payload) {
+      return null
+    }
+    
+    // The JWT payload now includes: user_id, email, role
+    return {
+      userId: payload.user_id,
+      email: payload.email,
+      role: payload.role, // PATIENT, STAFF, or ADMIN
+    }
+  } catch (error) {
+    console.error('Failed to get user info:', error)
+    return null
   }
 }

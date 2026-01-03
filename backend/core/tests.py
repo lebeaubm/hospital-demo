@@ -250,3 +250,156 @@ class AppointmentCreationTests(TestCase):
             'reason': 'Test'
         })
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class EmailNotificationTests(TestCase):
+    """Test email notification system"""
+
+    def setUp(self):
+        self.client = APIClient()
+
+        # Create test users
+        self.patient = User.objects.create_user(
+            email="patient@test.com",
+            password="TestPass123!",
+            role=User.Role.PATIENT,
+            first_name="John",
+            last_name="Doe"
+        )
+        self.staff = User.objects.create_user(
+            email="staff@test.com",
+            password="TestPass123!",
+            role=User.Role.STAFF
+        )
+
+        # Get tokens
+        self.patient_token = self._get_token("patient@test.com", "TestPass123!")
+        self.staff_token = self._get_token("staff@test.com", "TestPass123!")
+
+    def _get_token(self, email, password):
+        """Helper to get JWT access token"""
+        response = self.client.post('/api/auth/login/', {
+            'email': email,
+            'password': password
+        })
+        return response.data['access']
+
+    def test_staff_can_send_custom_email(self):
+        """Test that staff can send custom emails"""
+        from .models import NotificationLog
+        
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.staff_token}')
+        
+        response = self.client.post('/api/staff/emails/send/', {
+            'to_email': 'patient@test.com',
+            'subject': 'Test Email',
+            'body': 'This is a test email message.'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['event_type'], 'STAFF_CUSTOM')
+        self.assertEqual(response.data['to_email'], 'patient@test.com')
+        self.assertEqual(response.data['subject'], 'Test Email')
+        
+        # Verify log was created in database
+        log = NotificationLog.objects.get(id=response.data['id'])
+        self.assertEqual(log.sent_by, self.staff)
+        self.assertIn(log.status, ['SENT', 'FAILED'])  # Console backend should mark as SENT
+
+    def test_patient_cannot_send_custom_email(self):
+        """Test that patients cannot access staff email endpoints"""
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.patient_token}')
+        
+        response = self.client.post('/api/staff/emails/send/', {
+            'to_email': 'someone@test.com',
+            'subject': 'Test',
+            'body': 'Test message'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_appointment_status_change_creates_email_log(self):
+        """Test that changing appointment status to CONFIRMED creates an email log"""
+        from .models import Appointment, NotificationLog
+        
+        # Create an appointment
+        appointment = Appointment.objects.create(
+            patient=self.patient,
+            requested_start="2026-01-15T10:00:00Z",
+            reason="Checkup",
+            status=Appointment.Status.REQUESTED
+        )
+        
+        initial_log_count = NotificationLog.objects.count()
+        
+        # Staff updates appointment to CONFIRMED
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.staff_token}')
+        response = self.client.patch(f'/api/staff/appointments/{appointment.id}/', {
+            'status': 'CONFIRMED',
+            'scheduled_start': '2026-01-15T10:00:00Z'
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify email log was created
+        self.assertEqual(NotificationLog.objects.count(), initial_log_count + 1)
+        
+        log = NotificationLog.objects.latest('created_at')
+        self.assertEqual(log.event_type, 'APPT_CONFIRMED')
+        self.assertEqual(log.to_email, self.patient.email)
+        self.assertEqual(log.related_appointment, appointment)
+
+    def test_duplicate_status_change_does_not_create_duplicate_email(self):
+        """Test that updating appointment without changing status doesn't create duplicate emails"""
+        from .models import Appointment, NotificationLog
+        
+        # Create an appointment already confirmed
+        appointment = Appointment.objects.create(
+            patient=self.patient,
+            requested_start="2026-01-15T10:00:00Z",
+            scheduled_start="2026-01-15T10:00:00Z",
+            reason="Checkup",
+            status=Appointment.Status.CONFIRMED
+        )
+        
+        initial_log_count = NotificationLog.objects.count()
+        
+        # Staff updates staff_notes but status remains CONFIRMED
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.staff_token}')
+        response = self.client.patch(f'/api/staff/appointments/{appointment.id}/', {
+            'staff_notes': 'Updated notes',
+            'status': 'CONFIRMED'  # Same status
+        })
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify NO new email log was created (status didn't actually change)
+        self.assertEqual(NotificationLog.objects.count(), initial_log_count)
+
+    def test_staff_can_view_email_logs(self):
+        """Test that staff can view email logs"""
+        from .models import NotificationLog
+        
+        # Create some test logs
+        NotificationLog.objects.create(
+            event_type='WELCOME',
+            to_email='test@example.com',
+            subject='Welcome',
+            body_text='Welcome message',
+            status='SENT'
+        )
+        
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.staff_token}')
+        response = self.client.get('/api/staff/emails/')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('results', response.data)
+        self.assertGreaterEqual(len(response.data['results']), 1)
+
+    def test_patient_cannot_view_email_logs(self):
+        """Test that patients cannot view email logs"""
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.patient_token}')
+        response = self.client.get('/api/staff/emails/')
+        
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+

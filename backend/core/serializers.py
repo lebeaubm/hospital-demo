@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import Appointment, Doctor, PatientProfile, StaffProfile
+from .models import Appointment, Doctor, NotificationLog, PatientProfile, StaffProfile
 
 User = get_user_model()
 
@@ -147,3 +147,47 @@ class StaffAppointmentUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Appointment
         fields = ("status", "scheduled_start", "staff_notes", "doctor")
+
+
+class NotificationLogSerializer(serializers.ModelSerializer):
+    """Serializer for NotificationLog model (read-only for staff)."""
+    sent_by_email = serializers.EmailField(source="sent_by.email", read_only=True, allow_null=True)
+    related_appointment_id = serializers.IntegerField(source="related_appointment.id", read_only=True, allow_null=True)
+    
+    class Meta:
+        model = NotificationLog
+        fields = (
+            "id",
+            "event_type",
+            "to_email",
+            "cc_emails",
+            "subject",
+            "body_text",
+            "status",
+            "error",
+            "sent_by_email",
+            "related_appointment_id",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = fields
+
+
+class StaffSendEmailSerializer(serializers.Serializer):
+    """Serializer for staff sending custom emails."""
+    to_email = serializers.EmailField(required=True)
+    subject = serializers.CharField(required=True, max_length=255)
+    body = serializers.CharField(required=True, max_length=5000)
+    appointment_id = serializers.IntegerField(required=False, allow_null=True)
+    cc = serializers.ListField(
+        child=serializers.EmailField(),
+        required=False,
+        allow_empty=True,
+    )
+    
+    def validate_appointment_id(self, value):
+        """Validate that the appointment exists if provided."""
+        if value is not None:
+            if not Appointment.objects.filter(id=value).exists():
+                raise serializers.ValidationError(f"Appointment with id {value} does not exist.")
+        return value

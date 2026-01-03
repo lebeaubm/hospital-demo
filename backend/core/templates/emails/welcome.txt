@@ -1,0 +1,16 @@
+Welcome to Hospital Demo!
+
+Dear {{ patient_name }},
+
+Thank you for registering with Hospital Demo. We're excited to have you as a patient!
+
+You can now:
+- Browse our list of doctors and specialists
+- Request appointments online
+- Manage your patient profile
+- View your appointment history
+
+If you have any questions or need assistance, please don't hesitate to contact us.
+
+Best regards,
+Hospital Demo Team
