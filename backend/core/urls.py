@@ -26,6 +26,13 @@ from .views import (
     StaffPatientRecordView,
     StaffSendEmailView,
 )
+from .payment_views import (
+    CreateCheckoutSessionView,
+    stripe_webhook,
+    verify_payment,
+    payment_history,
+    download_invoice,
+)
 
 urlpatterns = [
     path("", APIRootView.as_view(), name="api_root"),
@@ -59,4 +66,10 @@ urlpatterns = [
     path("staff/documents/<int:document_id>/", StaffDocumentDeleteView.as_view(), name="staff_document_delete"),
     # Document download (secure, permission-checked)
     path("documents/<int:document_id>/download/", DocumentDownloadView.as_view(), name="document_download"),
+    # Payment endpoints
+    path("payments/checkout-session/", CreateCheckoutSessionView.as_view(), name="create_checkout_session"),
+    path("payments/webhook/", stripe_webhook, name="stripe_webhook"),
+    path("payments/verify/", verify_payment, name="verify_payment"),
+    path("payments/my/", payment_history, name="payment_history"),
+    path("payments/<int:payment_id>/invoice/", download_invoice, name="download_invoice"),
 ]

@@ -13,9 +13,13 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from pathlib import Path
 import dj_database_url
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -220,3 +224,10 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@hospitaldemo.
 
 # Staff notification email (for appointment requests)
 STAFF_INBOX_EMAIL = os.environ.get('STAFF_INBOX_EMAIL', '')
+
+# Stripe Configuration
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+STRIPE_CONSULTATION_FEE = int(os.environ.get('STRIPE_CONSULTATION_FEE', '5000'))  # in cents (default: $50.00)
+STRIPE_CURRENCY = os.environ.get('STRIPE_CURRENCY', 'usd')

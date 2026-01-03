@@ -293,3 +293,84 @@ class MedicalDocument(models.Model):
         if self.file:
             self.file.delete(save=False)
         super().delete(*args, **kwargs)
+
+
+class Payment(models.Model):
+    """Model for tracking patient payments for consultation fees."""
+    
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        PAID = "PAID", "Paid"
+        FAILED = "FAILED", "Failed"
+        REFUNDED = "REFUNDED", "Refunded"
+
+    patient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="payments",
+        limit_choices_to={"role": User.Role.PATIENT}
+    )
+    appointment = models.ForeignKey(
+        "Appointment",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="payments"
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=3, default="usd")
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING
+    )
+    stripe_checkout_session_id = models.CharField(max_length=255, unique=True)
+    stripe_payment_intent_id = models.CharField(max_length=255, blank=True, null=True)
+    receipt_url = models.URLField(max_length=500, blank=True, null=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"Payment {self.id} - {self.patient.email} - {self.amount} {self.currency} - {self.status}"
+
+
+class Invoice(models.Model):
+    """Model for storing invoice information linked to payments."""
+    
+    payment = models.OneToOneField(
+        Payment,
+        on_delete=models.CASCADE,
+        related_name="invoice"
+    )
+    invoice_number = models.CharField(max_length=50, unique=True)
+    pdf_file = models.FileField(
+        upload_to="invoices/",
+        blank=True,
+        null=True
+    )
+    generated_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-generated_at",)
+
+    def __str__(self):
+        return f"Invoice {self.invoice_number} for Payment {self.payment.id}"
+
+    def generate_invoice_number(self):
+        """Generate a unique invoice number."""
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y%m%d")
+        return f"INV-{timestamp}-{self.payment.id:06d}"
+
+    def save(self, *args, **kwargs):
+        if not self.invoice_number:
+            # Generate invoice number before saving
+            super().save(*args, **kwargs)
+            self.invoice_number = self.generate_invoice_number()
+            super().save(update_fields=["invoice_number"])
+        else:
+            super().save(*args, **kwargs)

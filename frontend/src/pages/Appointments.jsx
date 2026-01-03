@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { api } from '../api/client'
+import { api, createCheckoutSession } from '../api/client'
 import Loading from '../components/Loading'
 import ErrorAlert from '../components/ErrorAlert'
 
@@ -8,6 +8,8 @@ export default function Appointments() {
   const [appointments, setAppointments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [paymentLoading, setPaymentLoading] = useState(null)
+  const [stripeConfigured, setStripeConfigured] = useState(true)
 
   useEffect(() => {
     fetchAppointments()
@@ -48,6 +50,27 @@ export default function Appointments() {
       dateStyle: 'medium',
       timeStyle: 'short',
     })
+  }
+
+  const handlePayConsultationFee = async (appointmentId) => {
+    setPaymentLoading(appointmentId)
+    try {
+      const data = await createCheckoutSession(appointmentId)
+      // Redirect to Stripe Checkout
+      window.location.href = data.url
+    } catch (err) {
+      console.error('Payment error:', err)
+      const errorMessage = err.response?.data?.error || 'Failed to create payment session. Please try again.'
+      
+      // Check if it's a Stripe configuration error
+      if (err.response?.status === 503) {
+        setStripeConfigured(false)
+        alert('⚠️ Payment System Not Available\n\n' + errorMessage + '\n\nPayments are currently disabled. Please contact support or try again later.')
+      } else {
+        alert(errorMessage)
+      }
+      setPaymentLoading(null)
+    }
   }
 
   if (loading) {
@@ -134,6 +157,24 @@ export default function Appointments() {
                       </p>
                     </div>
                   </div>
+                  {stripeConfigured && (
+                    <div className="mt-3">
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => handlePayConsultationFee(appointment.id)}
+                        disabled={paymentLoading === appointment.id}
+                      >
+                        {paymentLoading === appointment.id ? (
+                          <>
+                            <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            Processing...
+                          </>
+                        ) : (
+                          <>💳 Pay Consultation Fee</>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

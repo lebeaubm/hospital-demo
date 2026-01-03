@@ -5,11 +5,13 @@ from rest_framework import serializers
 from .models import (
     Appointment,
     Doctor,
+    Invoice,
     MedicalDocument,
     MedicalNote,
     MedicalRecord,
     NotificationLog,
     PatientProfile,
+    Payment,
     StaffProfile,
 )
 
@@ -396,3 +398,73 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
             )
 
         return MedicalDocumentSerializer(documents, many=True, context=self.context).data
+
+
+class PaymentSerializer(serializers.ModelSerializer):
+    """Serializer for Payment model."""
+    patient_email = serializers.EmailField(source="patient.email", read_only=True)
+    patient_name = serializers.CharField(source="patient.get_full_name", read_only=True)
+    appointment_id = serializers.IntegerField(source="appointment.id", read_only=True, allow_null=True)
+    has_invoice = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Payment
+        fields = (
+            "id",
+            "patient",
+            "patient_email",
+            "patient_name",
+            "appointment",
+            "appointment_id",
+            "amount",
+            "currency",
+            "status",
+            "stripe_checkout_session_id",
+            "stripe_payment_intent_id",
+            "receipt_url",
+            "paid_at",
+            "created_at",
+            "updated_at",
+            "has_invoice",
+        )
+        read_only_fields = (
+            "id",
+            "patient",
+            "patient_email",
+            "patient_name",
+            "appointment_id",
+            "status",
+            "stripe_checkout_session_id",
+            "stripe_payment_intent_id",
+            "receipt_url",
+            "paid_at",
+            "created_at",
+            "updated_at",
+            "has_invoice",
+        )
+
+    def get_has_invoice(self, obj):
+        """Check if payment has an associated invoice."""
+        return hasattr(obj, "invoice")
+
+
+class InvoiceSerializer(serializers.ModelSerializer):
+    """Serializer for Invoice model."""
+    payment = PaymentSerializer(read_only=True)
+
+    class Meta:
+        model = Invoice
+        fields = (
+            "id",
+            "payment",
+            "invoice_number",
+            "pdf_file",
+            "generated_at",
+        )
+        read_only_fields = (
+            "id",
+            "payment",
+            "invoice_number",
+            "pdf_file",
+            "generated_at",
+        )

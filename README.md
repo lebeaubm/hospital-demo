@@ -75,6 +75,12 @@ The app works locally without configuration using sensible defaults (SQLite data
   - `EMAIL_HOST_PASSWORD` - SMTP password
   - `DEFAULT_FROM_EMAIL` - From email address (default: `noreply@hospitaldemo.com`)
   - `STAFF_INBOX_EMAIL` - Staff notification inbox for appointment requests
+- **Stripe Payment Settings** (for payment functionality):
+  - `STRIPE_SECRET_KEY` - Stripe secret key (test mode: starts with `sk_test_`)
+  - `STRIPE_PUBLISHABLE_KEY` - Stripe publishable key (test mode: starts with `pk_test_`)
+  - `STRIPE_WEBHOOK_SECRET` - Stripe webhook signing secret (optional for local dev)
+  - `STRIPE_CONSULTATION_FEE` - Consultation fee in cents (default: `5000` = $50.00)
+  - `STRIPE_CURRENCY` - Currency code (default: `usd`)
 
 **Frontend** (optional `.env` in `frontend/`):
 - `VITE_API_URL` - Backend API URL (default: `http://127.0.0.1:8000`)
@@ -86,6 +92,91 @@ Copy `.env.example` files to `.env` and customize as needed. See [DEPLOYMENT.md]
 Seeded test accounts:
 - **Patient**: `patient@example.com` / `Pass1234!`
 - **Staff**: `staff@example.com` / `StaffPass123!`
+
+## Stripe Payment Testing (Browser-Only)
+
+The application includes Stripe integration for consultation fee payments with browser-only testing (no webhooks required for local development).
+
+### Test Mode Setup
+
+1. **Get Stripe Test Keys** (free, no credit card required):
+   - Sign up at https://stripe.com
+   - Navigate to Developers → API keys
+   - Copy your test keys (they start with `sk_test_` and `pk_test_`)
+
+2. **Configure Backend** (`backend/.env`):
+   ```env
+   STRIPE_SECRET_KEY=sk_test_your_key_here
+   STRIPE_PUBLISHABLE_KEY=pk_test_your_key_here
+   STRIPE_CONSULTATION_FEE=5000
+   STRIPE_CURRENCY=usd
+   ```
+
+3. **Restart Backend**:
+   ```powershell
+   cd backend
+   python manage.py runserver
+   ```
+
+**Note**: If Stripe keys are not configured, payment buttons will show an error message: "Stripe is not configured. Please set STRIPE_SECRET_KEY in your environment variables." This is expected - payments require valid Stripe API keys to function.
+
+### Testing Payment Flow
+
+1. **Login as Patient**:
+   - Go to http://localhost:5173/login
+   - Use: `patient@example.com` / `Pass1234!`
+
+2. **View Appointments**:
+   - Navigate to "My Appointments"
+   - Click "💳 Pay Consultation Fee" on any appointment
+
+3. **Complete Payment**:
+   - You'll be redirected to Stripe Checkout
+   - Use Stripe test card: `4242 4242 4242 4242`
+   - Any future expiry date (e.g., 12/34)
+   - Any 3-digit CVC (e.g., 123)
+   - Any valid billing details
+
+4. **Verify Payment**:
+   - After successful payment, you'll be redirected to the success page
+   - The browser will automatically verify payment with Stripe
+   - View payment history at "Payments" in the navigation menu
+
+5. **Download Invoice**:
+   - Go to "Payments" page
+   - Click "📄 Download Invoice" on paid payments
+   - PDF invoice will download automatically
+
+### Test Cards
+
+Stripe provides various test cards for different scenarios:
+
+- **Success**: `4242 4242 4242 4242`
+- **Decline**: `4000 0000 0000 0002`
+- **Insufficient Funds**: `4000 0000 0000 9995`
+- **3D Secure Required**: `4000 0025 0000 3155`
+
+More test cards: https://stripe.com/docs/testing
+
+### Browser-Only Verification
+
+The application uses a browser fallback verification system:
+- When you return from Stripe, the success page calls `/api/payments/verify/?session_id=...`
+- This endpoint fetches the payment status directly from Stripe
+- No webhook configuration needed for local testing
+- Works perfectly for development and testing
+
+### Payment Features
+
+- ✅ Secure Stripe Checkout integration
+- ✅ Consultation fee payments ($50.00 default)
+- ✅ Payment history for patients
+- ✅ Automatic invoice generation (PDF)
+- ✅ Invoice download
+- ✅ Browser-only verification (no webhook setup required)
+- ✅ Test mode for safe development
+
+**Note**: For production deployment with webhooks, see [DEPLOYMENT.md](DEPLOYMENT.md) for webhook configuration.
 
 ## API Documentation
 
@@ -166,6 +257,16 @@ POST  /api/staff/patients/{id}/notes/      - Add note to patient record
 POST  /api/staff/patients/{id}/documents/  - Upload document to patient record
 PATCH /api/staff/notes/{id}/               - Update note visibility (share/hide from patient)
 DELETE /api/staff/documents/{id}/          - Delete document (staff only)
+
+# Payment API (Patient Only)
+POST /api/payments/checkout-session/   - Create Stripe Checkout Session
+                                         Body: { "appointment_id": 123 (optional) }
+                                         Returns: { "url": "...", "session_id": "...", "payment_id": 1 }
+GET  /api/payments/verify/              - Verify payment (browser fallback)
+                                         Query: ?session_id=cs_test_...
+POST /api/payments/webhook/             - Stripe webhook endpoint (production only)
+GET  /api/payments/my/                  - Get payment history
+GET  /api/payments/{id}/invoice/        - Download invoice PDF
 ```
 
 ## Testing the API

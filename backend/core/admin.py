@@ -4,11 +4,13 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     Appointment,
     Doctor,
+    Invoice,
     MedicalDocument,
     MedicalNote,
     MedicalRecord,
     NotificationLog,
     PatientProfile,
+    Payment,
     StaffProfile,
     User,
 )
@@ -147,5 +149,44 @@ class MedicalDocumentAdmin(admin.ModelAdmin):
         }),
         ("Timestamps", {
             "fields": ("created_at", "updated_at")
+        }),
+    )
+
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ("id", "patient", "amount", "currency", "status", "paid_at", "created_at")
+    list_filter = ("status", "currency", "paid_at", "created_at")
+    search_fields = ("patient__email", "stripe_checkout_session_id", "stripe_payment_intent_id")
+    readonly_fields = ("stripe_checkout_session_id", "stripe_payment_intent_id", "receipt_url", "paid_at", "created_at", "updated_at")
+    autocomplete_fields = ("patient", "appointment")
+
+    fieldsets = (
+        ("Payment Details", {
+            "fields": ("patient", "appointment", "amount", "currency", "status")
+        }),
+        ("Stripe Information", {
+            "fields": ("stripe_checkout_session_id", "stripe_payment_intent_id", "receipt_url")
+        }),
+        ("Timestamps", {
+            "fields": ("paid_at", "created_at", "updated_at")
+        }),
+    )
+
+
+@admin.register(Invoice)
+class InvoiceAdmin(admin.ModelAdmin):
+    list_display = ("id", "invoice_number", "payment", "generated_at")
+    list_filter = ("generated_at",)
+    search_fields = ("invoice_number", "payment__patient__email")
+    readonly_fields = ("invoice_number", "generated_at")
+    autocomplete_fields = ("payment",)
+
+    fieldsets = (
+        ("Invoice Details", {
+            "fields": ("payment", "invoice_number", "pdf_file")
+        }),
+        ("Timestamps", {
+            "fields": ("generated_at",)
         }),
     )

@@ -11,6 +11,9 @@ import Profile from './pages/Profile'
 import Appointments from './pages/Appointments'
 import RequestAppointment from './pages/RequestAppointment'
 import MedicalRecords from './pages/MedicalRecords'
+import Payments from './pages/Payments'
+import PaymentSuccess from './pages/PaymentSuccess'
+import PaymentCancel from './pages/PaymentCancel'
 import StaffDashboard from './pages/StaffDashboard'
 import StaffEmails from './pages/StaffEmails'
 import StaffPatientRecord from './pages/StaffPatientRecord'
@@ -114,6 +117,11 @@ function App() {
                           Medical Records
                         </NavLink>
                       </li>
+                      <li className="nav-item">
+                        <NavLink className="nav-link" to="/portal/payments">
+                          Payments
+                        </NavLink>
+                      </li>
                     </>
                   )}
                   <li className="nav-item">
@@ -173,6 +181,16 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+            path="/portal/payments"
+            element={
+              <ProtectedRoute>
+                <Payments />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/payment/success" element={<PaymentSuccess />} />
+          <Route path="/payment/cancel" element={<PaymentCancel />} />
           <Route
             path="/staff/dashboard"
             element={
