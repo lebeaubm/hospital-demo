@@ -1,5 +1,6 @@
 # Render Free Tier Configuration
-# Both frontend and backend on Render FREE tier
+# This is a simpler setup for FREE deployment
+# Only deploys backend - deploy frontend to Netlify (free)
 
 services:
   # Backend API (FREE TIER)
@@ -27,22 +28,6 @@ services:
         sync: false
       - key: STRIPE_PUBLISHABLE_KEY
         sync: false
-    autoDeploy: true
-
-  # Frontend Static Site (FREE)
-  - type: web
-    name: hospital-demo-frontend
-    runtime: static
-    rootDir: frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
-    envVars:
-      - key: VITE_API_URL
-        sync: false
-    routes:
-      - type: rewrite
-        source: /*
-        destination: /index.html
     autoDeploy: true
 
 databases:
