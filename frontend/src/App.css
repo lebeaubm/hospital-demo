@@ -1,0 +1,14 @@
+.app-shell {
+  min-height: 100vh;
+  background: #f4f7fb;
+}
+
+main.container {
+  padding-top: 2rem;
+  padding-bottom: 3rem;
+}
+
+.navbar .nav-link.active {
+  font-weight: 600;
+  text-decoration: underline;
+}

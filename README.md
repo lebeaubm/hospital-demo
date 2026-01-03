@@ -38,9 +38,29 @@ curl http://127.0.0.1:8000/api/doctors/
 curl http://127.0.0.1:8000/api/doctors/1/
 ```
 
-## Frontend (React)
+## Frontend (React + Vite)
 
 ```powershell
 cd frontend
-# TODO: initialize React app (e.g., `npm create vite@latest` or `npx create-react-app .`)
+npm install
+npm run dev
+```
+
+The frontend expects the backend at `http://127.0.0.1:8000`.
+To override, set `VITE_API_URL` before running `npm run dev`.
+
+## Run both (two terminals)
+
+Terminal 1:
+
+```powershell
+cd backend
+python manage.py runserver
+```
+
+Terminal 2:
+
+```powershell
+cd frontend
+npm run dev
 ```
