@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { api, setTokens } from '../api/client'
 import { useAuth } from '../context/AuthContext'
+import { getUserInfo } from '../utils/auth'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -24,9 +25,19 @@ export default function Login() {
         password,
       })
       setTokens({ access: data.access, refresh: data.refresh })
-      login()
+      
+      // Fetch user info to get role
+      const userInfo = await getUserInfo(api)
+      
+      login(userInfo)
       setSuccess('Logged in successfully.')
-      navigate('/')
+      
+      // Redirect based on role
+      if (userInfo?.role === 'STAFF' || userInfo?.role === 'ADMIN') {
+        navigate('/staff/dashboard')
+      } else {
+        navigate('/')
+      }
     } catch (err) {
       setError('Login failed. Check your credentials and try again.')
     } finally {
@@ -63,9 +74,14 @@ export default function Login() {
         </div>
         {error && <div className="alert alert-danger">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}
-        <button className="btn btn-primary" type="submit" disabled={submitting}>
+        <button className="btn btn-primary mb-3" type="submit" disabled={submitting}>
           {submitting ? 'Signing in...' : 'Sign in'}
         </button>
+        <div className="text-center">
+          <small>
+            Don't have an account? <Link to="/register">Register here</Link>
+          </small>
+        </div>
       </form>
     </div>
   )

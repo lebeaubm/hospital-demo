@@ -1,0 +1,27 @@
+services:
+  # Backend API
+  - type: web
+    name: hospital-demo-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn backend.wsgi:application
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: ALLOWED_HOSTS
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: DATABASE_URL
+        fromDatabase:
+          name: hospital-demo-db
+          property: connectionString
+    autoDeploy: true
+
+databases:
+  # PostgreSQL Database
+  - name: hospital-demo-db
+    databaseName: hospital_demo
+    user: hospital_demo_user
