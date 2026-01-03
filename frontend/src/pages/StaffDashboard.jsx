@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
-import Loading from '../components/Loading'
+import { SkeletonTable } from '../components/SkeletonLoader'
 import ErrorAlert from '../components/ErrorAlert'
 
 export default function StaffDashboard() {
@@ -253,7 +253,7 @@ export default function StaffDashboard() {
       {successMessage && <div className="alert alert-success">{successMessage}</div>}
 
       {/* Loading State */}
-      {loading && <Loading message="Loading appointments..." />}
+      {loading && <SkeletonTable />}
 
       {/* Appointments Table */}
       {!loading && !error && appointments.length === 0 && (

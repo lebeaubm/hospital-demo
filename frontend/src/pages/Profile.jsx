@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
 import { useAuth } from '../context/AuthContext'
-import Loading from '../components/Loading'
+import { SkeletonProfile } from '../components/SkeletonLoader'
 import ErrorAlert from '../components/ErrorAlert'
 
 export default function Profile() {
@@ -107,7 +107,7 @@ export default function Profile() {
     return (
       <div className="py-4">
         <h1 className="mb-3">My Profile</h1>
-        <Loading message="Loading profile..." />
+        <SkeletonProfile />
       </div>
     )
   }

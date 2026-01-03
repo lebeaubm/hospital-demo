@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
-import Loading from '../components/Loading'
+import { SkeletonCard } from '../components/SkeletonLoader'
 import ErrorAlert from '../components/ErrorAlert'
 
 export default function DoctorDetail() {
@@ -32,7 +32,7 @@ export default function DoctorDetail() {
       <Link className="btn btn-link px-0" to="/doctors">
         Back to doctors
       </Link>
-      {loading && <Loading message="Loading doctor details..." />}
+      {loading && <SkeletonCard />}
       {error && <ErrorAlert error={error} onRetry={fetchDoctor} />}
       {!loading && !error && doctor && (
         <div className="card shadow-sm">

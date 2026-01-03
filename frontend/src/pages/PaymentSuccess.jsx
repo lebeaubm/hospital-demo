@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { verifyPayment } from '../api/client'
-import Loading from '../components/Loading'
+import { SkeletonCard } from '../components/SkeletonLoader'
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams()
@@ -36,7 +36,11 @@ export default function PaymentSuccess() {
   if (loading) {
     return (
       <div className="container py-5">
-        <Loading message="Verifying your payment..." />
+        <div className="row justify-content-center">
+          <div className="col-md-6">
+            <SkeletonCard />
+          </div>
+        </div>
       </div>
     )
   }
