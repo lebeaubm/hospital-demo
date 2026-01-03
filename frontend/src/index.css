@@ -34,12 +34,7 @@ a:hover {
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at top, #ffffff 0%, #e6eef9 50%, #dae4f5 100%);
   transition: background 0.3s ease, color 0.3s ease;
-}
-
-[data-theme="dark"] body {
-  background: radial-gradient(circle at top, #1a1a1a 0%, #0f0f0f 50%, #000000 100%);
 }
 
 #root {
@@ -71,9 +66,9 @@ body {
 }
 
 [data-theme="dark"] .alert-info {
-  background-color: #1e3a5f;
-  border-color: #2563eb;
-  color: #93c5fd;
+  background-color: #2e1065;
+  border-color: #7c3aed;
+  color: #c4b5fd;
 }
 
 [data-theme="dark"] .alert-danger {
@@ -113,7 +108,7 @@ body {
 }
 
 [data-theme="dark"] .navbar-dark {
-  background-color: #1e40af !important;
+  background-color: #6d28d9 !important;
 }
 
 [data-theme="dark"] .badge {
