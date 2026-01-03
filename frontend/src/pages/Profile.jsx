@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
+import { useAuth } from '../context/AuthContext'
 
 export default function Profile() {
+  const { isStaff } = useAuth()
   const [profile, setProfile] = useState(null)
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
+    // Patient fields
     date_of_birth: '',
     phone_number: '',
     address: '',
@@ -13,6 +16,10 @@ export default function Profile() {
     emergency_contact_phone: '',
     insurance_provider: '',
     insurance_policy_number: '',
+    // Staff fields
+    department: '',
+    position: '',
+    office_location: '',
   })
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -25,19 +32,41 @@ export default function Profile() {
 
   const fetchProfile = async () => {
     try {
-      const { data } = await api.get('/api/patients/me/')
+      const endpoint = isStaff ? '/api/staff/me/' : '/api/patients/me/'
+      const { data } = await api.get(endpoint)
       setProfile(data)
-      setFormData({
-        first_name: data.first_name || '',
-        last_name: data.last_name || '',
-        date_of_birth: data.date_of_birth || '',
-        phone_number: data.phone_number || '',
-        address: data.address || '',
-        emergency_contact_name: data.emergency_contact_name || '',
-        emergency_contact_phone: data.emergency_contact_phone || '',
-        insurance_provider: data.insurance_provider || '',
-        insurance_policy_number: data.insurance_policy_number || '',
-      })
+      
+      if (isStaff) {
+        setFormData({
+          first_name: data.first_name || '',
+          last_name: data.last_name || '',
+          department: data.department || '',
+          position: data.position || '',
+          phone_number: data.phone_number || '',
+          office_location: data.office_location || '',
+          date_of_birth: '',
+          address: '',
+          emergency_contact_name: '',
+          emergency_contact_phone: '',
+          insurance_provider: '',
+          insurance_policy_number: '',
+        })
+      } else {
+        setFormData({
+          first_name: data.first_name || '',
+          last_name: data.last_name || '',
+          date_of_birth: data.date_of_birth || '',
+          phone_number: data.phone_number || '',
+          address: data.address || '',
+          emergency_contact_name: data.emergency_contact_name || '',
+          emergency_contact_phone: data.emergency_contact_phone || '',
+          insurance_provider: data.insurance_provider || '',
+          insurance_policy_number: data.insurance_policy_number || '',
+          department: '',
+          position: '',
+          office_location: '',
+        })
+      }
       setLoading(false)
     } catch (err) {
       setError('Unable to load profile.')
@@ -59,7 +88,8 @@ export default function Profile() {
     setSubmitting(true)
 
     try {
-      const { data } = await api.patch('/api/patients/me/', formData)
+      const endpoint = isStaff ? '/api/staff/me/' : '/api/patients/me/'
+      const { data } = await api.patch(endpoint, formData)
       setProfile(data)
       setSuccess('Profile updated successfully!')
     } catch (err) {
@@ -120,34 +150,96 @@ export default function Profile() {
           </div>
         </div>
         
-        <div className="row">
-          <div className="col-md-6 mb-3">
-            <label className="form-label" htmlFor="date_of_birth">
-              Date of Birth
-            </label>
-            <input
-              className="form-control"
-              id="date_of_birth"
-              name="date_of_birth"
-              type="date"
-              value={formData.date_of_birth}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="col-md-6 mb-3">
-            <label className="form-label" htmlFor="phone_number">
-              Phone Number
-            </label>
-            <input
-              className="form-control"
-              id="phone_number"
-              name="phone_number"
-              type="tel"
-              value={formData.phone_number}
-              onChange={handleChange}
-            />
-          </div>
-        </div>
+        {isStaff ? (
+          <>
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label" htmlFor="department">
+                  Department
+                </label>
+                <input
+                  className="form-control"
+                  id="department"
+                  name="department"
+                  type="text"
+                  value={formData.department}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label" htmlFor="position">
+                  Position
+                </label>
+                <input
+                  className="form-control"
+                  id="position"
+                  name="position"
+                  type="text"
+                  value={formData.position}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+            
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label" htmlFor="phone_number">
+                  Phone Number
+                </label>
+                <input
+                  className="form-control"
+                  id="phone_number"
+                  name="phone_number"
+                  type="tel"
+                  value={formData.phone_number}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label" htmlFor="office_location">
+                  Office Location
+                </label>
+                <input
+                  className="form-control"
+                  id="office_location"
+                  name="office_location"
+                  type="text"
+                  value={formData.office_location}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="row">
+              <div className="col-md-6 mb-3">
+                <label className="form-label" htmlFor="date_of_birth">
+                  Date of Birth
+                </label>
+                <input
+                  className="form-control"
+                  id="date_of_birth"
+                  name="date_of_birth"
+                  type="date"
+                  value={formData.date_of_birth}
+                  onChange={handleChange}
+                />
+              </div>
+              <div className="col-md-6 mb-3">
+                <label className="form-label" htmlFor="phone_number">
+                  Phone Number
+                </label>
+                <input
+                  className="form-control"
+                  id="phone_number"
+                  name="phone_number"
+                  type="tel"
+                  value={formData.phone_number}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
 
         <div className="mb-3">
           <label className="form-label" htmlFor="address">
@@ -222,6 +314,8 @@ export default function Profile() {
             />
           </div>
         </div>
+          </>
+        )}
 
         {error && <div className="alert alert-danger">{error}</div>}
         {success && <div className="alert alert-success">{success}</div>}

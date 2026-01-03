@@ -69,6 +69,19 @@ class PatientProfile(models.Model):
         return f"PatientProfile for {self.user.email}"
 
 
+class StaffProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="staff_profile")
+    department = models.CharField(max_length=200, blank=True)
+    position = models.CharField(max_length=200, blank=True)
+    phone_number = models.CharField(max_length=50, blank=True)
+    office_location = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"StaffProfile for {self.user.email}"
+
+
 class Appointment(models.Model):
     class Status(models.TextChoices):
         REQUESTED = "REQUESTED", "Requested"

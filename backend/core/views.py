@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from .models import Appointment, Doctor, PatientProfile
+from .models import Appointment, Doctor, PatientProfile, StaffProfile
 from .permissions import IsAppointmentOwner, IsPatientUser, IsStaffUser
 from .serializers import (
     AppointmentSerializer,
@@ -12,7 +12,9 @@ from .serializers import (
     PatientProfileSerializer,
     RegisterSerializer,
     StaffAppointmentUpdateSerializer,
+    StaffProfileSerializer,
 )
+from .serializers_jwt import CustomTokenObtainPairSerializer
 
 
 class APIRootView(APIView):
@@ -55,6 +57,7 @@ class RegisterView(generics.CreateAPIView):
 
 class LoginView(TokenObtainPairView):
     permission_classes = [permissions.AllowAny]
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 class RefreshView(TokenRefreshView):
@@ -79,6 +82,15 @@ class PatientMeView(generics.RetrieveUpdateAPIView):
 
     def get_object(self):
         profile, _ = PatientProfile.objects.get_or_create(user=self.request.user)
+        return profile
+
+
+class StaffMeView(generics.RetrieveUpdateAPIView):
+    serializer_class = StaffProfileSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def get_object(self):
+        profile, _ = StaffProfile.objects.get_or_create(user=self.request.user)
         return profile
 
 

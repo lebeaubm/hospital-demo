@@ -13,6 +13,7 @@ from .views import (
     RegisterView,
     StaffAppointmentListView,
     StaffAppointmentUpdateView,
+    StaffMeView,
 )
 
 urlpatterns = [
@@ -23,6 +24,7 @@ urlpatterns = [
     path("doctors/", DoctorListView.as_view(), name="doctor_list"),
     path("doctors/<int:pk>/", DoctorDetailView.as_view(), name="doctor_detail"),
     path("patients/me/", PatientMeView.as_view(), name="patient_me"),
+    path("staff/me/", StaffMeView.as_view(), name="staff_me"),
     path("appointments/", AppointmentCreateView.as_view(), name="appointment_create"),
     path("appointments/my/", MyAppointmentListView.as_view(), name="appointment_list"),
     path("appointments/<int:pk>/", AppointmentDetailView.as_view(), name="appointment_detail"),

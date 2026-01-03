@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import Appointment, Doctor, PatientProfile, User
+from .models import Appointment, Doctor, PatientProfile, StaffProfile, User
 
 
 @admin.register(User)
@@ -39,6 +39,13 @@ class DoctorAdmin(admin.ModelAdmin):
 class PatientProfileAdmin(admin.ModelAdmin):
     list_display = ("user", "phone_number", "date_of_birth", "insurance_provider")
     search_fields = ("user__email", "phone_number", "insurance_provider")
+    autocomplete_fields = ("user",)
+
+
+@admin.register(StaffProfile)
+class StaffProfileAdmin(admin.ModelAdmin):
+    list_display = ("user", "department", "position", "phone_number", "office_location")
+    search_fields = ("user__email", "department", "position")
     autocomplete_fields = ("user",)
 
 

@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import Appointment, Doctor, PatientProfile
+from .models import Appointment, Doctor, PatientProfile, StaffProfile
 
 User = get_user_model()
 
@@ -47,6 +47,42 @@ class PatientProfileSerializer(serializers.ModelSerializer):
             "emergency_contact_phone",
             "insurance_provider",
             "insurance_policy_number",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = ("id", "email", "created_at", "updated_at")
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("user", {})
+        if user_data:
+            for attr, value in user_data.items():
+                setattr(instance.user, attr, value)
+            instance.user.save(
+                update_fields=[field for field in user_data.keys()]
+            )
+        return super().update(instance, validated_data)
+
+
+class StaffProfileSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source="user.email", read_only=True)
+    first_name = serializers.CharField(
+        source="user.first_name", required=False, allow_blank=True, allow_null=True
+    )
+    last_name = serializers.CharField(
+        source="user.last_name", required=False, allow_blank=True, allow_null=True
+    )
+
+    class Meta:
+        model = StaffProfile
+        fields = (
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "department",
+            "position",
+            "phone_number",
+            "office_location",
             "created_at",
             "updated_at",
         )

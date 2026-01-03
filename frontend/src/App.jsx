@@ -77,11 +77,18 @@ function App() {
               ) : (
                 <>
                   {isStaff ? (
-                    <li className="nav-item">
-                      <NavLink className="nav-link" to="/staff/dashboard">
-                        Staff Dashboard
-                      </NavLink>
-                    </li>
+                    <>
+                      <li className="nav-item">
+                        <NavLink className="nav-link" to="/staff/dashboard">
+                          Staff Dashboard
+                        </NavLink>
+                      </li>
+                      <li className="nav-item">
+                        <NavLink className="nav-link" to="/portal/profile">
+                          My Profile
+                        </NavLink>
+                      </li>
+                    </>
                   ) : (
                     <>
                       <li className="nav-item">

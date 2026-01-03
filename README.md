@@ -1,6 +1,33 @@
 # Hospital Demo
 
-## Backend (Django)
+A full-stack hospital management application with role-based access control (RBAC), featuring appointment scheduling, patient profiles, and staff dashboard.
+
+## Features
+
+- **Role-Based Access Control (RBAC)**: Patient, Staff, and Admin roles
+- **JWT Authentication**: Secure token-based auth with refresh tokens
+- **Patient Portal**: Profile management and appointment requests
+- **Staff Dashboard**: View and manage all appointments
+- **Real-time Updates**: React frontend with instant UI feedback
+- **REST API**: Comprehensive Django REST Framework API
+
+## Tech Stack
+
+**Backend:**
+- Django 5.0+ with Django REST Framework
+- JWT authentication (SimpleJWT)
+- SQLite (dev) / PostgreSQL (prod)
+- drf-spectacular for API docs
+
+**Frontend:**
+- React 18 with React Router
+- Axios for API calls
+- Bootstrap 5 for styling
+- Vite for build tooling
+
+## Quick Start
+
+### Backend Setup
 
 ```powershell
 cd backend
@@ -9,17 +36,339 @@ python manage.py migrate
 python manage.py runserver
 ```
 
-API docs:
-- http://127.0.0.1:8000/api/docs/
+The backend will run at `http://127.0.0.1:8000`
 
-Seeded demo logins:
-- Patient: `patient@example.com` / `Pass1234!`
-- Staff: `staff@example.com` / `StaffPass123!`
-
-Example auth flow:
+### Frontend Setup
 
 ```powershell
-# Register a patient
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend will run at `http://localhost:5173`
+
+## Demo Credentials
+
+Seeded test accounts:
+- **Patient**: `patient@example.com` / `Pass1234!`
+- **Staff**: `staff@example.com` / `StaffPass123!`
+
+## API Documentation
+
+Interactive API docs available at:
+- **Swagger UI**: http://127.0.0.1:8000/api/docs/
+- **ReDoc**: http://127.0.0.1:8000/api/redoc/
+- **OpenAPI Schema**: http://127.0.0.1:8000/api/schema/
+
+## API Endpoints
+
+### Authentication
+```
+POST /api/auth/register/     - Register new patient
+POST /api/auth/login/        - Login (returns access + refresh tokens)
+POST /api/auth/refresh/      - Refresh access token
+```
+
+### Doctors (Public)
+```
+GET  /api/doctors/           - List all doctors
+GET  /api/doctors/{id}/      - Get doctor details
+```
+
+### Patient Endpoints (Requires Authentication)
+```
+GET   /api/patients/me/      - Get my profile
+PATCH /api/patients/me/      - Update my profile
+POST  /api/appointments/     - Create appointment request
+GET   /api/appointments/my/  - List my appointments
+GET   /api/appointments/{id}/ - Get my appointment detail
+```
+
+### Staff Endpoints (Requires Staff/Admin Role)
+```
+GET   /api/staff/me/                  - Get staff profile
+PATCH /api/staff/me/                  - Update staff profile
+GET   /api/staff/appointments/        - List all appointments (with filters)
+PATCH /api/staff/appointments/{id}/   - Update appointment status
+```
+
+## Testing the API
+
+### 1. Register a New Patient
+
+```powershell
+# PowerShell
+$response = Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/auth/register/" -Method POST -ContentType "application/json" -Body '{"email":"newpatient@test.com","password":"TestPass123!","first_name":"John","last_name":"Doe"}'
+$response | ConvertTo-Json
+```
+
+**Response:** Returns user object with id and email.
+
+### 2. Login to Get JWT Token
+
+```powershell
+$response = Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/auth/login/" -Method POST -ContentType "application/json" -Body '{"email":"newpatient@test.com","password":"TestPass123!"}'
+$TOKEN = $response.access
+Write-Host "Access Token: $($TOKEN.Substring(0,20))..."
+```
+
+**Response:** Returns `access` and `refresh` tokens. The token payload now includes:
+- `user_id`: User ID
+- `role`: User role (PATIENT, STAFF, or ADMIN)
+- `email`: User email
+
+### 3. Get Doctor List (Public Endpoint)
+
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/doctors/"
+```
+
+### 4. View/Update Patient Profile
+
+```powershell
+# Get profile
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/patients/me/" -Headers @{"Authorization"="Bearer $TOKEN"}
+
+# Update profile
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/patients/me/" -Method PATCH -Headers @{"Authorization"="Bearer $TOKEN"} -ContentType "application/json" -Body '{"first_name":"John","last_name":"Doe","phone_number":"555-0123","address":"123 Main St"}'
+```
+
+### 5. Create Appointment Request (Patient)
+
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/appointments/" -Method POST -Headers @{"Authorization"="Bearer $TOKEN"} -ContentType "application/json" -Body '{"requested_start":"2026-01-15T10:00:00","reason":"Annual checkup","patient_notes":"Morning preferred"}'
+```
+
+### 6. List My Appointments (Patient)
+
+```powershell
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/appointments/my/" -Headers @{"Authorization"="Bearer $TOKEN"}
+```
+
+### 7. Staff Login and List All Appointments
+
+```powershell
+# Login as staff
+$staffResponse = Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/auth/login/" -Method POST -ContentType "application/json" -Body '{"email":"staff@example.com","password":"StaffPass123!"}'
+$STAFF_TOKEN = $staffResponse.access
+
+# List all appointments (staff only)
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/staff/appointments/" -Headers @{"Authorization"="Bearer $STAFF_TOKEN"}
+
+# Filter by status
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/staff/appointments/?status=REQUESTED" -Headers @{"Authorization"="Bearer $STAFF_TOKEN"}
+```
+
+### 8. Staff Update Appointment Status
+
+```powershell
+# Get appointment ID from previous list, then update it
+Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/staff/appointments/1/" -Method PATCH -Headers @{"Authorization"="Bearer $STAFF_TOKEN"} -ContentType "application/json" -Body '{"status":"CONFIRMED","scheduled_start":"2026-01-15T10:30:00","staff_notes":"Confirmed by staff"}'
+```
+
+## Running Tests
+
+### Backend Tests
+
+```powershell
+cd backend
+python manage.py test
+```
+
+**Test Coverage:**
+- RBAC permissions (patients can only see own appointments)
+- Staff can view/update all appointments
+- Authentication and authorization flows
+- Appointment filtering and status updates
+
+### Test Results Expected:
+```
+Creating test database...
+..........
+----------------------------------------------------------------------
+Ran 10 tests in X.XXs
+
+OK
+```
+
+## Running Both Backend and Frontend
+
+### Terminal 1 - Backend
+```powershell
+cd backend
+python manage.py runserver
+```
+
+### Terminal 2 - Frontend
+```powershell
+cd frontend
+npm run dev
+```
+
+Then open `http://localhost:5173` in your browser.
+
+## Frontend Routes
+
+**Public Routes:**
+- `/` - Home
+- `/services` - Services overview
+- `/doctors` - Doctor listings
+- `/doctors/:id` - Doctor detail
+- `/contact` - Contact information
+- `/login` - Login page
+- `/register` - Registration page
+
+**Patient Routes (Protected):**
+- `/portal/profile` - Patient profile management
+- `/portal/appointments` - My appointments list
+- `/portal/appointments/request` - Request new appointment
+
+**Staff Routes (Protected, Role: STAFF/ADMIN):**
+- `/staff/dashboard` - Appointment queue management
+- `/portal/profile` - Staff profile management
+
+## Project Structure
+
+```
+hospital-demo/
+├── backend/                    # Django REST API
+│   ├── backend/               # Project settings
+│   │   ├── settings.py       # Configuration
+│   │   └── urls.py           # Root URL config
+│   ├── core/                 # Main application
+│   │   ├── models.py         # User, Doctor, PatientProfile, StaffProfile, Appointment
+│   │   ├── serializers.py    # DRF serializers
+│   │   ├── serializers_jwt.py # Custom JWT token serializer (includes role)
+│   │   ├── views.py          # API views
+│   │   ├── urls.py           # API endpoints
+│   │   ├── permissions.py    # RBAC permissions
+│   │   ├── admin.py          # Django admin config
+│   │   ├── tests.py          # RBAC test suite
+│   │   └── migrations/       # Database migrations
+│   ├── manage.py
+│   └── requirements.txt
+├── frontend/                  # React application
+│   ├── src/
+│   │   ├── api/
+│   │   │   └── client.js     # Axios client with JWT interceptor
+│   │   ├── components/
+│   │   │   ├── ProtectedRoute.jsx      # Auth guard
+│   │   │   └── StaffProtectedRoute.jsx # Staff role guard
+│   │   ├── context/
+│   │   │   └── AuthContext.jsx         # Auth state management
+│   │   ├── pages/
+│   │   │   ├── Home.jsx
+│   │   │   ├── Login.jsx
+│   │   │   ├── Register.jsx
+│   │   │   ├── Profile.jsx            # Patient/Staff profile
+│   │   │   ├── Appointments.jsx       # Patient appointments
+│   │   │   ├── RequestAppointment.jsx
+│   │   │   ├── StaffDashboard.jsx     # Staff appointment management
+│   │   │   ├── DoctorsList.jsx
+│   │   │   └── DoctorDetail.jsx
+│   │   ├── App.jsx           # Main app with routing
+│   │   └── main.jsx
+│   ├── package.json
+│   └── vite.config.js
+└── README.md                  # This file
+```
+
+## Data Models
+
+### User
+- email (unique, used for login)
+- password (hashed)
+- first_name, last_name
+- role: PATIENT | STAFF | ADMIN
+- is_staff, is_active
+- date_joined
+
+### PatientProfile (OneToOne with User)
+- date_of_birth
+- phone_number
+- address
+- emergency_contact_name, emergency_contact_phone
+- insurance_provider, insurance_policy_number
+
+### StaffProfile (OneToOne with User)
+- department
+- position
+- phone_number
+- office_location
+
+### Doctor
+- name
+- specialty
+- bio
+- years_experience
+
+### Appointment
+- patient (FK to User)
+- requested_start (datetime)
+- scheduled_start (datetime, nullable)
+- reason
+- patient_notes
+- staff_notes
+- status: REQUESTED | CONFIRMED | COMPLETED | CANCELED
+- created_at, updated_at
+
+## RBAC Rules
+
+### Patients (role=PATIENT)
+✅ Can register and login  
+✅ Can view/update own profile  
+✅ Can create appointment requests  
+✅ Can view only their own appointments  
+❌ Cannot access other patients' data  
+❌ Cannot access staff endpoints  
+
+### Staff (role=STAFF or ADMIN)
+✅ Can login  
+✅ Can view/update own staff profile  
+✅ Can view all appointments (with filters)  
+✅ Can update appointment status, scheduled_start, staff_notes  
+✅ Full access to appointment management  
+
+### Public
+✅ Can view doctor listings  
+✅ Can register as new patient  
+✅ Can login  
+
+## Deployment
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for production deployment instructions to Render (backend) and Netlify (frontend).
+
+## Development Notes
+
+- **JWT Token Payload**: Now includes `role` and `email` claims for frontend role-based UI
+- **Auto-refresh**: Frontend automatically refreshes expired access tokens using refresh token
+- **CORS**: Configured for local development (localhost:5173)
+- **API Docs**: Auto-generated with drf-spectacular
+- **Seeded Data**: Run migrations to automatically seed doctors and test users
+
+## Files Changed in This Implementation
+
+### Backend
+- `core/models.py` - Added StaffProfile model
+- `core/serializers.py` - Added StaffProfileSerializer
+- `core/serializers_jwt.py` - **NEW** Custom JWT serializer with role in payload
+- `core/views.py` - Added StaffMeView, updated LoginView
+- `core/urls.py` - Added `/api/staff/me/` endpoint
+- `core/admin.py` - Registered StaffProfile
+- `core/tests.py` - **NEW** Comprehensive RBAC test suite
+- `core/migrations/0005_staffprofile.py` - Added via `makemigrations`
+
+### Frontend
+- `src/pages/Profile.jsx` - Updated to handle both patient and staff profiles
+- `src/App.jsx` - Added staff profile link to navigation
+
+### Documentation
+- `README.md` - **COMPLETELY UPDATED** with comprehensive documentation
+
+## License
+
+MIT
 curl -X POST http://127.0.0.1:8000/api/auth/register/ `
   -H "Content-Type: application/json" `
   -d '{"email":"patient@example.com","password":"Pass1234!","first_name":"Pat","last_name":"Smith"}'
