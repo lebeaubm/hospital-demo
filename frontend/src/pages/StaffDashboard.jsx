@@ -36,6 +36,11 @@ export default function StaffDashboard() {
     })
   }
 
+  const handleViewRecord = (appointment) => {
+    // Navigate to patient medical record
+    navigate(`/staff/patients/${appointment.patient_id}/record`)
+  }
+
   useEffect(() => {
     fetchDoctors()
   }, [])
@@ -393,11 +398,18 @@ export default function StaffDashboard() {
                               Edit
                             </button>
                             <button
+                              className="btn btn-sm btn-info"
+                              onClick={() => handleViewRecord(appointment)}
+                              title="View Medical Record"
+                            >
+                              📋 Record
+                            </button>
+                            <button
                               className="btn btn-sm btn-outline-secondary"
                               onClick={() => handleEmailPatient(appointment)}
                               title="Email Patient"
                             >
-                              <i className="bi bi-envelope"></i>
+                              ✉️
                             </button>
                           </div>
                         )}

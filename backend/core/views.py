@@ -1,4 +1,7 @@
 from django.db.models import Q
+from django.http import FileResponse, Http404
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from rest_framework import generics, permissions, status
 from rest_framework.pagination import PageNumberPagination
@@ -6,7 +9,17 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from .models import Appointment, Doctor, NotificationLog, PatientProfile, StaffProfile
+from .models import (
+    Appointment,
+    Doctor,
+    MedicalDocument,
+    MedicalNote,
+    MedicalRecord,
+    NotificationLog,
+    PatientProfile,
+    StaffProfile,
+    User,
+)
 from .notifications import (
     send_appointment_canceled_notification,
     send_appointment_completed_notification,
@@ -19,6 +32,11 @@ from .permissions import IsAppointmentOwner, IsPatientUser, IsStaffUser
 from .serializers import (
     AppointmentSerializer,
     DoctorSerializer,
+    MedicalDocumentSerializer,
+    MedicalDocumentUploadSerializer,
+    MedicalNoteSerializer,
+    MedicalNoteVisibilitySerializer,
+    MedicalRecordSerializer,
     NotificationLogSerializer,
     PatientProfileSerializer,
     RegisterSerializer,
@@ -360,3 +378,292 @@ class StaffSendEmailView(APIView):
             NotificationLogSerializer(log).data,
             status=status.HTTP_201_CREATED
         )
+
+
+# Medical Records Views
+
+class PatientMedicalRecordView(APIView):
+    """
+    Patient endpoint to view their own medical record.
+    GET /api/records/me/
+    Returns: record summary + shared notes + visible documents
+    """
+    permission_classes = [permissions.IsAuthenticated, IsPatientUser]
+
+    def get(self, request):
+        """Get patient's own medical record."""
+        try:
+            patient_profile = request.user.patient_profile
+        except PatientProfile.DoesNotExist:
+            return Response(
+                {"error": "Patient profile not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Get or create medical record
+        record, created = MedicalRecord.objects.get_or_create(patient=patient_profile)
+
+        serializer = MedicalRecordSerializer(record, context={"request": request})
+        return Response(serializer.data)
+
+
+class PatientDocumentUploadView(APIView):
+    """
+    Patient endpoint to upload documents to their own record.
+    POST /api/records/me/documents/
+    """
+    permission_classes = [permissions.IsAuthenticated, IsPatientUser]
+
+    def post(self, request):
+        """Upload a document to patient's own record."""
+        try:
+            patient_profile = request.user.patient_profile
+        except PatientProfile.DoesNotExist:
+            return Response(
+                {"error": "Patient profile not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Get or create medical record
+        record, created = MedicalRecord.objects.get_or_create(patient=patient_profile)
+
+        serializer = MedicalDocumentUploadSerializer(data=request.data)
+        if serializer.is_valid():
+            # Patient uploads default to PATIENT_AND_STAFF visibility
+            document = serializer.save(
+                record=record,
+                uploaded_by=request.user,
+                visibility=MedicalDocument.Visibility.PATIENT_AND_STAFF
+            )
+            return Response(
+                MedicalDocumentSerializer(document, context={"request": request}).data,
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StaffPatientRecordView(APIView):
+    """
+    Staff endpoint to view a patient's full medical record.
+    GET /api/staff/patients/<patient_id>/record/
+    Returns: full record with all notes and documents
+    """
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def get(self, request, patient_id):
+        """Get full medical record for a patient."""
+        try:
+            patient_user = User.objects.get(id=patient_id, role=User.Role.PATIENT)
+            patient_profile = patient_user.patient_profile
+        except (User.DoesNotExist, PatientProfile.DoesNotExist):
+            return Response(
+                {"error": "Patient not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # Get or create medical record
+        record, created = MedicalRecord.objects.get_or_create(patient=patient_profile)
+
+        serializer = MedicalRecordSerializer(record, context={"request": request})
+        return Response(serializer.data)
+
+    def patch(self, request, patient_id):
+        """Update medical record summary fields."""
+        try:
+            patient_user = User.objects.get(id=patient_id, role=User.Role.PATIENT)
+            patient_profile = patient_user.patient_profile
+        except (User.DoesNotExist, PatientProfile.DoesNotExist):
+            return Response(
+                {"error": "Patient not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        record, created = MedicalRecord.objects.get_or_create(patient=patient_profile)
+
+        serializer = MedicalRecordSerializer(
+            record,
+            data=request.data,
+            partial=True,
+            context={"request": request}
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StaffPatientNotesView(APIView):
+    """
+    Staff endpoint to add notes to a patient's record.
+    POST /api/staff/patients/<patient_id>/notes/
+    """
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def post(self, request, patient_id):
+        """Create a new note for a patient."""
+        try:
+            patient_user = User.objects.get(id=patient_id, role=User.Role.PATIENT)
+            patient_profile = patient_user.patient_profile
+        except (User.DoesNotExist, PatientProfile.DoesNotExist):
+            return Response(
+                {"error": "Patient not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        record, created = MedicalRecord.objects.get_or_create(patient=patient_profile)
+
+        serializer = MedicalNoteSerializer(data=request.data)
+        if serializer.is_valid():
+            note = serializer.save(
+                record=record,
+                author=request.user
+            )
+            return Response(
+                MedicalNoteSerializer(note, context={"request": request}).data,
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StaffNoteVisibilityView(APIView):
+    """
+    Staff endpoint to toggle note visibility.
+    PATCH /api/staff/notes/<note_id>/
+    """
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def patch(self, request, note_id):
+        """Update note visibility."""
+        try:
+            note = MedicalNote.objects.get(id=note_id)
+        except MedicalNote.DoesNotExist:
+            return Response(
+                {"error": "Note not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        serializer = MedicalNoteVisibilitySerializer(data=request.data)
+        if serializer.is_valid():
+            new_visibility = serializer.validated_data["visibility"]
+            note.visibility = new_visibility
+
+            # Track when note is shared with patient
+            if new_visibility == MedicalNote.Visibility.SHARED_WITH_PATIENT:
+                if not note.shared_at:
+                    note.shared_at = timezone.now()
+                    note.shared_by = request.user
+
+            note.save()
+            return Response(
+                MedicalNoteSerializer(note, context={"request": request}).data
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StaffPatientDocumentsView(APIView):
+    """
+    Staff endpoint to upload documents to a patient's record.
+    POST /api/staff/patients/<patient_id>/documents/
+    """
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def post(self, request, patient_id):
+        """Upload a document to a patient's record."""
+        try:
+            patient_user = User.objects.get(id=patient_id, role=User.Role.PATIENT)
+            patient_profile = patient_user.patient_profile
+        except (User.DoesNotExist, PatientProfile.DoesNotExist):
+            return Response(
+                {"error": "Patient not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        record, created = MedicalRecord.objects.get_or_create(patient=patient_profile)
+
+        serializer = MedicalDocumentUploadSerializer(data=request.data)
+        if serializer.is_valid():
+            # Staff can specify visibility (defaults to PATIENT_AND_STAFF)
+            visibility = request.data.get(
+                "visibility",
+                MedicalDocument.Visibility.STAFF_ONLY
+            )
+            document = serializer.save(
+                record=record,
+                uploaded_by=request.user,
+                visibility=visibility
+            )
+            return Response(
+                MedicalDocumentSerializer(document, context={"request": request}).data,
+                status=status.HTTP_201_CREATED
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StaffDocumentDeleteView(APIView):
+    """
+    Staff endpoint to delete a document.
+    DELETE /api/staff/documents/<document_id>/
+    """
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def delete(self, request, document_id):
+        """Delete a document (staff/admin only)."""
+        try:
+            document = MedicalDocument.objects.get(id=document_id)
+        except MedicalDocument.DoesNotExist:
+            return Response(
+                {"error": "Document not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        document.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class DocumentDownloadView(APIView):
+    """
+    Secure document download endpoint.
+    GET /api/documents/<document_id>/download/
+    Checks permissions before serving file.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, document_id):
+        """Download a document with permission checks."""
+        try:
+            document = MedicalDocument.objects.select_related(
+                "record__patient__user"
+            ).get(id=document_id)
+        except MedicalDocument.DoesNotExist:
+            # Return 404 to avoid leaking existence
+            raise Http404("Document not found")
+
+        user = request.user
+
+        # Staff/Admin can download any document
+        if user.role in (User.Role.STAFF, User.Role.ADMIN):
+            pass  # Allow access
+        # Patient can only download documents from their own record
+        elif user.role == User.Role.PATIENT:
+            # Check if document belongs to this patient's record
+            if document.record.patient.user != user:
+                raise Http404("Document not found")
+            # Check visibility
+            if document.visibility != MedicalDocument.Visibility.PATIENT_AND_STAFF:
+                raise Http404("Document not found")
+        else:
+            raise Http404("Document not found")
+
+        # Serve the file
+        try:
+            response = FileResponse(
+                document.file.open("rb"),
+                content_type=document.mime_type
+            )
+            response["Content-Disposition"] = f'attachment; filename="{document.original_name}"'
+            return response
+        except FileNotFoundError:
+            return Response(
+                {"error": "File not found on server"},
+                status=status.HTTP_404_NOT_FOUND
+            )

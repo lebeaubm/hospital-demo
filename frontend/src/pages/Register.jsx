@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api, setTokens } from '../api/client'
 import { useAuth } from '../context/AuthContext'
-import { getUserInfo } from '../utils/auth'
 import ErrorAlert from '../components/ErrorAlert'
 
 export default function Register() {

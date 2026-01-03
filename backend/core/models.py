@@ -1,3 +1,5 @@
+import os
+import uuid
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
@@ -153,3 +155,141 @@ class NotificationLog(models.Model):
 
     def __str__(self):
         return f"{self.event_type} to {self.to_email} - {self.status}"
+
+
+def medical_document_upload_path(instance, filename):
+    """Generate a secure random filename for medical documents."""
+    ext = os.path.splitext(filename)[1]
+    random_name = f"{uuid.uuid4().hex}{ext}"
+    return f"medical_documents/{instance.record.patient.id}/{random_name}"
+
+
+class MedicalRecord(models.Model):
+    """
+    Medical record for a patient. OneToOne with PatientProfile.
+    Contains summary information and links to notes/documents.
+    """
+    patient = models.OneToOneField(
+        PatientProfile,
+        on_delete=models.CASCADE,
+        related_name="medical_record"
+    )
+    history_text = models.TextField(blank=True, help_text="Medical history summary")
+    allergies_text = models.TextField(blank=True, help_text="Known allergies")
+    medications_text = models.TextField(blank=True, help_text="Current medications")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Medical Record for {self.patient.user.email}"
+
+
+class MedicalNote(models.Model):
+    """
+    Staff notes attached to a medical record.
+    Visibility can be STAFF_ONLY or SHARED_WITH_PATIENT.
+    """
+    class NoteType(models.TextChoices):
+        VISIT = "VISIT", "Visit Note"
+        LAB = "LAB", "Lab Result"
+        PRESCRIPTION = "PRESCRIPTION", "Prescription"
+        GENERAL = "GENERAL", "General Note"
+
+    class Visibility(models.TextChoices):
+        STAFF_ONLY = "STAFF_ONLY", "Staff Only"
+        SHARED_WITH_PATIENT = "SHARED_WITH_PATIENT", "Shared with Patient"
+
+    record = models.ForeignKey(
+        MedicalRecord,
+        on_delete=models.CASCADE,
+        related_name="notes"
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="authored_notes"
+    )
+    note_type = models.CharField(
+        max_length=20,
+        choices=NoteType.choices,
+        default=NoteType.GENERAL
+    )
+    content = models.TextField()
+    visibility = models.CharField(
+        max_length=30,
+        choices=Visibility.choices,
+        default=Visibility.STAFF_ONLY
+    )
+    shared_at = models.DateTimeField(null=True, blank=True)
+    shared_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="shared_notes"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"{self.note_type} note for {self.record.patient.user.email} - {self.visibility}"
+
+
+class MedicalDocument(models.Model):
+    """
+    Documents (files) attached to a medical record.
+    Can be uploaded by patient or staff with different visibility rules.
+    """
+    class Category(models.TextChoices):
+        LAB_RESULT = "LAB_RESULT", "Lab Result"
+        PRESCRIPTION = "PRESCRIPTION", "Prescription"
+        IMAGING = "IMAGING", "Imaging"
+        OTHER = "OTHER", "Other"
+
+    class Visibility(models.TextChoices):
+        PATIENT_AND_STAFF = "PATIENT_AND_STAFF", "Patient and Staff"
+        STAFF_ONLY = "STAFF_ONLY", "Staff Only"
+
+    record = models.ForeignKey(
+        MedicalRecord,
+        on_delete=models.CASCADE,
+        related_name="documents"
+    )
+    uploaded_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="uploaded_documents"
+    )
+    category = models.CharField(
+        max_length=20,
+        choices=Category.choices,
+        default=Category.OTHER
+    )
+    visibility = models.CharField(
+        max_length=30,
+        choices=Visibility.choices,
+        default=Visibility.PATIENT_AND_STAFF
+    )
+    file = models.FileField(upload_to=medical_document_upload_path)
+    original_name = models.CharField(max_length=255)
+    mime_type = models.CharField(max_length=100)
+    size_bytes = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"{self.original_name} ({self.category}) - {self.visibility}"
+
+    def delete(self, *args, **kwargs):
+        """Delete the file from storage when the model instance is deleted."""
+        if self.file:
+            self.file.delete(save=False)
+        super().delete(*args, **kwargs)

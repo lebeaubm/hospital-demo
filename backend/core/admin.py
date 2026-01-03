@@ -1,7 +1,17 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 
-from .models import Appointment, Doctor, NotificationLog, PatientProfile, StaffProfile, User
+from .models import (
+    Appointment,
+    Doctor,
+    MedicalDocument,
+    MedicalNote,
+    MedicalRecord,
+    NotificationLog,
+    PatientProfile,
+    StaffProfile,
+    User,
+)
 
 
 @admin.register(User)
@@ -72,6 +82,68 @@ class NotificationLogAdmin(admin.ModelAdmin):
         }),
         ("Status & Tracking", {
             "fields": ("status", "error", "sent_by", "related_appointment")
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at")
+        }),
+    )
+
+
+@admin.register(MedicalRecord)
+class MedicalRecordAdmin(admin.ModelAdmin):
+    list_display = ("id", "patient", "created_at", "updated_at")
+    search_fields = ("patient__user__email", "patient__user__first_name", "patient__user__last_name")
+    autocomplete_fields = ("patient",)
+    readonly_fields = ("created_at", "updated_at")
+
+    fieldsets = (
+        ("Patient", {
+            "fields": ("patient",)
+        }),
+        ("Medical Information", {
+            "fields": ("history_text", "allergies_text", "medications_text")
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at")
+        }),
+    )
+
+
+@admin.register(MedicalNote)
+class MedicalNoteAdmin(admin.ModelAdmin):
+    list_display = ("id", "record", "author", "note_type", "visibility", "created_at")
+    list_filter = ("note_type", "visibility", "created_at")
+    search_fields = ("record__patient__user__email", "author__email", "content")
+    autocomplete_fields = ("record", "author", "shared_by")
+    readonly_fields = ("created_at", "updated_at")
+
+    fieldsets = (
+        ("Note Details", {
+            "fields": ("record", "author", "note_type", "content")
+        }),
+        ("Visibility & Sharing", {
+            "fields": ("visibility", "shared_at", "shared_by")
+        }),
+        ("Timestamps", {
+            "fields": ("created_at", "updated_at")
+        }),
+    )
+
+
+@admin.register(MedicalDocument)
+class MedicalDocumentAdmin(admin.ModelAdmin):
+    list_display = ("id", "original_name", "category", "visibility", "uploaded_by", "size_bytes", "created_at")
+    list_filter = ("category", "visibility", "created_at")
+    search_fields = ("record__patient__user__email", "uploaded_by__email", "original_name")
+    autocomplete_fields = ("record", "uploaded_by")
+    readonly_fields = ("original_name", "mime_type", "size_bytes", "created_at", "updated_at")
+
+    fieldsets = (
+        ("Document Details", {
+            "fields": ("record", "uploaded_by", "category", "visibility")
+        }),
+        ("File Information", {
+            "fields": ("file", "original_name", "mime_type", "size_bytes")
         }),
         ("Timestamps", {
             "fields": ("created_at", "updated_at")

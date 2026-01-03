@@ -1,13 +1,18 @@
 # Hospital Demo
 
-A full-stack hospital management application with role-based access control (RBAC), featuring appointment scheduling, patient profiles, and staff dashboard.
+A full-stack hospital management application with role-based access control (RBAC), featuring appointment scheduling, patient profiles, staff dashboard, and comprehensive medical records management.
 
 ## Features
 
 - **Role-Based Access Control (RBAC)**: Patient, Staff, and Admin roles
 - **JWT Authentication**: Secure token-based auth with refresh tokens
-- **Patient Portal**: Profile management and appointment requests
-- **Staff Dashboard**: View and manage all appointments
+- **Patient Portal**: Profile management, appointment requests, and medical records
+- **Medical Records System**: 
+  - Secure document management with staff-controlled visibility
+  - Clinical notes with sharing capabilities
+  - Patient document uploads
+  - Staff-only deletion
+- **Staff Dashboard**: View and manage all appointments with patient record access
 - **Email Notification System**: Automated emails for appointment lifecycle events
 - **Staff Email Management**: Send custom emails to patients and view email logs
 - **Real-time Updates**: React frontend with instant UI feedback
@@ -19,6 +24,7 @@ A full-stack hospital management application with role-based access control (RBA
 - Django 5.0+ with Django REST Framework
 - JWT authentication (SimpleJWT)
 - SQLite (dev) / PostgreSQL (prod)
+- Secure file storage with permission-checked downloads
 - drf-spectacular for API docs
 
 **Frontend:**
@@ -111,11 +117,14 @@ GET  /api/doctors/{id}/      - Get doctor details
 
 ### Patient Endpoints (Requires Authentication)
 ```
-GET   /api/patients/me/      - Get my profile
-PATCH /api/patients/me/      - Update my profile
-POST  /api/appointments/     - Create appointment request
-GET   /api/appointments/my/  - List my appointments
-GET   /api/appointments/{id}/ - Get my appointment detail
+GET   /api/patients/me/            - Get my profile
+PATCH /api/patients/me/            - Update my profile
+POST  /api/appointments/           - Create appointment request
+GET   /api/appointments/my/        - List my appointments
+GET   /api/appointments/{id}/      - Get my appointment detail
+GET   /api/records/me/             - Get my medical record (with shared notes & documents)
+POST  /api/records/me/documents/   - Upload document to my record (multipart/form-data)
+GET   /api/documents/{id}/download/ - Download document (with permission check)
 ```
 
 ### Staff Endpoints (Requires Staff/Admin Role)
@@ -149,6 +158,14 @@ POST  /api/staff/emails/send/         - Send custom email
                                           "appointment_id": 123 (optional),
                                           "cc": ["cc1@example.com"] (optional)
                                         }
+
+# Medical Records API (Staff/Admin)
+GET   /api/staff/patients/{id}/record/     - Get patient's full medical record
+PATCH /api/staff/patients/{id}/record/     - Update medical record summary
+POST  /api/staff/patients/{id}/notes/      - Add note to patient record
+POST  /api/staff/patients/{id}/documents/  - Upload document to patient record
+PATCH /api/staff/notes/{id}/               - Update note visibility (share/hide from patient)
+DELETE /api/staff/documents/{id}/          - Delete document (staff only)
 ```
 
 ## Testing the API

@@ -10,8 +10,10 @@ import Services from './pages/Services'
 import Profile from './pages/Profile'
 import Appointments from './pages/Appointments'
 import RequestAppointment from './pages/RequestAppointment'
+import MedicalRecords from './pages/MedicalRecords'
 import StaffDashboard from './pages/StaffDashboard'
 import StaffEmails from './pages/StaffEmails'
+import StaffPatientRecord from './pages/StaffPatientRecord'
 import ProtectedRoute from './components/ProtectedRoute'
 import StaffProtectedRoute from './components/StaffProtectedRoute'
 import { useAuth } from './context/AuthContext'
@@ -107,6 +109,11 @@ function App() {
                           My Appointments
                         </NavLink>
                       </li>
+                      <li className="nav-item">
+                        <NavLink className="nav-link" to="/portal/records">
+                          Medical Records
+                        </NavLink>
+                      </li>
                     </>
                   )}
                   <li className="nav-item">
@@ -159,6 +166,14 @@ function App() {
             }
           />
           <Route
+            path="/portal/records"
+            element={
+              <ProtectedRoute>
+                <MedicalRecords />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/staff/dashboard"
             element={
               <StaffProtectedRoute>
@@ -171,6 +186,14 @@ function App() {
             element={
               <StaffProtectedRoute>
                 <StaffEmails />
+              </StaffProtectedRoute>
+            }
+          />
+          <Route
+            path="/staff/patients/:patientId/record"
+            element={
+              <StaffProtectedRoute>
+                <StaffPatientRecord />
               </StaffProtectedRoute>
             }
           />

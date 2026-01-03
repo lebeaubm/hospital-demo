@@ -6,16 +6,24 @@ from .views import (
     AppointmentDetailView,
     DoctorDetailView,
     DoctorListView,
+    DocumentDownloadView,
     LoginView,
     MyAppointmentListView,
+    PatientDocumentUploadView,
+    PatientMedicalRecordView,
     PatientMeView,
     RefreshView,
     RegisterView,
     StaffAppointmentListView,
     StaffAppointmentUpdateView,
+    StaffDocumentDeleteView,
     StaffEmailLogDetailView,
     StaffEmailLogListView,
     StaffMeView,
+    StaffNoteVisibilityView,
+    StaffPatientDocumentsView,
+    StaffPatientNotesView,
+    StaffPatientRecordView,
     StaffSendEmailView,
 )
 
@@ -40,4 +48,15 @@ urlpatterns = [
     path("staff/emails/", StaffEmailLogListView.as_view(), name="staff_email_log_list"),
     path("staff/emails/<int:pk>/", StaffEmailLogDetailView.as_view(), name="staff_email_log_detail"),
     path("staff/emails/send/", StaffSendEmailView.as_view(), name="staff_send_email"),
+    # Medical Records - Patient endpoints
+    path("records/me/", PatientMedicalRecordView.as_view(), name="patient_medical_record"),
+    path("records/me/documents/", PatientDocumentUploadView.as_view(), name="patient_document_upload"),
+    # Medical Records - Staff endpoints
+    path("staff/patients/<int:patient_id>/record/", StaffPatientRecordView.as_view(), name="staff_patient_record"),
+    path("staff/patients/<int:patient_id>/notes/", StaffPatientNotesView.as_view(), name="staff_patient_notes"),
+    path("staff/patients/<int:patient_id>/documents/", StaffPatientDocumentsView.as_view(), name="staff_patient_documents"),
+    path("staff/notes/<int:note_id>/", StaffNoteVisibilityView.as_view(), name="staff_note_visibility"),
+    path("staff/documents/<int:document_id>/", StaffDocumentDeleteView.as_view(), name="staff_document_delete"),
+    # Document download (secure, permission-checked)
+    path("documents/<int:document_id>/download/", DocumentDownloadView.as_view(), name="document_download"),
 ]
