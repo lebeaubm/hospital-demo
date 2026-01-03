@@ -48,6 +48,22 @@ npm run dev
 
 The frontend will run at `http://localhost:5173`
 
+## Environment Variables
+
+The app works locally without configuration using sensible defaults (SQLite database, localhost CORS, insecure dev secret key). For production deployment or custom configuration:
+
+**Backend** (optional `.env` in `backend/`):
+- `SECRET_KEY` - Django secret key (auto-generated insecure key used in dev)
+- `DEBUG` - Set to `False` for production (default: `True`)
+- `ALLOWED_HOSTS` - Comma-separated hosts (default: `localhost,127.0.0.1`)
+- `DATABASE_URL` - PostgreSQL connection string (default: SQLite)
+- `CORS_ALLOWED_ORIGINS` - Comma-separated origins (default: `http://localhost:5173`)
+
+**Frontend** (optional `.env` in `frontend/`):
+- `VITE_API_URL` - Backend API URL (default: `http://127.0.0.1:8000`)
+
+Copy `.env.example` files to `.env` and customize as needed. See [DEPLOYMENT.md](DEPLOYMENT.md) for production deployment instructions.
+
 ## Demo Credentials
 
 Seeded test accounts:

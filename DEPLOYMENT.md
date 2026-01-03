@@ -8,6 +8,76 @@ The application consists of two components:
 - **Backend**: Django REST API with PostgreSQL database
 - **Frontend**: React SPA built with Vite
 
+---
+
+## Local Development Setup
+
+### Backend Environment Variables
+
+For local development, the backend works with default settings (SQLite, DEBUG=True). To customize:
+
+1. **Copy the example file:**
+   ```bash
+   cd backend
+   cp .env.example .env
+   ```
+
+2. **Edit `.env` for local development:**
+   ```bash
+   # Leave these commented out for local development defaults
+   # DEBUG=True
+   # ALLOWED_HOSTS=localhost,127.0.0.1
+   # DATABASE_URL=  # Empty = SQLite
+   # CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
+   
+   # Or generate a secret key for production testing:
+   SECRET_KEY=your-generated-secret-key-here
+   ```
+
+3. **Run the backend:**
+   ```bash
+   python manage.py migrate
+   python manage.py runserver
+   ```
+
+**Default Settings (no .env file):**
+- `DEBUG=True`
+- `ALLOWED_HOSTS=localhost,127.0.0.1`
+- `DATABASE_URL=` (uses SQLite)
+- `CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173`
+
+### Frontend Environment Variables
+
+1. **Copy the example file:**
+   ```bash
+   cd frontend
+   cp .env.example .env
+   ```
+
+2. **Edit `.env`:**
+   ```bash
+   VITE_API_URL=http://127.0.0.1:8000
+   ```
+
+3. **Run the frontend:**
+   ```bash
+   npm install
+   npm run dev
+   ```
+
+**Default Behavior:**
+If no `.env` file exists, the frontend defaults to `http://127.0.0.1:8000` for the API URL.
+
+**Changing the API URL:**
+To point to a different backend (e.g., staging server):
+```bash
+# In frontend/.env
+VITE_API_URL=https://api-staging.example.com
+```
+Then restart the dev server (`npm run dev`).
+
+---
+
 ## Backend Deployment (Django)
 
 ### Prerequisites
