@@ -4,14 +4,29 @@ from rest_framework import serializers
 
 from .models import (
     Appointment,
+    Bill,
+    BillableService,
+    BillLineItem,
+    BillPayment,
     Doctor,
+    FamilyMember,
     Invoice,
+    LabOrder,
+    LabResult,
+    LabResultValue,
+    LabTest,
     MedicalDocument,
     MedicalNote,
     MedicalRecord,
+    Message,
+    MessageAttachment,
+    MessageThread,
     NotificationLog,
     PatientProfile,
     Payment,
+    Pharmacy,
+    Prescription,
+    PrescriptionRefill,
     StaffProfile,
 )
 
@@ -468,3 +483,513 @@ class InvoiceSerializer(serializers.ModelSerializer):
             "pdf_file",
             "generated_at",
         )
+
+
+# ==================== PRESCRIPTION SERIALIZERS ====================
+
+class PharmacySerializer(serializers.ModelSerializer):
+    """Serializer for Pharmacy model."""
+    
+    class Meta:
+        model = Pharmacy
+        fields = (
+            "id",
+            "name",
+            "address",
+            "city",
+            "state",
+            "zip_code",
+            "phone_number",
+            "fax_number",
+            "hours",
+            "is_active",
+        )
+
+
+class PrescriptionSerializer(serializers.ModelSerializer):
+    """Serializer for Prescription model."""
+    patient_name = serializers.CharField(source="patient.get_full_name", read_only=True)
+    patient_email = serializers.EmailField(source="patient.email", read_only=True)
+    prescribed_by_name = serializers.CharField(source="prescribed_by.get_full_name", read_only=True)
+    pharmacy_name = serializers.CharField(source="pharmacy.name", read_only=True)
+    can_refill = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Prescription
+        fields = (
+            "id",
+            "patient",
+            "patient_name",
+            "patient_email",
+            "prescribed_by",
+            "prescribed_by_name",
+            "medication_name",
+            "dosage",
+            "quantity",
+            "refills_allowed",
+            "refills_remaining",
+            "instructions",
+            "status",
+            "pharmacy",
+            "pharmacy_name",
+            "prescribed_date",
+            "expiration_date",
+            "notes",
+            "can_refill",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = (
+            "id",
+            "patient",
+            "patient_name",
+            "patient_email",
+            "prescribed_by_name",
+            "pharmacy_name",
+            "prescribed_date",
+            "can_refill",
+            "created_at",
+            "updated_at",
+        )
+
+    def get_can_refill(self, obj):
+        """Check if prescription can be refilled."""
+        return (
+            obj.status == Prescription.Status.ACTIVE
+            and obj.refills_remaining > 0
+            and (obj.expiration_date is None or obj.expiration_date > timezone.now().date())
+        )
+
+
+class PrescriptionRefillSerializer(serializers.ModelSerializer):
+    """Serializer for PrescriptionRefill model."""
+    medication_name = serializers.CharField(source="prescription.medication_name", read_only=True)
+    dosage = serializers.CharField(source="prescription.dosage", read_only=True)
+    requested_by_name = serializers.CharField(source="requested_by.get_full_name", read_only=True)
+    processed_by_name = serializers.CharField(source="processed_by.get_full_name", read_only=True)
+    pharmacy_name = serializers.CharField(source="pharmacy.name", read_only=True)
+    
+    class Meta:
+        model = PrescriptionRefill
+        fields = (
+            "id",
+            "prescription",
+            "medication_name",
+            "dosage",
+            "requested_by",
+            "requested_by_name",
+            "requested_at",
+            "status",
+            "pharmacy",
+            "pharmacy_name",
+            "processed_by",
+            "processed_by_name",
+            "processed_at",
+            "notes",
+        )
+        read_only_fields = (
+            "id",
+            "requested_by",
+            "requested_by_name",
+            "requested_at",
+            "medication_name",
+            "dosage",
+            "processed_by_name",
+            "pharmacy_name",
+        )
+
+
+# ==================== MESSAGING SERIALIZERS ====================
+
+class MessageAttachmentSerializer(serializers.ModelSerializer):
+    """Serializer for MessageAttachment model."""
+    
+    class Meta:
+        model = MessageAttachment
+        fields = (
+            "id",
+            "file",
+            "original_name",
+            "mime_type",
+            "size_bytes",
+            "created_at",
+        )
+        read_only_fields = ("id", "created_at")
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    """Serializer for Message model."""
+    sender_name = serializers.CharField(source="sender.get_full_name", read_only=True)
+    sender_email = serializers.EmailField(source="sender.email", read_only=True)
+    sender_role = serializers.CharField(source="sender.role", read_only=True)
+    attachments = MessageAttachmentSerializer(many=True, read_only=True)
+    
+    class Meta:
+        model = Message
+        fields = (
+            "id",
+            "thread",
+            "sender",
+            "sender_name",
+            "sender_email",
+            "sender_role",
+            "content",
+            "is_read",
+            "read_at",
+            "attachments",
+            "created_at",
+        )
+        read_only_fields = (
+            "id",
+            "sender",
+            "sender_name",
+            "sender_email",
+            "sender_role",
+            "is_read",
+            "read_at",
+            "created_at",
+        )
+
+
+class MessageThreadSerializer(serializers.ModelSerializer):
+    """Serializer for MessageThread model."""
+    patient_name = serializers.CharField(source="patient.get_full_name", read_only=True)
+    staff_name = serializers.CharField(source="staff.get_full_name", read_only=True)
+    unread_count = serializers.SerializerMethodField()
+    last_message = serializers.SerializerMethodField()
+    message_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = MessageThread
+        fields = (
+            "id",
+            "patient",
+            "patient_name",
+            "staff",
+            "staff_name",
+            "subject",
+            "status",
+            "unread_count",
+            "last_message",
+            "message_count",
+            "created_at",
+            "updated_at",
+            "last_message_at",
+        )
+        read_only_fields = (
+            "id",
+            "patient_name",
+            "staff_name",
+            "unread_count",
+            "last_message",
+            "message_count",
+            "created_at",
+            "updated_at",
+            "last_message_at",
+        )
+
+    def get_unread_count(self, obj):
+        """Get count of unread messages for current user."""
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return 0
+        return obj.messages.filter(is_read=False).exclude(sender=request.user).count()
+
+    def get_last_message(self, obj):
+        """Get the last message in thread."""
+        last_msg = obj.messages.last()
+        if last_msg:
+            return {
+                "content": last_msg.content[:100],
+                "sender_name": last_msg.sender.get_full_name(),
+                "created_at": last_msg.created_at,
+            }
+        return None
+
+    def get_message_count(self, obj):
+        """Get total message count."""
+        return obj.messages.count()
+
+
+class MessageThreadDetailSerializer(MessageThreadSerializer):
+    """Detailed serializer with all messages."""
+    messages = MessageSerializer(many=True, read_only=True)
+    
+    class Meta(MessageThreadSerializer.Meta):
+        fields = MessageThreadSerializer.Meta.fields + ("messages",)
+
+
+# ==================== LAB RESULTS SERIALIZERS ====================
+
+class LabTestSerializer(serializers.ModelSerializer):
+    """Serializer for LabTest model."""
+    
+    class Meta:
+        model = LabTest
+        fields = (
+            "id",
+            "name",
+            "category",
+            "description",
+            "typical_turnaround_days",
+            "is_active",
+        )
+
+
+class LabResultValueSerializer(serializers.ModelSerializer):
+    """Serializer for LabResultValue model."""
+    
+    class Meta:
+        model = LabResultValue
+        fields = (
+            "id",
+            "parameter_name",
+            "value",
+            "unit",
+            "reference_range",
+            "is_abnormal",
+            "flag",
+        )
+
+
+class LabResultSerializer(serializers.ModelSerializer):
+    """Serializer for LabResult model."""
+    reviewed_by_name = serializers.CharField(source="reviewed_by.get_full_name", read_only=True)
+    values = LabResultValueSerializer(many=True, read_only=True)
+    test_name = serializers.CharField(source="order.test.name", read_only=True)
+    
+    class Meta:
+        model = LabResult
+        fields = (
+            "id",
+            "order",
+            "test_name",
+            "result_date",
+            "status",
+            "reviewed_by",
+            "reviewed_by_name",
+            "interpretation",
+            "is_critical",
+            "pdf_report",
+            "values",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = (
+            "id",
+            "reviewed_by_name",
+            "test_name",
+            "created_at",
+            "updated_at",
+        )
+
+
+class LabOrderSerializer(serializers.ModelSerializer):
+    """Serializer for LabOrder model."""
+    patient_name = serializers.CharField(source="patient.get_full_name", read_only=True)
+    ordered_by_name = serializers.CharField(source="ordered_by.get_full_name", read_only=True)
+    test_name = serializers.CharField(source="test.name", read_only=True)
+    test_category = serializers.CharField(source="test.category", read_only=True)
+    result = LabResultSerializer(read_only=True)
+    has_result = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = LabOrder
+        fields = (
+            "id",
+            "patient",
+            "patient_name",
+            "ordered_by",
+            "ordered_by_name",
+            "test",
+            "test_name",
+            "test_category",
+            "status",
+            "ordered_date",
+            "collection_date",
+            "priority",
+            "notes",
+            "result",
+            "has_result",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = (
+            "id",
+            "patient",
+            "patient_name",
+            "ordered_by_name",
+            "test_name",
+            "test_category",
+            "ordered_date",
+            "has_result",
+            "created_at",
+            "updated_at",
+        )
+
+    def get_has_result(self, obj):
+        """Check if order has a result."""
+        return hasattr(obj, "result")
+
+
+# ==================== BILLING SERIALIZERS ====================
+
+class BillableServiceSerializer(serializers.ModelSerializer):
+    """Serializer for BillableService model."""
+    
+    class Meta:
+        model = BillableService
+        fields = (
+            "id",
+            "code",
+            "name",
+            "category",
+            "description",
+            "default_price",
+            "is_active",
+        )
+
+
+class BillLineItemSerializer(serializers.ModelSerializer):
+    """Serializer for BillLineItem model."""
+    service_code = serializers.CharField(source="service.code", read_only=True)
+    service_name = serializers.CharField(source="service.name", read_only=True)
+    
+    class Meta:
+        model = BillLineItem
+        fields = (
+            "id",
+            "service",
+            "service_code",
+            "service_name",
+            "description",
+            "quantity",
+            "unit_price",
+            "total",
+            "service_date",
+        )
+        read_only_fields = ("id", "total", "service_code", "service_name")
+
+
+class BillPaymentSerializer(serializers.ModelSerializer):
+    """Serializer for BillPayment model."""
+    
+    class Meta:
+        model = BillPayment
+        fields = (
+            "id",
+            "bill",
+            "amount",
+            "payment_method",
+            "transaction_id",
+            "payment_date",
+            "notes",
+            "created_at",
+        )
+        read_only_fields = ("id", "payment_date", "created_at")
+
+
+class BillSerializer(serializers.ModelSerializer):
+    """Serializer for Bill model."""
+    patient_name = serializers.CharField(source="patient.get_full_name", read_only=True)
+    patient_email = serializers.EmailField(source="patient.email", read_only=True)
+    line_items = BillLineItemSerializer(many=True, read_only=True)
+    payments = BillPaymentSerializer(many=True, read_only=True)
+    appointment_reason = serializers.CharField(source="related_appointment.reason", read_only=True)
+    
+    class Meta:
+        model = Bill
+        fields = (
+            "id",
+            "patient",
+            "patient_name",
+            "patient_email",
+            "bill_number",
+            "related_appointment",
+            "appointment_reason",
+            "status",
+            "subtotal",
+            "tax",
+            "insurance_covered",
+            "patient_responsibility",
+            "amount_paid",
+            "balance_due",
+            "bill_date",
+            "due_date",
+            "notes",
+            "line_items",
+            "payments",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = (
+            "id",
+            "patient",
+            "patient_name",
+            "patient_email",
+            "bill_number",
+            "appointment_reason",
+            "subtotal",
+            "patient_responsibility",
+            "amount_paid",
+            "balance_due",
+            "created_at",
+            "updated_at",
+        )
+
+
+# ==================== FAMILY MANAGEMENT SERIALIZERS ====================
+
+class FamilyMemberSerializer(serializers.ModelSerializer):
+    """Serializer for FamilyMember model."""
+    member_email = serializers.EmailField(source="member_user.email", read_only=True)
+    full_name = serializers.SerializerMethodField()
+    age = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = FamilyMember
+        fields = (
+            "id",
+            "primary_account",
+            "member_user",
+            "member_email",
+            "first_name",
+            "last_name",
+            "full_name",
+            "date_of_birth",
+            "age",
+            "relationship",
+            "can_view_appointments",
+            "can_manage_appointments",
+            "can_view_medical_records",
+            "can_view_messages",
+            "is_active",
+            "created_at",
+            "updated_at",
+        )
+        read_only_fields = (
+            "id",
+            "primary_account",
+            "member_email",
+            "full_name",
+            "age",
+            "created_at",
+            "updated_at",
+        )
+
+    def get_full_name(self, obj):
+        """Get full name of family member."""
+        return obj.get_full_name()
+
+    def get_age(self, obj):
+        """Calculate age from date of birth."""
+        if not obj.date_of_birth:
+            return None
+        today = timezone.now().date()
+        age = today.year - obj.date_of_birth.year
+        if today.month < obj.date_of_birth.month or (
+            today.month == obj.date_of_birth.month and today.day < obj.date_of_birth.day
+        ):
+            age -= 1
+        return age
+

@@ -374,3 +374,560 @@ class Invoice(models.Model):
             super().save(update_fields=["invoice_number"])
         else:
             super().save(*args, **kwargs)
+
+
+# ==================== PRESCRIPTION SYSTEM ====================
+
+class Pharmacy(models.Model):
+    """Pharmacy locations where prescriptions can be filled."""
+    name = models.CharField(max_length=255)
+    address = models.CharField(max_length=255)
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=2)
+    zip_code = models.CharField(max_length=10)
+    phone_number = models.CharField(max_length=20)
+    fax_number = models.CharField(max_length=20, blank=True)
+    hours = models.TextField(blank=True, help_text="Operating hours")
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name_plural = "Pharmacies"
+        ordering = ["name"]
+
+    def __str__(self):
+        return f"{self.name} - {self.city}, {self.state}"
+
+
+class Prescription(models.Model):
+    """Patient prescriptions with refill tracking."""
+    
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        ACTIVE = "ACTIVE", "Active"
+        REFILL_REQUESTED = "REFILL_REQUESTED", "Refill Requested"
+        EXPIRED = "EXPIRED", "Expired"
+        DISCONTINUED = "DISCONTINUED", "Discontinued"
+
+    patient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="prescriptions",
+        limit_choices_to={"role": User.Role.PATIENT}
+    )
+    prescribed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="prescribed_medications",
+        limit_choices_to={"role__in": [User.Role.STAFF, User.Role.ADMIN]}
+    )
+    medication_name = models.CharField(max_length=255)
+    dosage = models.CharField(max_length=100)
+    quantity = models.PositiveIntegerField(help_text="Number of pills/doses")
+    refills_allowed = models.PositiveIntegerField(default=0)
+    refills_remaining = models.PositiveIntegerField(default=0)
+    instructions = models.TextField(help_text="How to take the medication")
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING
+    )
+    pharmacy = models.ForeignKey(
+        Pharmacy,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="prescriptions"
+    )
+    prescribed_date = models.DateField(auto_now_add=True)
+    expiration_date = models.DateField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"{self.medication_name} - {self.patient.email}"
+
+
+class PrescriptionRefill(models.Model):
+    """Tracks refill requests for prescriptions."""
+    
+    class Status(models.TextChoices):
+        REQUESTED = "REQUESTED", "Requested"
+        APPROVED = "APPROVED", "Approved"
+        FILLED = "FILLED", "Filled"
+        DENIED = "DENIED", "Denied"
+        CANCELED = "CANCELED", "Canceled"
+
+    prescription = models.ForeignKey(
+        Prescription,
+        on_delete=models.CASCADE,
+        related_name="refill_requests"
+    )
+    requested_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="refill_requests"
+    )
+    requested_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.REQUESTED
+    )
+    pharmacy = models.ForeignKey(
+        Pharmacy,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="refill_requests"
+    )
+    processed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="processed_refills"
+    )
+    processed_at = models.DateTimeField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ("-requested_at",)
+
+    def __str__(self):
+        return f"Refill for {self.prescription.medication_name} - {self.status}"
+
+
+# ==================== SECURE MESSAGING ====================
+
+class MessageThread(models.Model):
+    """Conversation thread between patient and staff."""
+    
+    class Status(models.TextChoices):
+        OPEN = "OPEN", "Open"
+        CLOSED = "CLOSED", "Closed"
+
+    patient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="patient_threads",
+        limit_choices_to={"role": User.Role.PATIENT}
+    )
+    staff = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="staff_threads",
+        limit_choices_to={"role__in": [User.Role.STAFF, User.Role.ADMIN]}
+    )
+    subject = models.CharField(max_length=255)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.OPEN
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    last_message_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("-last_message_at",)
+
+    def __str__(self):
+        return f"Thread: {self.subject} - {self.patient.email}"
+
+
+class Message(models.Model):
+    """Individual message in a thread."""
+    
+    thread = models.ForeignKey(
+        MessageThread,
+        on_delete=models.CASCADE,
+        related_name="messages"
+    )
+    sender = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="sent_messages"
+    )
+    content = models.TextField()
+    is_read = models.BooleanField(default=False)
+    read_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("created_at",)
+
+    def __str__(self):
+        return f"Message from {self.sender.email} at {self.created_at}"
+
+
+class MessageAttachment(models.Model):
+    """File attachments for messages."""
+    
+    message = models.ForeignKey(
+        Message,
+        on_delete=models.CASCADE,
+        related_name="attachments"
+    )
+    file = models.FileField(upload_to="message_attachments/%Y/%m/%d/")
+    original_name = models.CharField(max_length=255)
+    mime_type = models.CharField(max_length=100)
+    size_bytes = models.PositiveIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Attachment: {self.original_name}"
+
+    def delete(self, *args, **kwargs):
+        """Delete the file from storage when the model instance is deleted."""
+        if self.file:
+            self.file.delete(save=False)
+        super().delete(*args, **kwargs)
+
+
+# ==================== LAB RESULTS ====================
+
+class LabTest(models.Model):
+    """Lab test definitions (reusable test types)."""
+    
+    class Category(models.TextChoices):
+        BLOOD = "BLOOD", "Blood Work"
+        URINE = "URINE", "Urine Analysis"
+        IMAGING = "IMAGING", "Imaging"
+        BIOPSY = "BIOPSY", "Biopsy"
+        CULTURE = "CULTURE", "Culture"
+        OTHER = "OTHER", "Other"
+
+    name = models.CharField(max_length=255, unique=True)
+    category = models.CharField(max_length=20, choices=Category.choices)
+    description = models.TextField(blank=True)
+    typical_turnaround_days = models.PositiveIntegerField(default=3)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["category", "name"]
+
+    def __str__(self):
+        return f"{self.name} ({self.category})"
+
+
+class LabOrder(models.Model):
+    """Lab test order for a patient."""
+    
+    class Status(models.TextChoices):
+        ORDERED = "ORDERED", "Ordered"
+        COLLECTED = "COLLECTED", "Sample Collected"
+        IN_PROGRESS = "IN_PROGRESS", "In Progress"
+        COMPLETED = "COMPLETED", "Completed"
+        CANCELED = "CANCELED", "Canceled"
+
+    patient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="lab_orders",
+        limit_choices_to={"role": User.Role.PATIENT}
+    )
+    ordered_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="ordered_labs",
+        limit_choices_to={"role__in": [User.Role.STAFF, User.Role.ADMIN]}
+    )
+    test = models.ForeignKey(
+        LabTest,
+        on_delete=models.PROTECT,
+        related_name="orders"
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.ORDERED
+    )
+    ordered_date = models.DateField(auto_now_add=True)
+    collection_date = models.DateField(null=True, blank=True)
+    priority = models.CharField(
+        max_length=20,
+        choices=[("ROUTINE", "Routine"), ("URGENT", "Urgent"), ("STAT", "STAT")],
+        default="ROUTINE"
+    )
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"Lab Order: {self.test.name} for {self.patient.email}"
+
+
+class LabResult(models.Model):
+    """Lab test results with values and interpretation."""
+    
+    class Status(models.TextChoices):
+        PRELIMINARY = "PRELIMINARY", "Preliminary"
+        FINAL = "FINAL", "Final"
+        AMENDED = "AMENDED", "Amended"
+
+    order = models.OneToOneField(
+        LabOrder,
+        on_delete=models.CASCADE,
+        related_name="result"
+    )
+    result_date = models.DateField()
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PRELIMINARY
+    )
+    reviewed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="reviewed_results",
+        limit_choices_to={"role__in": [User.Role.STAFF, User.Role.ADMIN]}
+    )
+    interpretation = models.TextField(blank=True, help_text="Doctor's interpretation")
+    is_critical = models.BooleanField(default=False)
+    pdf_report = models.FileField(upload_to="lab_reports/%Y/%m/%d/", blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-result_date",)
+
+    def __str__(self):
+        return f"Result for {self.order.test.name} - {self.status}"
+
+
+class LabResultValue(models.Model):
+    """Individual values within a lab result (e.g., WBC, RBC counts)."""
+    
+    result = models.ForeignKey(
+        LabResult,
+        on_delete=models.CASCADE,
+        related_name="values"
+    )
+    parameter_name = models.CharField(max_length=255)
+    value = models.CharField(max_length=100)
+    unit = models.CharField(max_length=50)
+    reference_range = models.CharField(max_length=100, help_text="Normal range")
+    is_abnormal = models.BooleanField(default=False)
+    flag = models.CharField(
+        max_length=10,
+        choices=[("HIGH", "High"), ("LOW", "Low"), ("CRITICAL", "Critical"), ("", "Normal")],
+        blank=True
+    )
+
+    class Meta:
+        ordering = ["parameter_name"]
+
+    def __str__(self):
+        return f"{self.parameter_name}: {self.value} {self.unit}"
+
+
+# ==================== ENHANCED BILLING ====================
+
+class BillableService(models.Model):
+    """Catalog of billable services and procedures."""
+    
+    class Category(models.TextChoices):
+        CONSULTATION = "CONSULTATION", "Consultation"
+        PROCEDURE = "PROCEDURE", "Procedure"
+        LAB = "LAB", "Lab Test"
+        IMAGING = "IMAGING", "Imaging"
+        MEDICATION = "MEDICATION", "Medication"
+        FACILITY = "FACILITY", "Facility Fee"
+        OTHER = "OTHER", "Other"
+
+    code = models.CharField(max_length=50, unique=True, help_text="CPT or internal code")
+    name = models.CharField(max_length=255)
+    category = models.CharField(max_length=20, choices=Category.choices)
+    description = models.TextField(blank=True)
+    default_price = models.DecimalField(max_digits=10, decimal_places=2)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["category", "name"]
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
+
+class Bill(models.Model):
+    """Patient bill with itemized charges."""
+    
+    class Status(models.TextChoices):
+        DRAFT = "DRAFT", "Draft"
+        SENT = "SENT", "Sent"
+        PARTIALLY_PAID = "PARTIALLY_PAID", "Partially Paid"
+        PAID = "PAID", "Paid"
+        OVERDUE = "OVERDUE", "Overdue"
+        CANCELED = "CANCELED", "Canceled"
+
+    patient = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="bills",
+        limit_choices_to={"role": User.Role.PATIENT}
+    )
+    bill_number = models.CharField(max_length=50, unique=True)
+    related_appointment = models.ForeignKey(
+        Appointment,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="bills"
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.DRAFT
+    )
+    subtotal = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    tax = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    insurance_covered = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    patient_responsibility = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    balance_due = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    bill_date = models.DateField(auto_now_add=True)
+    due_date = models.DateField(null=True, blank=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"Bill {self.bill_number} - {self.patient.email}"
+
+    def calculate_totals(self):
+        """Recalculate bill totals from line items."""
+        line_items = self.line_items.all()
+        self.subtotal = sum(item.total for item in line_items)
+        self.patient_responsibility = self.subtotal + self.tax - self.insurance_covered
+        self.balance_due = self.patient_responsibility - self.amount_paid
+        self.save()
+
+
+class BillLineItem(models.Model):
+    """Individual line item on a bill."""
+    
+    bill = models.ForeignKey(
+        Bill,
+        on_delete=models.CASCADE,
+        related_name="line_items"
+    )
+    service = models.ForeignKey(
+        BillableService,
+        on_delete=models.PROTECT,
+        related_name="bill_items"
+    )
+    description = models.CharField(max_length=255)
+    quantity = models.PositiveIntegerField(default=1)
+    unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    total = models.DecimalField(max_digits=10, decimal_places=2)
+    service_date = models.DateField()
+
+    class Meta:
+        ordering = ["service_date"]
+
+    def save(self, *args, **kwargs):
+        """Auto-calculate total."""
+        self.total = self.quantity * self.unit_price
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.description} - ${self.total}"
+
+
+class BillPayment(models.Model):
+    """Payment record for a bill."""
+    
+    class Method(models.TextChoices):
+        CREDIT_CARD = "CREDIT_CARD", "Credit Card"
+        DEBIT_CARD = "DEBIT_CARD", "Debit Card"
+        BANK_TRANSFER = "BANK_TRANSFER", "Bank Transfer"
+        CHECK = "CHECK", "Check"
+        CASH = "CASH", "Cash"
+
+    bill = models.ForeignKey(
+        Bill,
+        on_delete=models.CASCADE,
+        related_name="payments"
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=20, choices=Method.choices)
+    transaction_id = models.CharField(max_length=255, blank=True)
+    payment_date = models.DateField(auto_now_add=True)
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"Payment ${self.amount} for Bill {self.bill.bill_number}"
+
+
+# ==================== FAMILY ACCOUNT MANAGEMENT ====================
+
+class FamilyMember(models.Model):
+    """Family member/dependent linked to a primary account."""
+    
+    class Relationship(models.TextChoices):
+        SELF = "SELF", "Self"
+        SPOUSE = "SPOUSE", "Spouse/Partner"
+        CHILD = "CHILD", "Child"
+        PARENT = "PARENT", "Parent"
+        SIBLING = "SIBLING", "Sibling"
+        GUARDIAN = "GUARDIAN", "Legal Guardian"
+        OTHER = "OTHER", "Other"
+
+    primary_account = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="family_members",
+        limit_choices_to={"role": User.Role.PATIENT}
+    )
+    # If member has their own account (adults)
+    member_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="managed_by_accounts"
+    )
+    # For dependents without accounts (minors)
+    first_name = models.CharField(max_length=150, blank=True)
+    last_name = models.CharField(max_length=150, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+    relationship = models.CharField(max_length=20, choices=Relationship.choices)
+    can_view_appointments = models.BooleanField(default=True)
+    can_manage_appointments = models.BooleanField(default=False)
+    can_view_medical_records = models.BooleanField(default=False)
+    can_view_messages = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["relationship", "last_name", "first_name"]
+        unique_together = [["primary_account", "member_user"]]
+
+    def __str__(self):
+        if self.member_user:
+            return f"{self.member_user.get_full_name()} ({self.relationship})"
+        return f"{self.first_name} {self.last_name} ({self.relationship})"
+
+    def get_full_name(self):
+        """Get the full name of the family member."""
+        if self.member_user:
+            return self.member_user.get_full_name()
+        return f"{self.first_name} {self.last_name}".strip()

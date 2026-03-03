@@ -11,12 +11,27 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .models import (
     Appointment,
+    Bill,
+    BillableService,
+    BillLineItem,
+    BillPayment,
     Doctor,
+    FamilyMember,
+    LabOrder,
+    LabResult,
+    LabResultValue,
+    LabTest,
     MedicalDocument,
     MedicalNote,
     MedicalRecord,
+    Message,
+    MessageAttachment,
+    MessageThread,
     NotificationLog,
     PatientProfile,
+    Pharmacy,
+    Prescription,
+    PrescriptionRefill,
     StaffProfile,
     User,
 )
@@ -31,14 +46,29 @@ from .notifications import (
 from .permissions import IsAppointmentOwner, IsPatientUser, IsStaffUser
 from .serializers import (
     AppointmentSerializer,
+    BillLineItemSerializer,
+    BillPaymentSerializer,
+    BillSerializer,
+    BillableServiceSerializer,
     DoctorSerializer,
+    FamilyMemberSerializer,
+    LabOrderSerializer,
+    LabResultSerializer,
+    LabResultValueSerializer,
+    LabTestSerializer,
     MedicalDocumentSerializer,
     MedicalDocumentUploadSerializer,
     MedicalNoteSerializer,
     MedicalNoteVisibilitySerializer,
     MedicalRecordSerializer,
+    MessageSerializer,
+    MessageThreadDetailSerializer,
+    MessageThreadSerializer,
     NotificationLogSerializer,
     PatientProfileSerializer,
+    PharmacySerializer,
+    PrescriptionRefillSerializer,
+    PrescriptionSerializer,
     RegisterSerializer,
     StaffAppointmentUpdateSerializer,
     StaffProfileSerializer,
@@ -667,3 +697,575 @@ class DocumentDownloadView(APIView):
                 {"error": "File not found on server"},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+
+# ==================== PRESCRIPTION VIEWS ====================
+
+class PharmacyListView(generics.ListAPIView):
+    """
+    GET /api/pharmacies/
+    List all active pharmacies.
+    """
+    queryset = Pharmacy.objects.filter(is_active=True)
+    serializer_class = PharmacySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class PatientPrescriptionListView(generics.ListAPIView):
+    """
+    GET /api/prescriptions/me/
+    List patient's own prescriptions.
+    """
+    serializer_class = PrescriptionSerializer
+    permission_classes = [permissions.IsAuthenticated, IsPatientUser]
+
+    def get_queryset(self):
+        return Prescription.objects.filter(patient=self.request.user).select_related(
+            "prescribed_by", "pharmacy"
+        )
+
+
+class PatientPrescriptionDetailView(generics.RetrieveAPIView):
+    """
+    GET /api/prescriptions/<id>/
+    View prescription details (patient owns or staff).
+    """
+    serializer_class = PrescriptionSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role in (User.Role.STAFF, User.Role.ADMIN):
+            return Prescription.objects.all()
+        return Prescription.objects.filter(patient=user)
+
+
+class PrescriptionRefillCreateView(generics.CreateAPIView):
+    """
+    POST /api/prescriptions/<prescription_id>/refill/
+    Request a prescription refill.
+    """
+    serializer_class = PrescriptionRefillSerializer
+    permission_classes = [permissions.IsAuthenticated, IsPatientUser]
+
+    def perform_create(self, serializer):
+        prescription_id = self.kwargs.get("prescription_id")
+        prescription = get_object_or_404(
+            Prescription, id=prescription_id, patient=self.request.user
+        )
+        
+        # Check if refill is allowed
+        if prescription.refills_remaining <= 0:
+            return Response(
+                {"error": "No refills remaining"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        if prescription.status != Prescription.Status.ACTIVE:
+            return Response(
+                {"error": "Prescription is not active"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        serializer.save(
+            prescription=prescription,
+            requested_by=self.request.user,
+            status=PrescriptionRefill.Status.REQUESTED
+        )
+
+
+class PatientRefillListView(generics.ListAPIView):
+    """
+    GET /api/prescriptions/refills/me/
+    List patient's refill requests.
+    """
+    serializer_class = PrescriptionRefillSerializer
+    permission_classes = [permissions.IsAuthenticated, IsPatientUser]
+
+    def get_queryset(self):
+        return PrescriptionRefill.objects.filter(
+            requested_by=self.request.user
+        ).select_related("prescription", "pharmacy", "processed_by")
+
+
+class StaffPrescriptionListView(generics.ListAPIView):
+    """
+    GET /api/staff/prescriptions/
+    List all prescriptions (staff view).
+    """
+    serializer_class = PrescriptionSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    queryset = Prescription.objects.select_related("patient", "prescribed_by", "pharmacy")
+
+
+class StaffPrescriptionCreateView(generics.CreateAPIView):
+    """
+    POST /api/staff/prescriptions/
+    Create a new prescription (staff only).
+    """
+    serializer_class = PrescriptionSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def perform_create(self, serializer):
+        serializer.save(prescribed_by=self.request.user)
+
+
+class StaffPrescriptionUpdateView(generics.UpdateAPIView):
+    """
+    PATCH /api/staff/prescriptions/<id>/
+    Update prescription (staff only).
+    """
+    serializer_class = PrescriptionSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    queryset = Prescription.objects.all()
+
+
+class StaffRefillListView(generics.ListAPIView):
+    """
+    GET /api/staff/refills/
+    List all refill requests (staff view).
+    """
+    serializer_class = PrescriptionRefillSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    
+    def get_queryset(self):
+        queryset = PrescriptionRefill.objects.select_related(
+            "prescription", "requested_by", "pharmacy", "processed_by"
+        )
+        # Filter by status if provided
+        status_param = self.request.query_params.get("status")
+        if status_param:
+            queryset = queryset.filter(status=status_param)
+        return queryset
+
+
+class StaffRefillUpdateView(generics.UpdateAPIView):
+    """
+    PATCH /api/staff/refills/<id>/
+    Update refill request status (staff only).
+    """
+    serializer_class = PrescriptionRefillSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    queryset = PrescriptionRefill.objects.all()
+
+    def perform_update(self, serializer):
+        refill = self.get_object()
+        new_status = serializer.validated_data.get("status", refill.status)
+        
+        # If approving, decrement refills_remaining
+        if new_status == PrescriptionRefill.Status.APPROVED and refill.status != PrescriptionRefill.Status.APPROVED:
+            prescription = refill.prescription
+            if prescription.refills_remaining > 0:
+                prescription.refills_remaining -= 1
+                prescription.save()
+        
+        serializer.save(processed_by=self.request.user, processed_at=timezone.now())
+
+
+# ==================== MESSAGING VIEWS ====================
+
+class PatientMessageThreadListView(generics.ListAPIView):
+    """
+    GET /api/messages/threads/
+    List patient's message threads.
+    """
+    serializer_class = MessageThreadSerializer
+    permission_classes = [permissions.IsAuthenticated, IsPatientUser]
+
+    def get_queryset(self):
+        return MessageThread.objects.filter(
+            patient=self.request.user
+        ).select_related("staff")
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
+
+
+class PatientMessageThreadCreateView(generics.CreateAPIView):
+    """
+    POST /api/messages/threads/
+    Create a new message thread.
+    """
+    serializer_class = MessageThreadSerializer
+    permission_classes = [permissions.IsAuthenticated, IsPatientUser]
+
+    def perform_create(self, serializer):
+        serializer.save(patient=self.request.user, last_message_at=timezone.now())
+
+
+class MessageThreadDetailView(generics.RetrieveAPIView):
+    """
+    GET /api/messages/threads/<id>/
+    View thread with all messages.
+    """
+    serializer_class = MessageThreadDetailSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role in (User.Role.STAFF, User.Role.ADMIN):
+            return MessageThread.objects.all()
+        return MessageThread.objects.filter(patient=user)
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Mark messages as read for the current user
+        Message.objects.filter(
+            thread=instance, is_read=False
+        ).exclude(sender=request.user).update(is_read=True, read_at=timezone.now())
+        
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
+
+
+class MessageCreateView(generics.CreateAPIView):
+    """
+    POST /api/messages/threads/<thread_id>/messages/
+    Send a message in a thread.
+    """
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        thread_id = self.kwargs.get("thread_id")
+        thread = get_object_or_404(MessageThread, id=thread_id)
+        
+        # Check permissions
+        user = self.request.user
+        if user.role == User.Role.PATIENT and thread.patient != user:
+            return Response(
+                {"error": "You can only message in your own threads"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer.save(thread=thread, sender=user)
+        thread.last_message_at = timezone.now()
+        thread.save()
+
+
+class StaffMessageThreadListView(generics.ListAPIView):
+    """
+    GET /api/staff/messages/threads/
+    List all message threads (staff view).
+    """
+    serializer_class = MessageThreadSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    queryset = MessageThread.objects.select_related("patient", "staff")
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
+
+
+class StaffMessageThreadUpdateView(generics.UpdateAPIView):
+    """
+    PATCH /api/staff/messages/threads/<id>/
+    Update thread (assign staff, change status).
+    """
+    serializer_class = MessageThreadSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    queryset = MessageThread.objects.all()
+
+
+# ==================== LAB RESULTS VIEWS ====================
+
+class LabTestListView(generics.ListAPIView):
+    """
+    GET /api/lab-tests/
+    List all active lab tests.
+    """
+    queryset = LabTest.objects.filter(is_active=True)
+    serializer_class = LabTestSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+class PatientLabOrderListView(generics.ListAPIView):
+    """
+    GET /api/lab-orders/me/
+    List patient's lab orders.
+    """
+    serializer_class = LabOrderSerializer
+    permission_classes = [permissions.IsAuthenticated, IsPatientUser]
+
+    def get_queryset(self):
+        return LabOrder.objects.filter(patient=self.request.user).select_related(
+            "test", "ordered_by"
+        ).prefetch_related("result__values")
+
+
+class PatientLabOrderDetailView(generics.RetrieveAPIView):
+    """
+    GET /api/lab-orders/<id>/
+    View lab order details with results.
+    """
+    serializer_class = LabOrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role in (User.Role.STAFF, User.Role.ADMIN):
+            return LabOrder.objects.all()
+        return LabOrder.objects.filter(patient=user)
+
+
+class StaffLabOrderListView(generics.ListAPIView):
+    """
+    GET /api/staff/lab-orders/
+    List all lab orders (staff view).
+    """
+    serializer_class = LabOrderSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    queryset = LabOrder.objects.select_related("patient", "test", "ordered_by")
+
+
+class StaffLabOrderCreateView(generics.CreateAPIView):
+    """
+    POST /api/staff/lab-orders/
+    Create a lab order (staff only).
+    """
+    serializer_class = LabOrderSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def perform_create(self, serializer):
+        serializer.save(ordered_by=self.request.user)
+
+
+class StaffLabOrderUpdateView(generics.UpdateAPIView):
+    """
+    PATCH /api/staff/lab-orders/<id>/
+    Update lab order status (staff only).
+    """
+    serializer_class = LabOrderSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    queryset = LabOrder.objects.all()
+
+
+class StaffLabResultCreateView(generics.CreateAPIView):
+    """
+    POST /api/staff/lab-results/
+    Create lab result (staff only).
+    """
+    serializer_class = LabResultSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def perform_create(self, serializer):
+        serializer.save(reviewed_by=self.request.user)
+
+
+class StaffLabResultUpdateView(generics.UpdateAPIView):
+    """
+    PATCH /api/staff/lab-results/<id>/
+    Update lab result (staff only).
+    """
+    serializer_class = LabResultSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    queryset = LabResult.objects.all()
+
+
+class StaffLabResultValueCreateView(generics.CreateAPIView):
+    """
+    POST /api/staff/lab-results/<result_id>/values/
+    Add values to a lab result.
+    """
+    serializer_class = LabResultValueSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def perform_create(self, serializer):
+        result_id = self.kwargs.get("result_id")
+        result = get_object_or_404(LabResult, id=result_id)
+        serializer.save(result=result)
+
+
+# ==================== BILLING VIEWS ====================
+
+class BillableServiceListView(generics.ListAPIView):
+    """
+    GET /api/billable-services/
+    List all active billable services.
+    """
+    queryset = BillableService.objects.filter(is_active=True)
+    serializer_class = BillableServiceSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+
+class PatientBillListView(generics.ListAPIView):
+    """
+    GET /api/bills/me/
+    List patient's bills.
+    """
+    serializer_class = BillSerializer
+    permission_classes = [permissions.IsAuthenticated, IsPatientUser]
+
+    def get_queryset(self):
+        return Bill.objects.filter(patient=self.request.user).prefetch_related(
+            "line_items__service", "payments"
+        )
+
+
+class PatientBillDetailView(generics.RetrieveAPIView):
+    """
+    GET /api/bills/<id>/
+    View bill details.
+    """
+    serializer_class = BillSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.role in (User.Role.STAFF, User.Role.ADMIN):
+            return Bill.objects.all()
+        return Bill.objects.filter(patient=user)
+
+
+class StaffBillListView(generics.ListAPIView):
+    """
+    GET /api/staff/bills/
+    List all bills (staff view).
+    """
+    serializer_class = BillSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    queryset = Bill.objects.select_related("patient", "related_appointment")
+
+
+class StaffBillCreateView(generics.CreateAPIView):
+    """
+    POST /api/staff/bills/
+    Create a new bill (staff only).
+    """
+    serializer_class = BillSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        # Generate unique bill number
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        bill_number = f"BILL-{timestamp}"
+        
+        bill = serializer.save(bill_number=bill_number)
+        return Response(
+            BillSerializer(bill).data,
+            status=status.HTTP_201_CREATED
+        )
+
+
+class StaffBillUpdateView(generics.UpdateAPIView):
+    """
+    PATCH /api/staff/bills/<id>/
+    Update bill (staff only).
+    """
+    serializer_class = BillSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    queryset = Bill.objects.all()
+
+
+class StaffBillLineItemCreateView(generics.CreateAPIView):
+    """
+    POST /api/staff/bills/<bill_id>/line-items/
+    Add line item to a bill.
+    """
+    serializer_class = BillLineItemSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def perform_create(self, serializer):
+        bill_id = self.kwargs.get("bill_id")
+        bill = get_object_or_404(Bill, id=bill_id)
+        serializer.save(bill=bill)
+        # Recalculate bill totals
+        bill.calculate_totals()
+
+
+class BillPaymentCreateView(generics.CreateAPIView):
+    """
+    POST /api/bills/<bill_id>/payments/
+    Record a payment for a bill.
+    """
+    serializer_class = BillPaymentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        bill_id = self.kwargs.get("bill_id")
+        bill = get_object_or_404(Bill, id=bill_id)
+        
+        # Check if patient owns bill or if staff
+        user = self.request.user
+        if user.role == User.Role.PATIENT and bill.patient != user:
+            return Response(
+                {"error": "You can only pay your own bills"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        payment = serializer.save(bill=bill)
+        
+        # Update bill's amount_paid and balance_due
+        bill.amount_paid += payment.amount
+        bill.balance_due = bill.patient_responsibility - bill.amount_paid
+        
+        # Update status
+        if bill.balance_due <= 0:
+            bill.status = Bill.Status.PAID
+        elif bill.amount_paid > 0:
+            bill.status = Bill.Status.PARTIALLY_PAID
+        
+        bill.save()
+
+
+# ==================== FAMILY MANAGEMENT VIEWS ====================
+
+class PatientFamilyMemberListView(generics.ListAPIView):
+    """
+    GET /api/family-members/
+    List patient's family members.
+    """
+    serializer_class = FamilyMemberSerializer
+    permission_classes = [permissions.IsAuthenticated, IsPatientUser]
+
+    def get_queryset(self):
+        return FamilyMember.objects.filter(
+            primary_account=self.request.user
+        ).select_related("member_user")
+
+
+class PatientFamilyMemberCreateView(generics.CreateAPIView):
+    """
+    POST /api/family-members/
+    Add a family member.
+    """
+    serializer_class = FamilyMemberSerializer
+    permission_classes = [permissions.IsAuthenticated, IsPatientUser]
+
+    def perform_create(self, serializer):
+        serializer.save(primary_account=self.request.user)
+
+
+class PatientFamilyMemberDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET/PATCH/DELETE /api/family-members/<id>/
+    Manage family member.
+    """
+    serializer_class = FamilyMemberSerializer
+    permission_classes = [permissions.IsAuthenticated, IsPatientUser]
+
+    def get_queryset(self):
+        return FamilyMember.objects.filter(primary_account=self.request.user)
+
+
+class StaffFamilyMemberListView(generics.ListAPIView):
+    """
+    GET /api/staff/family-members/
+    List all family member relationships (staff view).
+    """
+    serializer_class = FamilyMemberSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+    queryset = FamilyMember.objects.select_related("primary_account", "member_user")
+

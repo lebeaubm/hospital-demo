@@ -17,6 +17,11 @@ import PaymentCancel from './pages/PaymentCancel'
 import StaffDashboard from './pages/StaffDashboard'
 import StaffEmails from './pages/StaffEmails'
 import StaffPatientRecord from './pages/StaffPatientRecord'
+import Prescriptions from './pages/Prescriptions'
+import Messages from './pages/Messages'
+import LabResults from './pages/LabResults'
+import Billing from './pages/Billing'
+import FamilyMembers from './pages/FamilyMembers'
 import ProtectedRoute from './components/ProtectedRoute'
 import StaffProtectedRoute from './components/StaffProtectedRoute'
 import ThemeToggle from './components/ThemeToggle'
@@ -103,25 +108,60 @@ function App() {
                     </>
                   ) : (
                     <>
-                      <li className="nav-item">
-                        <NavLink className="nav-link" to="/portal/profile">
-                          My Profile
-                        </NavLink>
-                      </li>
-                      <li className="nav-item">
-                        <NavLink className="nav-link" to="/portal/appointments">
-                          My Appointments
-                        </NavLink>
-                      </li>
-                      <li className="nav-item">
-                        <NavLink className="nav-link" to="/portal/records">
-                          Medical Records
-                        </NavLink>
-                      </li>
-                      <li className="nav-item">
-                        <NavLink className="nav-link" to="/portal/payments">
-                          Payments
-                        </NavLink>
+                      <li className="nav-item dropdown">
+                        <a
+                          className="nav-link dropdown-toggle"
+                          href="#"
+                          id="patientPortalDropdown"
+                          role="button"
+                          data-bs-toggle="dropdown"
+                          aria-expanded="false"
+                        >
+                          My Health
+                        </a>
+                        <ul className="dropdown-menu" aria-labelledby="patientPortalDropdown">
+                          <li>
+                            <NavLink className="dropdown-item" to="/portal/appointments">
+                              📅 Appointments
+                            </NavLink>
+                          </li>
+                          <li>
+                            <NavLink className="dropdown-item" to="/portal/messages">
+                              💬 Messages
+                            </NavLink>
+                          </li>
+                          <li>
+                            <NavLink className="dropdown-item" to="/portal/prescriptions">
+                              💊 Prescriptions
+                            </NavLink>
+                          </li>
+                          <li>
+                            <NavLink className="dropdown-item" to="/portal/lab-results">
+                              🔬 Lab Results
+                            </NavLink>
+                          </li>
+                          <li>
+                            <NavLink className="dropdown-item" to="/portal/records">
+                              📋 Medical Records
+                            </NavLink>
+                          </li>
+                          <li><hr className="dropdown-divider" /></li>
+                          <li>
+                            <NavLink className="dropdown-item" to="/portal/billing">
+                              💰 Bills & Payments
+                            </NavLink>
+                          </li>
+                          <li>
+                            <NavLink className="dropdown-item" to="/portal/family">
+                              👨‍👩‍👧‍👦 Family Members
+                            </NavLink>
+                          </li>
+                          <li>
+                            <NavLink className="dropdown-item" to="/portal/profile">
+                              👤 My Profile
+                            </NavLink>
+                          </li>
+                        </ul>
                       </li>
                     </>
                   )}
@@ -179,6 +219,54 @@ function App() {
             element={
               <ProtectedRoute>
                 <MedicalRecords />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/portal/prescriptions"
+            element={
+              <ProtectedRoute>
+                <Prescriptions />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/portal/messages"
+            element={
+              <ProtectedRoute>
+                <Messages />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/portal/messages/:threadId"
+            element={
+              <ProtectedRoute>
+                <Messages />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/portal/lab-results"
+            element={
+              <ProtectedRoute>
+                <LabResults />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/portal/billing"
+            element={
+              <ProtectedRoute>
+                <Billing />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/portal/family"
+            element={
+              <ProtectedRoute>
+                <FamilyMembers />
               </ProtectedRoute>
             }
           />
