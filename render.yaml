@@ -35,6 +35,8 @@ services:
     envVars:
       - key: VITE_API_URL
         sync: false
+      - key: VITE_STRIPE_PUBLISHABLE_KEY
+        sync: false
     routes:
       - type: rewrite
         source: /*
