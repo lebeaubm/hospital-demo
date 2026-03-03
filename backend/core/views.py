@@ -43,7 +43,7 @@ from .notifications import (
     send_email_notification,
     send_welcome_email,
 )
-from .permissions import IsAppointmentOwner, IsPatientUser, IsStaffUser
+from .permissions import IsAdminUser, IsAppointmentOwner, IsPatientUser, IsStaffUser
 from .serializers import (
     AppointmentSerializer,
     BillLineItemSerializer,
@@ -1450,4 +1450,68 @@ class StaffFamilyMemberListView(generics.ListAPIView):
     serializer_class = FamilyMemberSerializer
     permission_classes = [permissions.IsAuthenticated, IsStaffUser]
     queryset = FamilyMember.objects.select_related("primary_account", "member_user")
+
+
+# ==================== ADMIN VIEWS ====================
+
+class AdminUserListView(APIView):
+    """
+    GET /api/admin/users/
+    List all non-admin users with their roles.
+    """
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        users = User.objects.exclude(role=User.Role.ADMIN).order_by("last_name", "first_name", "email")
+        data = [
+            {
+                "id": u.id,
+                "email": u.email,
+                "first_name": u.first_name,
+                "last_name": u.last_name,
+                "role": u.role,
+                "date_joined": u.date_joined,
+            }
+            for u in users
+        ]
+        return Response(data)
+
+
+class AdminUserRoleUpdateView(APIView):
+    """
+    PATCH /api/admin/users/<user_id>/role/
+    Promote a patient to staff or demote a staff member to patient.
+    """
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+
+    def patch(self, request, user_id):
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if user.role == User.Role.ADMIN:
+            return Response({"error": "Cannot change the role of an admin account."}, status=status.HTTP_400_BAD_REQUEST)
+
+        new_role = request.data.get("role")
+        if new_role not in (User.Role.PATIENT, User.Role.STAFF):
+            return Response({"error": "Invalid role. Must be PATIENT or STAFF."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user.role = new_role
+        if new_role == User.Role.STAFF:
+            user.is_staff = True
+            StaffProfile.objects.get_or_create(user=user)
+        else:
+            user.is_staff = False
+            PatientProfile.objects.get_or_create(user=user)
+
+        user.save()
+
+        return Response({
+            "id": user.id,
+            "email": user.email,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "role": user.role,
+        })
 

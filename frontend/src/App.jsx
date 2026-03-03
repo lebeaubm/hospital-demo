@@ -25,6 +25,7 @@ import Messages from './pages/Messages'
 import LabResults from './pages/LabResults'
 import Billing from './pages/Billing'
 import FamilyMembers from './pages/FamilyMembers'
+import AdminUserManagement from './pages/AdminUserManagement'
 import ProtectedRoute from './components/ProtectedRoute'
 import StaffProtectedRoute from './components/StaffProtectedRoute'
 import ThemeToggle from './components/ThemeToggle'
@@ -32,7 +33,7 @@ import { useAuth } from './context/AuthContext'
 import { clearTokens } from './api/client'
 
 function App() {
-  const { isAuthenticated, isStaff, logout } = useAuth()
+  const { isAuthenticated, isStaff, user, logout } = useAuth()
   const navigate = useNavigate()
 
   const handleLogout = () => {
@@ -118,6 +119,13 @@ function App() {
                           Email Logs
                         </NavLink>
                       </li>
+                      {user?.role === 'ADMIN' && (
+                        <li className="nav-item">
+                          <NavLink className="nav-link" to="/admin/users">
+                            👑 User Management
+                          </NavLink>
+                        </li>
+                      )}
                       <li className="nav-item">
                         <NavLink className="nav-link" to="/portal/profile">
                           My Profile
@@ -343,6 +351,14 @@ function App() {
             element={
               <StaffProtectedRoute>
                 <StaffPatientRecord />
+              </StaffProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/users"
+            element={
+              <StaffProtectedRoute>
+                <AdminUserManagement />
               </StaffProtectedRoute>
             }
           />

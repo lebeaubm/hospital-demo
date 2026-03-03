@@ -68,6 +68,8 @@ from .views import (
     StaffAllDoctorsView,
     StaffPatientAssignedDoctorsView,
     StaffPatientRemoveAssignedDoctorView,
+    AdminUserListView,
+    AdminUserRoleUpdateView,
 )
 from .payment_views import (
     CreateCheckoutSessionView,
@@ -180,5 +182,9 @@ urlpatterns = [
     path("family-members/create/", PatientFamilyMemberCreateView.as_view(), name="patient_family_member_create"),
     path("family-members/<int:pk>/", PatientFamilyMemberDetailView.as_view(), name="patient_family_member_detail"),
     path("staff/family-members/", StaffFamilyMemberListView.as_view(), name="staff_family_member_list"),
+
+    # ==================== ADMIN URLS ====================
+    path("admin/users/", AdminUserListView.as_view(), name="admin_user_list"),
+    path("admin/users/<int:user_id>/role/", AdminUserRoleUpdateView.as_view(), name="admin_user_role_update"),
 ]
 
