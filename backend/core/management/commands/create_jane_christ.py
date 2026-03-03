@@ -64,124 +64,133 @@ class Command(BaseCommand):
         today = timezone.now()
 
         # ── 4. Appointments ──────────────────────────────────────────────
-        appointments_data = [
-            {
-                "reason": "Annual physical examination",
-                "status": Appointment.Status.COMPLETED,
-                "requested_start": today - timedelta(days=60),
-                "scheduled_start": today - timedelta(days=60),
-                "doctor": doctor1,
-                "staff_notes": "Routine annual checkup. Patient is in good health.",
-            },
-            {
-                "reason": "Persistent headaches and dizziness",
-                "status": Appointment.Status.COMPLETED,
-                "requested_start": today - timedelta(days=30),
-                "scheduled_start": today - timedelta(days=30),
-                "doctor": doctor2 or doctor1,
-                "staff_notes": "Referred for MRI. Likely tension headaches.",
-            },
-            {
-                "reason": "Follow-up on MRI results",
-                "status": Appointment.Status.CONFIRMED,
-                "requested_start": today + timedelta(days=7),
-                "scheduled_start": today + timedelta(days=7),
-                "doctor": doctor2 or doctor1,
-                "patient_notes": "Hoping to discuss the MRI results.",
-            },
-            {
-                "reason": "Flu symptoms",
-                "status": Appointment.Status.REQUESTED,
-                "requested_start": today + timedelta(days=14),
-                "scheduled_start": None,
-                "doctor": doctor1,
-                "patient_notes": "Fever and sore throat for 2 days.",
-            },
-            {
-                "reason": "Prescription refill - blood pressure medication",
-                "status": Appointment.Status.CANCELED,
-                "requested_start": today - timedelta(days=10),
-                "scheduled_start": None,
-                "doctor": doctor1,
-                "staff_notes": "Patient canceled - handled via phone.",
-            },
-        ]
+        # Only create if Jane has no appointments yet (prevents duplicates on redeploy)
+        if Appointment.objects.filter(patient=user).exists():
+            self.stdout.write("  → Appointments already exist, skipping")
+            created_appts = list(Appointment.objects.filter(patient=user)[:5])
+        else:
+            appointments_data = [
+                {
+                    "reason": "Annual physical examination",
+                    "status": Appointment.Status.COMPLETED,
+                    "requested_start": today - timedelta(days=60),
+                    "scheduled_start": today - timedelta(days=60),
+                    "doctor": doctor1,
+                    "staff_notes": "Routine annual checkup. Patient is in good health.",
+                },
+                {
+                    "reason": "Persistent headaches and dizziness",
+                    "status": Appointment.Status.COMPLETED,
+                    "requested_start": today - timedelta(days=30),
+                    "scheduled_start": today - timedelta(days=30),
+                    "doctor": doctor2 or doctor1,
+                    "staff_notes": "Referred for MRI. Likely tension headaches.",
+                },
+                {
+                    "reason": "Follow-up on MRI results",
+                    "status": Appointment.Status.CONFIRMED,
+                    "requested_start": today + timedelta(days=7),
+                    "scheduled_start": today + timedelta(days=7),
+                    "doctor": doctor2 or doctor1,
+                    "patient_notes": "Hoping to discuss the MRI results.",
+                },
+                {
+                    "reason": "Flu symptoms",
+                    "status": Appointment.Status.REQUESTED,
+                    "requested_start": today + timedelta(days=14),
+                    "scheduled_start": None,
+                    "doctor": doctor1,
+                    "patient_notes": "Fever and sore throat for 2 days.",
+                },
+                {
+                    "reason": "Prescription refill - blood pressure medication",
+                    "status": Appointment.Status.CANCELED,
+                    "requested_start": today - timedelta(days=10),
+                    "scheduled_start": None,
+                    "doctor": doctor1,
+                    "staff_notes": "Patient canceled - handled via phone.",
+                },
+            ]
 
-        created_appts = []
-        for appt_data in appointments_data:
-            appt = Appointment.objects.create(
-                patient=user,
-                reason=appt_data["reason"],
-                status=appt_data["status"],
-                requested_start=appt_data["requested_start"],
-                scheduled_start=appt_data.get("scheduled_start"),
-                doctor=appt_data.get("doctor"),
-                patient_notes=appt_data.get("patient_notes", ""),
-                staff_notes=appt_data.get("staff_notes", ""),
-            )
-            created_appts.append(appt)
+            created_appts = []
+            for appt_data in appointments_data:
+                appt = Appointment.objects.create(
+                    patient=user,
+                    reason=appt_data["reason"],
+                    status=appt_data["status"],
+                    requested_start=appt_data["requested_start"],
+                    scheduled_start=appt_data.get("scheduled_start"),
+                    doctor=appt_data.get("doctor"),
+                    patient_notes=appt_data.get("patient_notes", ""),
+                    staff_notes=appt_data.get("staff_notes", ""),
+                )
+                created_appts.append(appt)
 
-        self.stdout.write(self.style.SUCCESS(f"  ✓ {len(created_appts)} appointments created"))
+            self.stdout.write(self.style.SUCCESS(f"  ✓ {len(created_appts)} appointments created"))
 
         # ── 5. Bills ─────────────────────────────────────────────────────
-        bills_data = [
-            {
-                "status": Bill.Status.PAID,
-                "patient_responsibility": 150.00,
-                "amount_paid": 150.00,
-                "balance_due": 0.00,
-                "insurance_covered": 80.00,
-                "notes": "Annual physical examination",
-                "due_date": date.today() - timedelta(days=45),
-                "appointment": created_appts[0],
-            },
-            {
-                "status": Bill.Status.PARTIALLY_PAID,
-                "patient_responsibility": 320.00,
-                "amount_paid": 100.00,
-                "balance_due": 220.00,
-                "insurance_covered": 150.00,
-                "notes": "Specialist consultation — headache evaluation",
-                "due_date": date.today() + timedelta(days=10),
-                "appointment": created_appts[1],
-            },
-            {
-                "status": Bill.Status.SENT,
-                "patient_responsibility": 261.00,
-                "amount_paid": 0.00,
-                "balance_due": 261.00,
-                "insurance_covered": 0.00,
-                "notes": "MRI imaging — brain scan",
-                "due_date": date.today() + timedelta(days=20),
-                "appointment": None,
-            },
-            {
-                "status": Bill.Status.OVERDUE,
-                "patient_responsibility": 95.00,
-                "amount_paid": 0.00,
-                "balance_due": 95.00,
-                "insurance_covered": 0.00,
-                "notes": "Lab work — blood panel",
-                "due_date": date.today() - timedelta(days=5),
-                "appointment": None,
-            },
-        ]
+        # Only create if Jane has no bills yet (prevents duplicates on redeploy)
+        if Bill.objects.filter(patient=user).exists():
+            self.stdout.write("  → Bills already exist, skipping")
+        else:
+            bills_data = [
+                {
+                    "status": Bill.Status.PAID,
+                    "patient_responsibility": 150.00,
+                    "amount_paid": 150.00,
+                    "balance_due": 0.00,
+                    "insurance_covered": 80.00,
+                    "notes": "Annual physical examination",
+                    "due_date": date.today() - timedelta(days=45),
+                    "appointment": created_appts[0] if created_appts else None,
+                },
+                {
+                    "status": Bill.Status.PARTIALLY_PAID,
+                    "patient_responsibility": 320.00,
+                    "amount_paid": 100.00,
+                    "balance_due": 220.00,
+                    "insurance_covered": 150.00,
+                    "notes": "Specialist consultation — headache evaluation",
+                    "due_date": date.today() + timedelta(days=10),
+                    "appointment": created_appts[1] if len(created_appts) > 1 else None,
+                },
+                {
+                    "status": Bill.Status.SENT,
+                    "patient_responsibility": 261.00,
+                    "amount_paid": 0.00,
+                    "balance_due": 261.00,
+                    "insurance_covered": 0.00,
+                    "notes": "MRI imaging — brain scan",
+                    "due_date": date.today() + timedelta(days=20),
+                    "appointment": None,
+                },
+                {
+                    "status": Bill.Status.OVERDUE,
+                    "patient_responsibility": 95.00,
+                    "amount_paid": 0.00,
+                    "balance_due": 95.00,
+                    "insurance_covered": 0.00,
+                    "notes": "Lab work — blood panel",
+                    "due_date": date.today() - timedelta(days=5),
+                    "appointment": None,
+                },
+            ]
 
-        for bill_data in bills_data:
-            bill = Bill(
-                patient=user,
-                status=bill_data["status"],
-                patient_responsibility=bill_data["patient_responsibility"],
-                amount_paid=bill_data["amount_paid"],
-                balance_due=bill_data["balance_due"],
-                insurance_covered=bill_data["insurance_covered"],
-                notes=bill_data["notes"],
-                due_date=bill_data["due_date"],
-                related_appointment=bill_data.get("appointment"),
-            )
-            bill.save()
+            for bill_data in bills_data:
+                bill = Bill(
+                    patient=user,
+                    status=bill_data["status"],
+                    patient_responsibility=bill_data["patient_responsibility"],
+                    amount_paid=bill_data["amount_paid"],
+                    balance_due=bill_data["balance_due"],
+                    insurance_covered=bill_data["insurance_covered"],
+                    notes=bill_data["notes"],
+                    due_date=bill_data["due_date"],
+                    related_appointment=bill_data.get("appointment"),
+                )
+                bill.save()
 
-        self.stdout.write(self.style.SUCCESS(f"  ✓ {len(bills_data)} bills created"))
+            self.stdout.write(self.style.SUCCESS(f"  ✓ {len(bills_data)} bills created"))
 
         # ── Summary ──────────────────────────────────────────────────────
         self.stdout.write("")
