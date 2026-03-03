@@ -46,6 +46,11 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
     const refreshToken = getRefreshToken()
+    const requestUrl = originalRequest?.url || ''
+    const isAuthEndpoint =
+      requestUrl.includes('/api/auth/login/') ||
+      requestUrl.includes('/api/auth/register/') ||
+      requestUrl.includes('/api/auth/refresh/')
 
     // Don't try to refresh if:
     // 1. Not a 401 error
@@ -88,8 +93,12 @@ api.interceptors.response.use(
       }
     }
 
-    // For 401 errors that can't be refreshed, logout
-    if (error.response?.status === 401 && originalRequest._retry) {
+    // For 401 errors that can't be refreshed, logout for protected API calls
+    if (
+      error.response?.status === 401 &&
+      !isAuthEndpoint &&
+      (originalRequest._retry || !refreshToken)
+    ) {
       logout()
     }
 

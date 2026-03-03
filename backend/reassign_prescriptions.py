@@ -23,7 +23,7 @@ try:
     
     # Reassign all prescriptions to patient@example.com
     updated = prescriptions.update(patient=target_patient)
-    print(f"\n✅ Successfully reassigned {updated} prescriptions to {target_patient.email}")
+    print(f"\n Successfully reassigned {updated} prescriptions to {target_patient.email}")
     
     # Verify
     patient_rx = Prescription.objects.filter(patient=target_patient)
@@ -32,6 +32,6 @@ try:
         print(f"  - {p.medication_name} {p.dosage}")
         
 except User.DoesNotExist:
-    print("❌ patient@example.com not found!")
+    print(" patient@example.com not found!")
 except Exception as e:
-    print(f"❌ Error: {e}")
+    print(f" Error: {e}")

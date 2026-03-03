@@ -32,36 +32,36 @@ npm run dev
 
 ## New Features Quick Tour
 
-### 1. Prescriptions (💊)
+### 1. Prescriptions ()
 1. Login as patient
 2. Click "My Health" dropdown in nav
-3. Select "💊 Prescriptions"
+3. Select " Prescriptions"
 4. **You'll see:** 3 active prescriptions (Lisinopril, Metformin, Atorvastatin)
 5. **Try:** Click "Request Refill" on any medication
 6. **View:** Refill Requests tab to see your request
 
-### 2. Secure Messages (💬)
-1. Click "My Health" → "💬 Messages"
+### 2. Secure Messages ()
+1. Click "My Health" → " Messages"
 2. **Try:** Click "New" button
 3. **Create:** Subject = "Question about medication", Message = "Can I take this with food?"
 4. **See:** Your new message thread appear in the list
 
-### 3. Lab Results (🔬)
-1. Click "My Health" → "🔬 Lab Results"
+### 3. Lab Results ()
+1. Click "My Health" → " Lab Results"
 2. **You'll see:** 2 completed lab orders:
-   - **CBC:** All normal values ✓
-   - **Lipid Panel:** High cholesterol warning ⚠️
+   - **CBC:** All normal values 
+   - **Lipid Panel:** High cholesterol warning 
 3. **Try:** Click each order to see detailed values
 4. **Notice:** Abnormal values are highlighted in yellow with flags
 
-### 4. Billing & Payments (💰)
-1. Click "My Health" → "💰 Bills & Payments"
+### 4. Billing & Payments ()
+1. Click "My Health" → " Bills & Payments"
 2. **Dashboard shows:** Summary cards (balance, paid bills, unpaid bills)
 3. **Note:** No bills yet - staff must create them
 4. **Staff can:** Login as staff to create sample bills
 
-### 5. Family Members (👨‍👩‍👧‍👦)
-1. Click "My Health" → "👨‍👩‍👧‍👦 Family Members"
+### 5. Family Members ()
+1. Click "My Health" → " Family Members"
 2. **Try:** Click "Add Family Member"
 3. **Fill in:** 
    - Name: "Jane Doe"
@@ -159,13 +159,13 @@ curl -X GET http://127.0.0.1:8000/api/bills/me/ \
 
 ## Seed Data Included
 
-✅ **4 Pharmacies:**
+ **4 Pharmacies:**
 - Kaiser Permanente Pharmacy - Downtown (SF)
 - Kaiser Permanente Pharmacy - Mission Bay (SF)
 - Kaiser Permanente Pharmacy - Oakland
 - Kaiser Permanente Pharmacy - San Jose
 
-✅ **10 Lab Tests:**
+ **10 Lab Tests:**
 - Complete Blood Count (CBC)
 - Basic Metabolic Panel (BMP)
 - Comprehensive Metabolic Panel (CMP)
@@ -177,14 +177,14 @@ curl -X GET http://127.0.0.1:8000/api/bills/me/ \
 - Blood Culture
 - COVID-19 PCR Test
 
-✅ **12 Billable Services:**
+ **12 Billable Services:**
 - Office Visits (3 complexity levels)
 - Lab Tests (CBC, CMP, Lipid Panel, TSH)
 - Imaging (Chest X-Ray, Ultrasound)
 - Procedures (Wound Debridement)
 - Facility Fees
 
-✅ **Sample Patient Data:**
+ **Sample Patient Data:**
 - 3 Active Prescriptions
 - 2 Completed Lab Orders with Results
 - 0 Bills (staff needs to create)
@@ -256,21 +256,21 @@ Shows all endpoints with:
 
 | Feature | Backend | Frontend | Seed Data | Status |
 |---------|---------|----------|-----------|--------|
-| Prescriptions | ✅ | ✅ | ✅ | Complete |
-| Messaging | ✅ | ✅ | ❌ | Complete |
-| Lab Results | ✅ | ✅ | ✅ | Complete |
-| Billing | ✅ | ✅ | ✅ | Complete |
-| Family Members | ✅ | ✅ | ❌ | Complete |
+| Prescriptions |  |  |  | Complete |
+| Messaging |  |  |  | Complete |
+| Lab Results |  |  |  | Complete |
+| Billing |  |  |  | Complete |
+| Family Members |  |  |  | Complete |
 
-## Enjoy Your Kaiser Permanente Portal! 🎉
+## Enjoy Your Kaiser Permanente Portal! 
 
 You now have a production-ready healthcare management system with:
-- ✅ 5 major feature additions
-- ✅ 15 new database models
-- ✅ 40+ new API endpoints
-- ✅ 5 new frontend pages
-- ✅ Full admin interface
-- ✅ Seed data for testing
-- ✅ Zero errors
+-  5 major feature additions
+-  15 new database models
+-  40+ new API endpoints
+-  5 new frontend pages
+-  Full admin interface
+-  Seed data for testing
+-  Zero errors
 
 Everything is ready to use!

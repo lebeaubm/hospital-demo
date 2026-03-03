@@ -430,7 +430,7 @@ function StaffPatientRecord() {
                     className="btn btn-sm btn-outline-secondary"
                     onClick={() => handleToggleNoteVisibility(note.id, note.visibility)}
                   >
-                    {note.visibility === 'STAFF_ONLY' ? '👁️ Share with Patient' : '🚫 Hide from Patient'}
+                    {note.visibility === 'STAFF_ONLY' ? ' Share with Patient' : ' Hide from Patient'}
                   </button>
                 </div>
               ))}
@@ -545,19 +545,19 @@ function StaffPatientRecord() {
                           onClick={() => handlePreview(doc)}
                           disabled={previewLoading}
                         >
-                          👁️ View
+                           View
                         </button>
                         <button
                           className="btn btn-sm btn-primary me-1"
                           onClick={() => handleDownload(doc.id, doc.original_name)}
                         >
-                          ⬇️ Download
+                           Download
                         </button>
                         <button
                           className="btn btn-sm btn-danger"
                           onClick={() => handleDeleteDocument(doc.id, doc.original_name)}
                         >
-                          🗑️ Delete
+                           Delete
                         </button>
                       </td>
                     </tr>
@@ -615,7 +615,7 @@ function StaffPatientRecord() {
                   className="btn btn-primary me-2"
                   onClick={() => handleDownload(previewDocument.id, previewDocument.original_name)}
                 >
-                  ⬇️ Download
+                   Download
                 </button>
                 <button
                   className="btn btn-danger me-2"
@@ -624,7 +624,7 @@ function StaffPatientRecord() {
                     handleDeleteDocument(previewDocument.id, previewDocument.original_name)
                   }}
                 >
-                  🗑️ Delete
+                   Delete
                 </button>
                 <button className="btn btn-secondary" onClick={closePreview}>
                   Close

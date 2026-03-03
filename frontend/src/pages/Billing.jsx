@@ -88,7 +88,7 @@ function Billing() {
 
   return (
     <div className="container mt-4">
-      <h1 className="mb-4">💰 Billing & Payments</h1>
+      <h1 className="mb-4"> Billing & Payments</h1>
 
       {/* Summary Cards */}
       <div className="row mb-4">
@@ -315,7 +315,7 @@ function Billing() {
                         setShowPaymentModal(true);
                       }}
                     >
-                      💳 Make Payment
+                       Make Payment
                     </button>
                   </div>
                 )}

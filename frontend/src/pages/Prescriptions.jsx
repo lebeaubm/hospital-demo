@@ -14,43 +14,53 @@ function Prescriptions() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchPrescriptions();
-    fetchRefills();
-    fetchPharmacies();
-  }, []);
+    let isMounted = true;
 
-  const fetchPrescriptions = async () => {
-    try {
-      const response = await api.get('/api/prescriptions/me/');
-      setPrescriptions(response.data);
-    } catch (err) {
-      setError('Failed to load prescriptions');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const loadData = async () => {
+      try {
+        const [prescriptionsResponse, refillsResponse, pharmaciesResponse] = await Promise.all([
+          api.get('/api/prescriptions/me/'),
+          api.get('/api/prescriptions/refills/me/'),
+          api.get('/api/pharmacies/'),
+        ]);
 
-  const fetchRefills = async () => {
-    try {
-      const response = await api.get('/api/prescriptions/refills/me/');
-      setRefills(response.data);
-    } catch (err) {
-      console.error('Failed to load refills:', err);
-    }
-  };
+        if (!isMounted) {
+          return;
+        }
 
-  const fetchPharmacies = async () => {
-    try {
-      const response = await api.get('/api/pharmacies/');
-      setPharmacies(response.data);
-      if (response.data.length > 0) {
-        setSelectedPharmacy(response.data[0].id);
+        setPrescriptions(prescriptionsResponse.data);
+        setRefills(refillsResponse.data);
+        setPharmacies(pharmaciesResponse.data);
+
+        if (pharmaciesResponse.data.length > 0) {
+          setSelectedPharmacy(pharmaciesResponse.data[0].id);
+        }
+      } catch (err) {
+        if (!isMounted) {
+          return;
+        }
+
+        if (err.response?.status === 401) {
+          setError('Your session expired. Please sign in again.');
+          navigate('/login', { replace: true });
+          return;
+        }
+
+        setError('Failed to load prescriptions');
+        console.error(err);
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    } catch (err) {
-      console.error('Failed to load pharmacies:', err);
-    }
-  };
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [navigate]);
 
   const requestRefill = async (prescriptionId) => {
     if (!selectedPharmacy) {
@@ -65,8 +75,12 @@ function Prescriptions() {
         pharmacy: selectedPharmacy,
       });
       alert('Refill request submitted successfully!');
-      fetchPrescriptions();
-      fetchRefills();
+      const [prescriptionsResponse, refillsResponse] = await Promise.all([
+        api.get('/api/prescriptions/me/'),
+        api.get('/api/prescriptions/refills/me/'),
+      ]);
+      setPrescriptions(prescriptionsResponse.data);
+      setRefills(refillsResponse.data);
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to request refill');
     } finally {
@@ -120,7 +134,7 @@ function Prescriptions() {
 
   return (
     <div className="container mt-4">
-      <h1 className="mb-4">💊 My Prescriptions</h1>
+      <h1 className="mb-4"> My Prescriptions</h1>
 
       {/* Tabs */}
       <ul className="nav nav-tabs mb-4">
@@ -182,19 +196,19 @@ function Prescriptions() {
                         
                         {rx.pharmacy_name && (
                           <p className="mb-2 text-muted">
-                            <small>📍 {rx.pharmacy_name}</small>
+                            <small> {rx.pharmacy_name}</small>
                           </p>
                         )}
 
                         {rx.prescribed_by_name && (
                           <p className="mb-2 text-muted">
-                            <small>👨‍⚕️ Prescribed by: {rx.prescribed_by_name}</small>
+                            <small> Prescribed by: {rx.prescribed_by_name}</small>
                           </p>
                         )}
 
                         {rx.expiration_date && (
                           <p className="mb-2 text-muted">
-                            <small>📅 Expires: {new Date(rx.expiration_date).toLocaleDateString()}</small>
+                            <small> Expires: {new Date(rx.expiration_date).toLocaleDateString()}</small>
                           </p>
                         )}
                       </div>
@@ -227,7 +241,7 @@ function Prescriptions() {
                                 Requesting...
                               </>
                             ) : (
-                              '🔄 Request Refill'
+                              ' Request Refill'
                             )}
                           </button>
                         </div>

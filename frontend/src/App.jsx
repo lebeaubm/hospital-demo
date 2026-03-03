@@ -122,43 +122,43 @@ function App() {
                         <ul className="dropdown-menu" aria-labelledby="patientPortalDropdown">
                           <li>
                             <NavLink className="dropdown-item" to="/portal/appointments">
-                              📅 Appointments
+                               Appointments
                             </NavLink>
                           </li>
                           <li>
                             <NavLink className="dropdown-item" to="/portal/messages">
-                              💬 Messages
+                               Messages
                             </NavLink>
                           </li>
                           <li>
                             <NavLink className="dropdown-item" to="/portal/prescriptions">
-                              💊 Prescriptions
+                               Prescriptions
                             </NavLink>
                           </li>
                           <li>
                             <NavLink className="dropdown-item" to="/portal/lab-results">
-                              🔬 Lab Results
+                               Lab Results
                             </NavLink>
                           </li>
                           <li>
                             <NavLink className="dropdown-item" to="/portal/records">
-                              📋 Medical Records
+                               Medical Records
                             </NavLink>
                           </li>
                           <li><hr className="dropdown-divider" /></li>
                           <li>
                             <NavLink className="dropdown-item" to="/portal/billing">
-                              💰 Bills & Payments
+                               Bills & Payments
                             </NavLink>
                           </li>
                           <li>
                             <NavLink className="dropdown-item" to="/portal/family">
-                              👨‍👩‍👧‍👦 Family Members
+                               Family Members
                             </NavLink>
                           </li>
                           <li>
                             <NavLink className="dropdown-item" to="/portal/profile">
-                              👤 My Profile
+                               My Profile
                             </NavLink>
                           </li>
                         </ul>

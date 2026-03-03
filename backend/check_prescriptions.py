@@ -41,7 +41,7 @@ try:
     print(f"Prescriptions: {rx_count}")
     
     if rx_count == 0:
-        print("\n⚠️ PROBLEM: patient@example.com has NO prescriptions!")
+        print("\n PROBLEM: patient@example.com has NO prescriptions!")
         print("   The seed data created prescriptions for a different user.")
         
 except User.DoesNotExist:

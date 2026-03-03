@@ -402,14 +402,14 @@ export default function StaffDashboard() {
                               onClick={() => handleViewRecord(appointment)}
                               title="View Medical Record"
                             >
-                              📋 Record
+                               Record
                             </button>
                             <button
                               className="btn btn-sm btn-outline-secondary"
                               onClick={() => handleEmailPatient(appointment)}
                               title="Email Patient"
                             >
-                              ✉️
+                              
                             </button>
                           </div>
                         )}

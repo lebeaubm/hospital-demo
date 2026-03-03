@@ -44,7 +44,7 @@ class Command(BaseCommand):
         # Create sample lab orders
         self.seed_lab_orders()
 
-        self.stdout.write(self.style.SUCCESS("✅ Successfully seeded Kaiser data!"))
+        self.stdout.write(self.style.SUCCESS(" Successfully seeded Kaiser data!"))
 
     def seed_pharmacies(self):
         """Create sample pharmacy locations."""
@@ -97,7 +97,7 @@ class Command(BaseCommand):
                 defaults=pharmacy_data
             )
             if created:
-                self.stdout.write(f"  ✓ Created pharmacy: {pharmacy.name}")
+                self.stdout.write(f"   Created pharmacy: {pharmacy.name}")
 
     def seed_lab_tests(self):
         """Create common lab test types."""
@@ -170,7 +170,7 @@ class Command(BaseCommand):
                 defaults=test_data
             )
             if created:
-                self.stdout.write(f"  ✓ Created lab test: {test.name}")
+                self.stdout.write(f"   Created lab test: {test.name}")
 
     def seed_billable_services(self):
         """Create common billable services."""
@@ -259,7 +259,7 @@ class Command(BaseCommand):
                 defaults=service_data
             )
             if created:
-                self.stdout.write(f"  ✓ Created billable service: {service.code} - {service.name}")
+                self.stdout.write(f"   Created billable service: {service.code} - {service.name}")
 
     def seed_prescriptions(self):
         """Create sample prescriptions for existing patients."""
@@ -271,7 +271,7 @@ class Command(BaseCommand):
             pharmacy = Pharmacy.objects.first()
 
             if not patient or not staff or not pharmacy:
-                self.stdout.write(self.style.WARNING("  ⚠ Skipping prescriptions - missing patient, staff, or pharmacy"))
+                self.stdout.write(self.style.WARNING("   Skipping prescriptions - missing patient, staff, or pharmacy"))
                 return
 
             prescriptions = [
@@ -323,10 +323,10 @@ class Command(BaseCommand):
                     defaults=rx_data
                 )
                 if created:
-                    self.stdout.write(f"  ✓ Created prescription: {rx.medication_name}")
+                    self.stdout.write(f"   Created prescription: {rx.medication_name}")
 
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f"  ✗ Error creating prescriptions: {e}"))
+            self.stdout.write(self.style.ERROR(f"   Error creating prescriptions: {e}"))
 
     def seed_lab_orders(self):
         """Create sample lab orders with results."""
@@ -339,7 +339,7 @@ class Command(BaseCommand):
             lipid_test = LabTest.objects.filter(name__contains="Lipid").first()
 
             if not patient or not staff or not cbc_test:
-                self.stdout.write(self.style.WARNING("  ⚠ Skipping lab orders - missing required data"))
+                self.stdout.write(self.style.WARNING("   Skipping lab orders - missing required data"))
                 return
 
             # Create CBC order with results
@@ -355,7 +355,7 @@ class Command(BaseCommand):
             )
 
             if created:
-                self.stdout.write(f"  ✓ Created lab order: {cbc_test.name}")
+                self.stdout.write(f"   Created lab order: {cbc_test.name}")
 
                 # Create result for CBC
                 result = LabResult.objects.create(
@@ -379,7 +379,7 @@ class Command(BaseCommand):
                 for value_data in cbc_values:
                     LabResultValue.objects.create(result=result, **value_data)
 
-                self.stdout.write(f"  ✓ Created lab result with values for CBC")
+                self.stdout.write(f"   Created lab result with values for CBC")
 
             # Create Lipid Panel order with results if available
             if lipid_test:
@@ -395,7 +395,7 @@ class Command(BaseCommand):
                 )
 
                 if created:
-                    self.stdout.write(f"  ✓ Created lab order: {lipid_test.name}")
+                    self.stdout.write(f"   Created lab order: {lipid_test.name}")
 
                     # Create result for Lipid Panel
                     result = LabResult.objects.create(
@@ -418,7 +418,7 @@ class Command(BaseCommand):
                     for value_data in lipid_values:
                         LabResultValue.objects.create(result=result, **value_data)
 
-                    self.stdout.write(f"  ✓ Created lab result with values for Lipid Panel")
+                    self.stdout.write(f"   Created lab result with values for Lipid Panel")
 
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f"  ✗ Error creating lab orders: {e}"))
+            self.stdout.write(self.style.ERROR(f"   Error creating lab orders: {e}"))

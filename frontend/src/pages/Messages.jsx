@@ -118,12 +118,12 @@ function Messages() {
         {/* Thread List Sidebar */}
         <div className="col-md-4 col-lg-3">
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h2>💬 Messages</h2>
+            <h2> Messages</h2>
             <button
               className="btn btn-primary btn-sm"
               onClick={() => setShowNewThreadModal(true)}
             >
-              ✉️ New
+               New
             </button>
           </div>
 
@@ -159,7 +159,7 @@ function Messages() {
                   
                   {thread.staff_name && (
                     <p className="mb-1 small">
-                      👨‍⚕️ {thread.staff_name}
+                       {thread.staff_name}
                     </p>
                   )}
                   
@@ -214,7 +214,7 @@ function Messages() {
                         <div className="card-body p-3">
                           <div className="mb-2">
                             <strong>
-                              {message.sender_role === 'PATIENT' ? '👤' : '👨‍⚕️'}{' '}
+                              {message.sender_role === 'PATIENT' ? '' : ''}{' '}
                               {message.sender_name}
                             </strong>
                             <br />
@@ -251,7 +251,7 @@ function Messages() {
                       {sending ? (
                         <span className="spinner-border spinner-border-sm" />
                       ) : (
-                        '📤 Send'
+                        ' Send'
                       )}
                     </button>
                   </div>

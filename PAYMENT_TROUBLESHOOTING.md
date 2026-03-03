@@ -114,7 +114,7 @@ To see detailed error messages from the backend:
 2. Check frontend console (browser developer tools)
 3. Verify all migrations are applied: `python manage.py migrate`
 4. Verify dependencies are installed: `pip install stripe reportlab`
-5. Try with a fresh database: `python manage.py flush` (⚠️ deletes all data)
+5. Try with a fresh database: `python manage.py flush` ( deletes all data)
 
 ## Verify Configuration
 
@@ -126,8 +126,8 @@ python manage.py shell -c "from django.conf import settings; print('Stripe Confi
 ```
 
 Expected output:
-- ✅ `Stripe Configured: True` - Ready to test
-- ❌ `Stripe Configured: False` - Need to configure keys
+-  `Stripe Configured: True` - Ready to test
+-  `Stripe Configured: False` - Need to configure keys
 
 ## Test Without Stripe (Optional)
 

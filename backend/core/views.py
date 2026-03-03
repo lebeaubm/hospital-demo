@@ -82,7 +82,7 @@ class APIRootView(APIView):
 
     def get(self, request):
         return Response({
-            "status": "✅ IT'S WORKING!",
+            "status": " IT'S WORKING!",
             "message": "Hospital Demo API",
             "version": "1.0",
             "available_endpoints": {

@@ -96,7 +96,7 @@ This document lists all files created or modified for the Stripe payment integra
    - Added import for `createCheckoutSession`
    - Added `paymentLoading` state
    - Added `handlePayConsultationFee` function
-   - Added "💳 Pay Consultation Fee" button to each appointment card
+   - Added " Pay Consultation Fee" button to each appointment card
    - Button shows loading spinner during payment initiation
 
 3. **`frontend/src/App.jsx`**
@@ -145,12 +145,12 @@ The migration creates two new tables:
 - `reportlab>=4.0.0` (Python)
 
 **New Features:**
-- ✅ Stripe Checkout integration
-- ✅ Payment verification (browser fallback)
-- ✅ Payment history
-- ✅ PDF invoice generation and download
-- ✅ Webhook support (production-ready)
-- ✅ Test mode support with Stripe test cards
+-  Stripe Checkout integration
+-  Payment verification (browser fallback)
+-  Payment history
+-  PDF invoice generation and download
+-  Webhook support (production-ready)
+-  Test mode support with Stripe test cards
 
 ## Running Instructions
 
@@ -193,9 +193,9 @@ The migration creates two new tables:
 
 ## Security Notes
 
-- ✅ Stripe secret key stored in environment variables only
-- ✅ No card data stored in database
-- ✅ Patients can only see their own payments/invoices
-- ✅ Payment verification checks ownership
-- ✅ Webhook signature verification (when configured)
-- ✅ CSRF protection on API endpoints
+-  Stripe secret key stored in environment variables only
+-  No card data stored in database
+-  Patients can only see their own payments/invoices
+-  Payment verification checks ownership
+-  Webhook signature verification (when configured)
+-  CSRF protection on API endpoints

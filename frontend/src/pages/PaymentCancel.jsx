@@ -7,7 +7,7 @@ export default function PaymentCancel() {
         <div className="col-md-6">
           <div className="card">
             <div className="card-body text-center">
-              <div className="display-1 text-warning mb-3">⚠️</div>
+              <div className="display-1 text-warning mb-3"></div>
               <h2 className="card-title">Payment Canceled</h2>
               <p className="card-text">
                 Your payment was canceled. No charges have been made to your account.

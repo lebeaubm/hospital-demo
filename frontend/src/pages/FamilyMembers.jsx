@@ -142,7 +142,7 @@ function FamilyMembers() {
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>👨‍👩‍👧‍👦 Family Members</h1>
+        <h1> Family Members</h1>
         <button
           className="btn btn-primary"
           onClick={() => {
@@ -150,7 +150,7 @@ function FamilyMembers() {
             setShowAddModal(true);
           }}
         >
-          ➕ Add Family Member
+           Add Family Member
         </button>
       </div>
 
@@ -243,13 +243,13 @@ function FamilyMembers() {
                     className="btn btn-sm btn-outline-primary me-2"
                     onClick={() => handleEdit(member)}
                   >
-                    ✏️ Edit
+                     Edit
                   </button>
                   <button
                     className="btn btn-sm btn-outline-danger"
                     onClick={() => handleDelete(member.id)}
                   >
-                    🗑️ Remove
+                     Remove
                   </button>
                 </div>
               </div>

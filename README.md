@@ -128,7 +128,7 @@ The application includes Stripe integration for consultation fee payments with b
 
 2. **View Appointments**:
    - Navigate to "My Appointments"
-   - Click "💳 Pay Consultation Fee" on any appointment
+   - Click " Pay Consultation Fee" on any appointment
 
 3. **Complete Payment**:
    - You'll be redirected to Stripe Checkout
@@ -144,7 +144,7 @@ The application includes Stripe integration for consultation fee payments with b
 
 5. **Download Invoice**:
    - Go to "Payments" page
-   - Click "📄 Download Invoice" on paid payments
+   - Click " Download Invoice" on paid payments
    - PDF invoice will download automatically
 
 ### Test Cards
@@ -168,13 +168,13 @@ The application uses a browser fallback verification system:
 
 ### Payment Features
 
-- ✅ Secure Stripe Checkout integration
-- ✅ Consultation fee payments ($50.00 default)
-- ✅ Payment history for patients
-- ✅ Automatic invoice generation (PDF)
-- ✅ Invoice download
-- ✅ Browser-only verification (no webhook setup required)
-- ✅ Test mode for safe development
+-  Secure Stripe Checkout integration
+-  Consultation fee payments ($50.00 default)
+-  Payment history for patients
+-  Automatic invoice generation (PDF)
+-  Invoice download
+-  Browser-only verification (no webhook setup required)
+-  Test mode for safe development
 
 **Note**: For production deployment with webhooks, see [DEPLOYMENT.md](DEPLOYMENT.md) for webhook configuration.
 
@@ -418,11 +418,11 @@ Destroying test database for alias 'default'...
 ### Continuous Integration
 
 The project includes a GitHub Actions workflow (`.github/workflows/ci.yml`) that automatically:
-- ✅ Sets up Python 3.11
-- ✅ Installs dependencies
-- ✅ Runs database migrations
-- ✅ Executes all tests
-- ✅ Checks for missing migrations
+-  Sets up Python 3.11
+-  Installs dependencies
+-  Runs database migrations
+-  Executes all tests
+-  Checks for missing migrations
 
 CI runs automatically on:
 - Pushes to `main`, `branch-1`, `branch-2`
@@ -554,24 +554,24 @@ hospital-demo/
 ## RBAC Rules
 
 ### Patients (role=PATIENT)
-✅ Can register and login  
-✅ Can view/update own profile  
-✅ Can create appointment requests  
-✅ Can view only their own appointments  
-❌ Cannot access other patients' data  
-❌ Cannot access staff endpoints  
+ Can register and login  
+ Can view/update own profile  
+ Can create appointment requests  
+ Can view only their own appointments  
+ Cannot access other patients' data  
+ Cannot access staff endpoints  
 
 ### Staff (role=STAFF or ADMIN)
-✅ Can login  
-✅ Can view/update own staff profile  
-✅ Can view all appointments (with filters)  
-✅ Can update appointment status, scheduled_start, staff_notes  
-✅ Full access to appointment management  
+ Can login  
+ Can view/update own staff profile  
+ Can view all appointments (with filters)  
+ Can update appointment status, scheduled_start, staff_notes  
+ Full access to appointment management  
 
 ### Public
-✅ Can view doctor listings  
-✅ Can register as new patient  
-✅ Can login  
+ Can view doctor listings  
+ Can register as new patient  
+ Can login  
 
 ## Deployment
 
@@ -864,14 +864,14 @@ npm run dev
    - No errors should appear
 
 **Expected Behavior:**
-- ✅ Filters update results instantly
-- ✅ Pagination shows correct page numbers
-- ✅ URL reflects current filters/page
-- ✅ Loading spinner shows during requests
-- ✅ Results count displays correctly
-- ✅ Reset button clears all filters
-- ✅ No console errors
-- ✅ Network requests show proper query parameters
+-  Filters update results instantly
+-  Pagination shows correct page numbers
+-  URL reflects current filters/page
+-  Loading spinner shows during requests
+-  Results count displays correctly
+-  Reset button clears all filters
+-  No console errors
+-  Network requests show proper query parameters
 
 ### Testing Staff Appointment Filtering & Pagination
 
@@ -1083,7 +1083,7 @@ STAFF_INBOX_EMAIL=staff@hospitaldemo.com
 1. **Use quick email link:**
    - Go to "Staff Dashboard"
    - Find any appointment
-   - Click the envelope icon (📧) in the Actions column
+   - Click the envelope icon () in the Actions column
 
 2. **Verify compose modal opens:**
    - Should redirect to "Email Logs" page
@@ -1163,12 +1163,12 @@ python manage.py test core.tests.EmailNotificationTests --verbosity=2
 ```
 
 **Tests included:**
-- ✅ Staff can send custom emails
-- ✅ Patients cannot access staff email endpoints
-- ✅ Appointment status change creates email log
-- ✅ No duplicate emails on same status
-- ✅ Staff can view email logs
-- ✅ Patients cannot view email logs
+-  Staff can send custom emails
+-  Patients cannot access staff email endpoints
+-  Appointment status change creates email log
+-  No duplicate emails on same status
+-  Staff can view email logs
+-  Patients cannot view email logs
 
 All 18 tests should pass (including 6 email notification tests + 12 existing tests).
 
@@ -1193,15 +1193,15 @@ Templates use Django template syntax and can be customized with HTML/plain text.
     - Response should be paginated: `{count, next, previous, results}`
 
 **Expected Behavior:**
-- ✅ Filters work independently and in combination
-- ✅ Pagination controls appear when needed
-- ✅ Changing filters resets to page 1
-- ✅ Edit mode works for status, doctor, date, and notes
-- ✅ Success messages appear after updates
-- ✅ Page reloads show updated data
-- ✅ No console errors
-- ✅ Date filters use requested_start field
-- ✅ Network requests show proper query parameters
+-  Filters work independently and in combination
+-  Pagination controls appear when needed
+-  Changing filters resets to page 1
+-  Edit mode works for status, doctor, date, and notes
+-  Success messages appear after updates
+-  Page reloads show updated data
+-  No console errors
+-  Date filters use requested_start field
+-  Network requests show proper query parameters
 
 ---
 
