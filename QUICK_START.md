@@ -1,4 +1,4 @@
-# Quick Start Guide - Kaiser Permanente Features
+# Quick Start Guide - Healthcare Portal Features
 
 ## Start the Application
 
@@ -160,10 +160,10 @@ curl -X GET http://127.0.0.1:8000/api/bills/me/ \
 ## Seed Data Included
 
  **4 Pharmacies:**
-- Kaiser Permanente Pharmacy - Downtown (SF)
-- Kaiser Permanente Pharmacy - Mission Bay (SF)
-- Kaiser Permanente Pharmacy - Oakland
-- Kaiser Permanente Pharmacy - San Jose
+- Downtown Pharmacy
+- Mission Bay Pharmacy
+- Oakland Pharmacy
+- San Jose Pharmacy
 
  **10 Lab Tests:**
 - Complete Blood Count (CBC)
@@ -219,7 +219,7 @@ python manage.py seed_kaiser_data
 
 ## Development Tips
 
-### Reset All Kaiser Data
+### Reset All Demo Data
 ```powershell
 cd backend
 python manage.py shell
@@ -262,7 +262,7 @@ Shows all endpoints with:
 | Billing |  |  |  | Complete |
 | Family Members |  |  |  | Complete |
 
-## Enjoy Your Kaiser Permanente Portal! 
+## Enjoy Your Healthcare Portal! 
 
 You now have a production-ready healthcare management system with:
 -  5 major feature additions

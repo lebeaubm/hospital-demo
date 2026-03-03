@@ -12,11 +12,14 @@ function Messages() {
   const [showNewThreadModal, setShowNewThreadModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [staffUsers, setStaffUsers] = useState([]);
+  const [selectedStaff, setSelectedStaff] = useState('');
   const navigate = useNavigate();
   const { threadId } = useParams();
 
   useEffect(() => {
     fetchThreads();
+    fetchStaffUsers();
   }, []);
 
   useEffect(() => {
@@ -36,17 +39,26 @@ function Messages() {
     }
   };
 
+  const fetchStaffUsers = async () => {
+    try {
+      const response = await api.get('/api/staff-users/');
+      setStaffUsers(response.data);
+      if (response.data.length > 0) {
+        setSelectedStaff(response.data[0].id);
+      }
+    } catch (err) {
+      console.error('Failed to load staff users:', err);
+    }
+  };
+
   const loadThread = async (id) => {
     try {
-      const thread = threads.find((t) => t.id === id);
-      if (thread) {
-        setSelectedThread(thread);
-        const response = await api.get(`/messages/threads/${id}/`);
-        setMessages(response.data.messages || []);
-        
-        // Refresh threads to update unread count
-        fetchThreads();
-      }
+      const response = await api.get(`/api/messages/threads/${id}/`);
+      setSelectedThread(response.data);
+      setMessages(response.data.messages || []);
+      
+      // Refresh threads to update unread count
+      fetchThreads();
     } catch (err) {
       console.error('Failed to load thread:', err);
     }
@@ -74,11 +86,16 @@ function Messages() {
   const createThread = async (e) => {
     e.preventDefault();
     if (!newThreadSubject.trim() || !newThreadMessage.trim()) return;
+    if (!selectedStaff) {
+      alert('Please select a staff member to message');
+      return;
+    }
 
     setSending(true);
     try {
       const threadResponse = await api.post('/api/messages/threads/create/', {
         subject: newThreadSubject,
+        staff: selectedStaff,
       });
       
       const newThreadId = threadResponse.data.id;
@@ -91,7 +108,7 @@ function Messages() {
       setNewThreadSubject('');
       setNewThreadMessage('');
       fetchThreads();
-      navigate(`/messages/${newThreadId}`);
+      navigate(`/portal/messages/${newThreadId}`);
     } catch (err) {
       alert('Failed to create thread');
       console.error(err);
@@ -138,7 +155,7 @@ function Messages() {
                     selectedThread?.id === thread.id ? 'active' : ''
                   }`}
                   onClick={() => {
-                    navigate(`/messages/${thread.id}`);
+                    navigate(`/portal/messages/${thread.id}`);
                   }}
                 >
                   <div className="d-flex w-100 justify-content-between">
@@ -284,6 +301,22 @@ function Messages() {
               </div>
               <form onSubmit={createThread}>
                 <div className="modal-body">
+                  <div className="mb-3">
+                    <label className="form-label">Send To</label>
+                    <select
+                      className="form-select"
+                      value={selectedStaff}
+                      onChange={(e) => setSelectedStaff(e.target.value)}
+                      required
+                    >
+                      <option value="">-- Select staff member --</option>
+                      {staffUsers.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name} ({s.role})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="mb-3">
                     <label className="form-label">Subject</label>
                     <input

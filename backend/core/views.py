@@ -3,7 +3,7 @@ from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions, serializers, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -186,6 +186,50 @@ class StaffMeView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         profile, _ = StaffProfile.objects.get_or_create(user=self.request.user)
         return profile
+
+
+class StaffPatientListView(generics.ListAPIView):
+    """
+    GET /api/staff/patients/
+    List all patient users (for staff to create lab orders etc).
+    """
+    permission_classes = [permissions.IsAuthenticated, IsStaffUser]
+
+    def list(self, request, *args, **kwargs):
+        patients = User.objects.filter(role=User.Role.PATIENT).values(
+            'id', 'first_name', 'last_name', 'email'
+        )
+        data = [
+            {
+                'id': p['id'],
+                'name': f"{p['first_name']} {p['last_name']}".strip() or p['email'],
+                'email': p['email'],
+            }
+            for p in patients
+        ]
+        return Response(data)
+
+
+class StaffUserListView(generics.ListAPIView):
+    """
+    GET /api/staff-users/
+    List all staff/admin users (for patients to select who to message).
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request, *args, **kwargs):
+        staff_users = User.objects.filter(
+            role__in=[User.Role.STAFF, User.Role.ADMIN]
+        ).values('id', 'first_name', 'last_name', 'role')
+        data = [
+            {
+                'id': u['id'],
+                'name': f"{u['first_name']} {u['last_name']}".strip() or f"Staff #{u['id']}",
+                'role': u['role'],
+            }
+            for u in staff_users
+        ]
+        return Response(data)
 
 
 class AppointmentCreateView(generics.CreateAPIView):
@@ -756,15 +800,13 @@ class PrescriptionRefillCreateView(generics.CreateAPIView):
         
         # Check if refill is allowed
         if prescription.refills_remaining <= 0:
-            return Response(
-                {"error": "No refills remaining"},
-                status=status.HTTP_400_BAD_REQUEST
+            raise serializers.ValidationError(
+                {"error": "No refills remaining"}
             )
         
         if prescription.status != Prescription.Status.ACTIVE:
-            return Response(
-                {"error": "Prescription is not active"},
-                status=status.HTTP_400_BAD_REQUEST
+            raise serializers.ValidationError(
+                {"error": "Prescription is not active"}
             )
         
         serializer.save(
@@ -885,14 +927,26 @@ class PatientMessageThreadListView(generics.ListAPIView):
 
 class PatientMessageThreadCreateView(generics.CreateAPIView):
     """
-    POST /api/messages/threads/
+    POST /api/messages/threads/create/
     Create a new message thread.
     """
     serializer_class = MessageThreadSerializer
     permission_classes = [permissions.IsAuthenticated, IsPatientUser]
 
     def perform_create(self, serializer):
-        serializer.save(patient=self.request.user, last_message_at=timezone.now())
+        staff_id = self.request.data.get('staff')
+        staff_user = None
+        if staff_id:
+            staff_user = get_object_or_404(
+                User,
+                id=staff_id,
+                role__in=[User.Role.STAFF, User.Role.ADMIN]
+            )
+        serializer.save(
+            patient=self.request.user,
+            staff=staff_user,
+            last_message_at=timezone.now()
+        )
 
 
 class MessageThreadDetailView(generics.RetrieveAPIView):
@@ -940,9 +994,8 @@ class MessageCreateView(generics.CreateAPIView):
         # Check permissions
         user = self.request.user
         if user.role == User.Role.PATIENT and thread.patient != user:
-            return Response(
-                {"error": "You can only message in your own threads"},
-                status=status.HTTP_403_FORBIDDEN
+            raise serializers.ValidationError(
+                {"error": "You can only message in your own threads"}
             )
         
         serializer.save(thread=thread, sender=user)
@@ -1035,7 +1088,14 @@ class StaffLabOrderCreateView(generics.CreateAPIView):
     permission_classes = [permissions.IsAuthenticated, IsStaffUser]
 
     def perform_create(self, serializer):
-        serializer.save(ordered_by=self.request.user)
+        test_name = serializer.validated_data.pop("test_name_input", "").strip()
+        if not test_name:
+            raise serializers.ValidationError({"test_name_input": "A test name is required."})
+        lab_test, _ = LabTest.objects.get_or_create(
+            name__iexact=test_name,
+            defaults={"name": test_name, "category": LabTest.Category.OTHER},
+        )
+        serializer.save(ordered_by=self.request.user, test=lab_test)
 
 
 class StaffLabOrderUpdateView(generics.UpdateAPIView):

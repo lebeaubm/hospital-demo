@@ -3,6 +3,8 @@ from django.urls import path
 from .views import (
     APIRootView,
     AppointmentCreateView,
+    StaffPatientListView,
+    StaffUserListView,
     AppointmentDetailView,
     BillPaymentCreateView,
     DoctorDetailView,
@@ -124,6 +126,10 @@ urlpatterns = [
     path("staff/refills/", StaffRefillListView.as_view(), name="staff_refill_list"),
     path("staff/refills/<int:pk>/", StaffRefillUpdateView.as_view(), name="staff_refill_update"),
     
+    # Staff user list (for patient message recipient selection)
+    path("staff-users/", StaffUserListView.as_view(), name="staff_user_list"),
+    path("staff/patients/", StaffPatientListView.as_view(), name="staff_patient_list"),
+
     # ==================== MESSAGING URLS ====================
     # Patient message endpoints
     path("messages/threads/", PatientMessageThreadListView.as_view(), name="patient_thread_list"),

@@ -1,5 +1,5 @@
 """
-Management command to seed Kaiser Permanente-style data:
+Management command to seed demo healthcare data:
 - Pharmacies
 - Lab Tests
 - Billable Services
@@ -24,10 +24,10 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
-    help = "Seed Kaiser Permanente-style data for pharmacies, lab tests, and billing"
+    help = "Seed demo data for pharmacies, lab tests, and billing"
 
     def handle(self, *args, **options):
-        self.stdout.write("Seeding Kaiser Permanente-style data...")
+        self.stdout.write("Seeding demo healthcare data...")
 
         # Create Pharmacies
         self.seed_pharmacies()
@@ -44,13 +44,13 @@ class Command(BaseCommand):
         # Create sample lab orders
         self.seed_lab_orders()
 
-        self.stdout.write(self.style.SUCCESS(" Successfully seeded Kaiser data!"))
+        self.stdout.write(self.style.SUCCESS(" Successfully seeded demo data!"))
 
     def seed_pharmacies(self):
         """Create sample pharmacy locations."""
         pharmacies = [
             {
-                "name": "Kaiser Permanente Pharmacy - Downtown",
+                "name": "Downtown Pharmacy",
                 "address": "123 Main Street",
                 "city": "San Francisco",
                 "state": "CA",
@@ -60,7 +60,7 @@ class Command(BaseCommand):
                 "hours": "Mon-Fri: 8:00 AM - 8:00 PM\nSat: 9:00 AM - 5:00 PM\nSun: Closed",
             },
             {
-                "name": "Kaiser Permanente Pharmacy - Mission Bay",
+                "name": "Mission Bay Pharmacy",
                 "address": "456 Mission Bay Blvd",
                 "city": "San Francisco",
                 "state": "CA",
@@ -70,7 +70,7 @@ class Command(BaseCommand):
                 "hours": "Mon-Fri: 7:00 AM - 9:00 PM\nSat-Sun: 9:00 AM - 6:00 PM",
             },
             {
-                "name": "Kaiser Permanente Pharmacy - Oakland",
+                "name": "Oakland Pharmacy",
                 "address": "789 Broadway",
                 "city": "Oakland",
                 "state": "CA",
@@ -80,7 +80,7 @@ class Command(BaseCommand):
                 "hours": "Mon-Fri: 8:00 AM - 7:00 PM\nSat: 9:00 AM - 5:00 PM\nSun: Closed",
             },
             {
-                "name": "Kaiser Permanente Pharmacy - San Jose",
+                "name": "San Jose Pharmacy",
                 "address": "321 First Street",
                 "city": "San Jose",
                 "state": "CA",

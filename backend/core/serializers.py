@@ -589,6 +589,7 @@ class PrescriptionRefillSerializer(serializers.ModelSerializer):
         )
         read_only_fields = (
             "id",
+            "prescription",
             "requested_by",
             "requested_by_name",
             "requested_at",
@@ -641,6 +642,7 @@ class MessageSerializer(serializers.ModelSerializer):
         )
         read_only_fields = (
             "id",
+            "thread",
             "sender",
             "sender_name",
             "sender_email",
@@ -678,7 +680,9 @@ class MessageThreadSerializer(serializers.ModelSerializer):
         )
         read_only_fields = (
             "id",
+            "patient",
             "patient_name",
+            "staff",
             "staff_name",
             "unread_count",
             "last_message",
@@ -750,6 +754,7 @@ class LabResultValueSerializer(serializers.ModelSerializer):
             "is_abnormal",
             "flag",
         )
+        read_only_fields = ("id", "result")
 
 
 class LabResultSerializer(serializers.ModelSerializer):
@@ -777,6 +782,7 @@ class LabResultSerializer(serializers.ModelSerializer):
         )
         read_only_fields = (
             "id",
+            "reviewed_by",
             "reviewed_by_name",
             "test_name",
             "created_at",
@@ -790,6 +796,7 @@ class LabOrderSerializer(serializers.ModelSerializer):
     ordered_by_name = serializers.CharField(source="ordered_by.get_full_name", read_only=True)
     test_name = serializers.CharField(source="test.name", read_only=True)
     test_category = serializers.CharField(source="test.category", read_only=True)
+    test_name_input = serializers.CharField(write_only=True, required=False, allow_blank=True)
     result = LabResultSerializer(read_only=True)
     has_result = serializers.SerializerMethodField()
     
@@ -804,6 +811,7 @@ class LabOrderSerializer(serializers.ModelSerializer):
             "test",
             "test_name",
             "test_category",
+            "test_name_input",
             "status",
             "ordered_date",
             "collection_date",
@@ -816,9 +824,10 @@ class LabOrderSerializer(serializers.ModelSerializer):
         )
         read_only_fields = (
             "id",
-            "patient",
             "patient_name",
+            "ordered_by",
             "ordered_by_name",
+            "test",
             "test_name",
             "test_category",
             "ordered_date",
