@@ -37,6 +37,15 @@ ACCOUNTS = [
         "is_staff": True,
         "is_superuser": True,
     },
+    {
+        "email": "testadmin@hospital.com",
+        "password": "TestAdmin123!",
+        "first_name": "Test",
+        "last_name": "Admin",
+        "role": "ADMIN",
+        "is_staff": True,
+        "is_superuser": True,
+    },
 ]
 
 
@@ -89,3 +98,4 @@ class Command(BaseCommand):
         self.stdout.write("  patient@example.com    / Pass1234!")
         self.stdout.write("  staff@example.com      / StaffPass123!")
         self.stdout.write("  lebeaubm@yahoo.com     / Admin123!")
+        self.stdout.write("  testadmin@hospital.com / TestAdmin123!")

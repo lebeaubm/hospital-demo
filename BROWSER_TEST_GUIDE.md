@@ -33,7 +33,8 @@ npm run dev
 |---|---|---|
 | Patient | `patient@example.com` | `Pass1234!` |
 | Staff | `staff@example.com` | `StaffPass123!` |
-| Admin | `lebeaubm@yahoo.com` | `Admin123!` |
+| Admin (you) | `lebeaubm@yahoo.com` | `Admin123!` |
+| Test Admin | `testadmin@hospital.com` | `TestAdmin123!` |
 | Test Patient | `jane.christ@testpatient.com` | `JaneTest123!` |
 | Test Staff | `jack.christ@teststaff.com` | `JackStaff123!` |
 
