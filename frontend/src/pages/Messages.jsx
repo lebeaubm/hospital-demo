@@ -27,7 +27,7 @@ function Messages() {
 
   const fetchThreads = async () => {
     try {
-      const response = await api.get('/messages/threads/');
+      const response = await api.get('/api/messages/threads/');
       setThreads(response.data);
     } catch (err) {
       console.error('Failed to load message threads:', err);
@@ -58,7 +58,7 @@ function Messages() {
 
     setSending(true);
     try {
-      await api.post(`/messages/threads/${selectedThread.id}/messages/`, {
+      await api.post(`/api/messages/threads/${selectedThread.id}/messages/`, {
         content: newMessage,
       });
       setNewMessage('');
@@ -77,13 +77,13 @@ function Messages() {
 
     setSending(true);
     try {
-      const threadResponse = await api.post('/messages/threads/create/', {
+      const threadResponse = await api.post('/api/messages/threads/create/', {
         subject: newThreadSubject,
       });
       
       const newThreadId = threadResponse.data.id;
       
-      await api.post(`/messages/threads/${newThreadId}/messages/`, {
+      await api.post(`/api/messages/threads/${newThreadId}/messages/`, {
         content: newThreadMessage,
       });
       

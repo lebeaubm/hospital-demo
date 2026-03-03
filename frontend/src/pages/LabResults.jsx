@@ -13,7 +13,7 @@ function LabResults() {
 
   const fetchLabOrders = async () => {
     try {
-      const response = await api.get('/lab-orders/me/');
+      const response = await api.get('/api/lab-orders/me/');
       setLabOrders(response.data);
     } catch (err) {
       setError('Failed to load lab results');

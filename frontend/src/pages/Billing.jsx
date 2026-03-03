@@ -17,7 +17,7 @@ function Billing() {
 
   const fetchBills = async () => {
     try {
-      const response = await api.get('/bills/me/');
+      const response = await api.get('/api/bills/me/');
       setBills(response.data);
     } catch (err) {
       setError('Failed to load bills');

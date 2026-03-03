@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 
 function Prescriptions() {
-  const [prescriptions, setprescriptions] = useState([]);
+  const [prescriptions, setPrescriptions] = useState([]);
   const [refills, setRefills] = useState([]);
   const [pharmacies, setPharmacies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,7 +21,7 @@ function Prescriptions() {
 
   const fetchPrescriptions = async () => {
     try {
-      const response = await api.get('/prescriptions/me/');
+      const response = await api.get('/api/prescriptions/me/');
       setPrescriptions(response.data);
     } catch (err) {
       setError('Failed to load prescriptions');
@@ -33,7 +33,7 @@ function Prescriptions() {
 
   const fetchRefills = async () => {
     try {
-      const response = await api.get('/prescriptions/refills/me/');
+      const response = await api.get('/api/prescriptions/refills/me/');
       setRefills(response.data);
     } catch (err) {
       console.error('Failed to load refills:', err);
@@ -42,7 +42,7 @@ function Prescriptions() {
 
   const fetchPharmacies = async () => {
     try {
-      const response = await api.get('/pharmacies/');
+      const response = await api.get('/api/pharmacies/');
       setPharmacies(response.data);
       if (response.data.length > 0) {
         setSelectedPharmacy(response.data[0].id);
@@ -61,7 +61,7 @@ function Prescriptions() {
     setRefillLoading({ ...refillLoading, [prescriptionId]: true });
 
     try {
-      await api.post(`/prescriptions/${prescriptionId}/refill/`, {
+      await api.post(`/api/prescriptions/${prescriptionId}/refill/`, {
         pharmacy: selectedPharmacy,
       });
       alert('Refill request submitted successfully!');

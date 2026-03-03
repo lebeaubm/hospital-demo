@@ -25,7 +25,7 @@ function FamilyMembers() {
 
   const fetchFamilyMembers = async () => {
     try {
-      const response = await api.get('/family-members/');
+      const response = await api.get('/api/family-members/');
       setFamilyMembers(response.data);
     } catch (err) {
       setError('Failed to load family members');
@@ -63,10 +63,10 @@ function FamilyMembers() {
 
     try {
       if (editingMember) {
-        await api.patch(`/family-members/${editingMember.id}/`, formData);
+        await api.patch(`/api/family-members/${editingMember.id}/`, formData);
         alert('Family member updated successfully!');
       } else {
-        await api.post('/family-members/create/', formData);
+        await api.post('/api/family-members/create/', formData);
         alert('Family member added successfully!');
       }
       fetchFamilyMembers();
