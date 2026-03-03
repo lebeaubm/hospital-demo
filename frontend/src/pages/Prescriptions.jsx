@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 
 function Prescriptions() {
-  const [prescriptions, setPrescriptions] = useState([]);
+  const [prescriptions, setprescriptions] = useState([]);
   const [refills, setRefills] = useState([]);
   const [pharmacies, setPharmacies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,53 +14,43 @@ function Prescriptions() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    let isMounted = true;
+    fetchPrescriptions();
+    fetchRefills();
+    fetchPharmacies();
+  }, []);
 
-    const loadData = async () => {
-      try {
-        const [prescriptionsResponse, refillsResponse, pharmaciesResponse] = await Promise.all([
-          api.get('/api/prescriptions/me/'),
-          api.get('/api/prescriptions/refills/me/'),
-          api.get('/api/pharmacies/'),
-        ]);
+  const fetchPrescriptions = async () => {
+    try {
+      const response = await api.get('/prescriptions/me/');
+      setPrescriptions(response.data);
+    } catch (err) {
+      setError('Failed to load prescriptions');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-        if (!isMounted) {
-          return;
-        }
+  const fetchRefills = async () => {
+    try {
+      const response = await api.get('/prescriptions/refills/me/');
+      setRefills(response.data);
+    } catch (err) {
+      console.error('Failed to load refills:', err);
+    }
+  };
 
-        setPrescriptions(prescriptionsResponse.data);
-        setRefills(refillsResponse.data);
-        setPharmacies(pharmaciesResponse.data);
-
-        if (pharmaciesResponse.data.length > 0) {
-          setSelectedPharmacy(pharmaciesResponse.data[0].id);
-        }
-      } catch (err) {
-        if (!isMounted) {
-          return;
-        }
-
-        if (err.response?.status === 401) {
-          setError('Your session expired. Please sign in again.');
-          navigate('/login', { replace: true });
-          return;
-        }
-
-        setError('Failed to load prescriptions');
-        console.error(err);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+  const fetchPharmacies = async () => {
+    try {
+      const response = await api.get('/pharmacies/');
+      setPharmacies(response.data);
+      if (response.data.length > 0) {
+        setSelectedPharmacy(response.data[0].id);
       }
-    };
-
-    loadData();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [navigate]);
+    } catch (err) {
+      console.error('Failed to load pharmacies:', err);
+    }
+  };
 
   const requestRefill = async (prescriptionId) => {
     if (!selectedPharmacy) {
@@ -71,16 +61,12 @@ function Prescriptions() {
     setRefillLoading({ ...refillLoading, [prescriptionId]: true });
 
     try {
-      await api.post(`/api/prescriptions/${prescriptionId}/refill/`, {
+      await api.post(`/prescriptions/${prescriptionId}/refill/`, {
         pharmacy: selectedPharmacy,
       });
       alert('Refill request submitted successfully!');
-      const [prescriptionsResponse, refillsResponse] = await Promise.all([
-        api.get('/api/prescriptions/me/'),
-        api.get('/api/prescriptions/refills/me/'),
-      ]);
-      setPrescriptions(prescriptionsResponse.data);
-      setRefills(refillsResponse.data);
+      fetchPrescriptions();
+      fetchRefills();
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to request refill');
     } finally {
@@ -134,7 +120,7 @@ function Prescriptions() {
 
   return (
     <div className="container mt-4">
-      <h1 className="mb-4"> My Prescriptions</h1>
+      <h1 className="mb-4">💊 My Prescriptions</h1>
 
       {/* Tabs */}
       <ul className="nav nav-tabs mb-4">
@@ -196,19 +182,19 @@ function Prescriptions() {
                         
                         {rx.pharmacy_name && (
                           <p className="mb-2 text-muted">
-                            <small> {rx.pharmacy_name}</small>
+                            <small>📍 {rx.pharmacy_name}</small>
                           </p>
                         )}
 
                         {rx.prescribed_by_name && (
                           <p className="mb-2 text-muted">
-                            <small> Prescribed by: {rx.prescribed_by_name}</small>
+                            <small>👨‍⚕️ Prescribed by: {rx.prescribed_by_name}</small>
                           </p>
                         )}
 
                         {rx.expiration_date && (
                           <p className="mb-2 text-muted">
-                            <small> Expires: {new Date(rx.expiration_date).toLocaleDateString()}</small>
+                            <small>📅 Expires: {new Date(rx.expiration_date).toLocaleDateString()}</small>
                           </p>
                         )}
                       </div>
@@ -241,7 +227,7 @@ function Prescriptions() {
                                 Requesting...
                               </>
                             ) : (
-                              ' Request Refill'
+                              '🔄 Request Refill'
                             )}
                           </button>
                         </div>

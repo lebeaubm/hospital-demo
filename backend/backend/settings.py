@@ -240,3 +240,14 @@ STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
 STRIPE_CONSULTATION_FEE = int(os.environ.get('STRIPE_CONSULTATION_FEE', '5000'))  # in cents (default: $50.00)
 STRIPE_CURRENCY = os.environ.get('STRIPE_CURRENCY', 'usd')
+
+# -------------------------------------------------------------------------
+# PAYMENT DEMO MODE
+# When True (default): payments are recorded in the database for tracking
+# but no real money is charged. The UI shows a "Demo Mode" warning.
+#
+# To enable real Stripe billing, set PAYMENT_DEMO_MODE=false in your .env
+# and ensure STRIPE_SECRET_KEY is configured. Then update BillPaymentCreateView
+# in views.py to create a Stripe PaymentIntent before calling serializer.save().
+# -------------------------------------------------------------------------
+PAYMENT_DEMO_MODE = os.environ.get('PAYMENT_DEMO_MODE', 'true').lower() == 'true'

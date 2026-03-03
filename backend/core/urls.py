@@ -64,6 +64,10 @@ from .views import (
     StaffRefillUpdateView,
     StaffSendEmailView,
     BillableServiceListView,
+    PatientMyDoctorsView,
+    StaffAllDoctorsView,
+    StaffPatientAssignedDoctorsView,
+    StaffPatientRemoveAssignedDoctorView,
 )
 from .payment_views import (
     CreateCheckoutSessionView,
@@ -129,6 +133,12 @@ urlpatterns = [
     # Staff user list (for patient message recipient selection)
     path("staff-users/", StaffUserListView.as_view(), name="staff_user_list"),
     path("staff/patients/", StaffPatientListView.as_view(), name="staff_patient_list"),
+
+    # ==================== DOCTOR ASSIGNMENT URLS ====================
+    path("my-doctors/", PatientMyDoctorsView.as_view(), name="my_doctors"),
+    path("staff/all-doctors/", StaffAllDoctorsView.as_view(), name="staff_all_doctors"),
+    path("staff/patients/<int:patient_id>/assigned-doctors/", StaffPatientAssignedDoctorsView.as_view(), name="staff_patient_assigned_doctors"),
+    path("staff/patients/<int:patient_id>/assigned-doctors/<int:doctor_id>/", StaffPatientRemoveAssignedDoctorView.as_view(), name="staff_patient_remove_assigned_doctor"),
 
     # ==================== MESSAGING URLS ====================
     # Patient message endpoints

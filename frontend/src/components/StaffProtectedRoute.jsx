@@ -2,7 +2,11 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 export default function StaffProtectedRoute({ children }) {
-  const { isAuthenticated, isStaff } = useAuth()
+  const { isAuthenticated, isStaff, authLoading } = useAuth()
+
+  if (authLoading) {
+    return null
+  }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />

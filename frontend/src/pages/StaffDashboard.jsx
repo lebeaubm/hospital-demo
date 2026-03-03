@@ -106,6 +106,37 @@ export default function StaffDashboard() {
     setSuccessMessage('')
   }
 
+  const handleQuickConfirm = async (appointment) => {
+    setSaving(true)
+    setError('')
+    setSuccessMessage('')
+    try {
+      await api.patch(`/api/staff/appointments/${appointment.id}/`, { status: 'CONFIRMED' })
+      setSuccessMessage(`Appointment #${appointment.id} confirmed!`)
+      fetchAppointments()
+    } catch (err) {
+      setError(err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleQuickCancel = async (appointment) => {
+    if (!window.confirm(`Cancel appointment #${appointment.id} for ${appointment.patient_name}?`)) return
+    setSaving(true)
+    setError('')
+    setSuccessMessage('')
+    try {
+      await api.patch(`/api/staff/appointments/${appointment.id}/`, { status: 'CANCELED' })
+      setSuccessMessage(`Appointment #${appointment.id} canceled.`)
+      fetchAppointments()
+    } catch (err) {
+      setError(err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const handleSave = async (id) => {
     setSaving(true)
     setError('')
@@ -390,7 +421,27 @@ export default function StaffDashboard() {
                             </button>
                           </div>
                         ) : (
-                          <div className="d-flex gap-1">
+                          <div className="d-flex gap-1 flex-wrap">
+                            {appointment.status === 'REQUESTED' && (
+                              <>
+                                <button
+                                  className="btn btn-sm btn-success"
+                                  onClick={() => handleQuickConfirm(appointment)}
+                                  disabled={saving}
+                                  title="Confirm appointment"
+                                >
+                                  ✓ Confirm
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-danger"
+                                  onClick={() => handleQuickCancel(appointment)}
+                                  disabled={saving}
+                                  title="Cancel appointment"
+                                >
+                                  ✗ Cancel
+                                </button>
+                              </>
+                            )}
                             <button
                               className="btn btn-sm btn-primary"
                               onClick={() => handleEdit(appointment)}

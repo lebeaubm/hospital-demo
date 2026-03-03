@@ -15,6 +15,7 @@ import Payments from './pages/Payments'
 import PaymentSuccess from './pages/PaymentSuccess'
 import PaymentCancel from './pages/PaymentCancel'
 import StaffDashboard from './pages/StaffDashboard'
+import StaffBilling from './pages/StaffBilling'
 import StaffEmails from './pages/StaffEmails'
 import StaffLabResults from './pages/StaffLabResults'
 import StaffMessages from './pages/StaffMessages'
@@ -105,6 +106,11 @@ function App() {
                       <li className="nav-item">
                         <NavLink className="nav-link" to="/staff/messages">
                            Messages
+                        </NavLink>
+                      </li>
+                      <li className="nav-item">
+                        <NavLink className="nav-link" to="/staff/billing">
+                          🧾 Billing
                         </NavLink>
                       </li>
                       <li className="nav-item">
@@ -297,6 +303,14 @@ function App() {
             element={
               <StaffProtectedRoute>
                 <StaffDashboard />
+              </StaffProtectedRoute>
+            }
+          />
+          <Route
+            path="/staff/billing"
+            element={
+              <StaffProtectedRoute>
+                <StaffBilling />
               </StaffProtectedRoute>
             }
           />

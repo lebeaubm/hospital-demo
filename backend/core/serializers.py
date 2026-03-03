@@ -48,7 +48,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 class DoctorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Doctor
-        fields = ("id", "name", "specialty", "bio", "years_experience", "location")
+        fields = ("id", "name", "specialty", "bio", "years_experience", "location", "is_accessible_to_all")
 
 
 class PatientProfileSerializer(serializers.ModelSerializer):
@@ -141,6 +141,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "patient_id",
             "patient_email",
             "patient_name",
+            "doctor",
             "doctor_id",
             "doctor_name",
             "doctor_specialty",
@@ -895,7 +896,7 @@ class BillPaymentSerializer(serializers.ModelSerializer):
             "notes",
             "created_at",
         )
-        read_only_fields = ("id", "payment_date", "created_at")
+        read_only_fields = ("id", "bill", "payment_date", "created_at")
 
 
 class BillSerializer(serializers.ModelSerializer):
@@ -945,6 +946,25 @@ class BillSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         )
+
+
+class StaffBillWriteSerializer(serializers.ModelSerializer):
+    """Writable serializer for staff creating/updating bills. patient is writable."""
+
+    class Meta:
+        model = Bill
+        fields = (
+            "id",
+            "patient",
+            "bill_number",
+            "related_appointment",
+            "status",
+            "patient_responsibility",
+            "insurance_covered",
+            "due_date",
+            "notes",
+        )
+        read_only_fields = ("id", "bill_number")
 
 
 # ==================== FAMILY MANAGEMENT SERIALIZERS ====================

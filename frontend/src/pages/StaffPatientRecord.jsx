@@ -34,8 +34,15 @@ function StaffPatientRecord() {
   const [previewDocument, setPreviewDocument] = useState(null)
   const [previewLoading, setPreviewLoading] = useState(false)
 
+  // Assigned doctors state
+  const [assignedDoctors, setAssignedDoctors] = useState([])
+  const [allDoctors, setAllDoctors] = useState([])
+  const [selectedNewDoctor, setSelectedNewDoctor] = useState('')
+  const [doctorsSaving, setDoctorsSaving] = useState(false)
+
   useEffect(() => {
     loadRecord()
+    loadAssignedDoctors()
   }, [patientId])
 
   const loadRecord = async () => {
@@ -48,6 +55,46 @@ function StaffPatientRecord() {
       setError(err.response?.data?.error || 'Failed to load patient record')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadAssignedDoctors = async () => {
+    try {
+      const [assignedRes, allRes] = await Promise.all([
+        api.get(`/api/staff/patients/${patientId}/assigned-doctors/`),
+        api.get('/api/staff/all-doctors/'),
+      ])
+      setAssignedDoctors(assignedRes.data)
+      setAllDoctors(allRes.data)
+    } catch (err) {
+      console.error('Failed to load doctors', err)
+    }
+  }
+
+  const assignDoctor = async () => {
+    if (!selectedNewDoctor) return
+    setDoctorsSaving(true)
+    try {
+      await api.post(`/api/staff/patients/${patientId}/assigned-doctors/`, { doctor_id: selectedNewDoctor })
+      setSelectedNewDoctor('')
+      await loadAssignedDoctors()
+      setSuccessMsg('Doctor assigned successfully.')
+      setTimeout(() => setSuccessMsg(null), 3000)
+    } catch (err) {
+      alert('Failed to assign doctor')
+    } finally {
+      setDoctorsSaving(false) }
+  }
+
+  const removeDoctor = async (doctorId) => {
+    if (!window.confirm('Remove this doctor from the patient?')) return
+    try {
+      await api.delete(`/api/staff/patients/${patientId}/assigned-doctors/${doctorId}/`)
+      await loadAssignedDoctors()
+      setSuccessMsg('Doctor removed.')
+      setTimeout(() => setSuccessMsg(null), 3000)
+    } catch (err) {
+      alert('Failed to remove doctor')
     }
   }
 
@@ -570,6 +617,85 @@ function StaffPatientRecord() {
           )}
         </div>
       </div>
+
+      {/* Assigned Doctors */}
+      <div className="card mb-4">
+        <div className="card-header">
+          <h5 className="mb-0">Assigned Doctors</h5>
+        </div>
+        <div className="card-body">
+          <p className="text-muted small mb-3">
+            Doctors listed here (plus any doctors marked "accessible to all") will appear in this
+            patient's appointment booking form.
+          </p>
+
+          {/* Current assignments */}
+          {assignedDoctors.length === 0 ? (
+            <p className="text-muted">No doctors specifically assigned yet.</p>
+          ) : (
+            <div className="table-responsive mb-3">
+              <table className="table table-sm align-middle">
+                <thead className="table-light">
+                  <tr>
+                    <th>Name</th>
+                    <th>Specialty</th>
+                    <th>Universal</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {assignedDoctors.map(doc => (
+                    <tr key={doc.id}>
+                      <td>{doc.name}</td>
+                      <td>{doc.specialty}</td>
+                      <td>
+                        {doc.is_accessible_to_all
+                          ? <span className="badge bg-info">All patients</span>
+                          : <span className="badge bg-secondary">Assigned only</span>}
+                      </td>
+                      <td>
+                        {!doc.is_accessible_to_all && (
+                          <button
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => removeDoctor(doc.id)}
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Assign a new doctor */}
+          <div className="d-flex gap-2 align-items-center">
+            <select
+              className="form-select form-select-sm"
+              style={{ maxWidth: 300 }}
+              value={selectedNewDoctor}
+              onChange={e => setSelectedNewDoctor(e.target.value)}
+            >
+              <option value="">-- Add a doctor --</option>
+              {allDoctors
+                .filter(d => !d.is_accessible_to_all && !assignedDoctors.find(a => a.id === d.id))
+                .map(d => (
+                  <option key={d.id} value={d.id}>{d.name} ({d.specialty})</option>
+                ))}
+            </select>
+            <button
+              className="btn btn-sm btn-success"
+              onClick={assignDoctor}
+              disabled={!selectedNewDoctor || doctorsSaving}
+            >
+              {doctorsSaving ? 'Assigning…' : 'Assign'}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Document Preview Modal */}
       {previewDocument && (
         <div

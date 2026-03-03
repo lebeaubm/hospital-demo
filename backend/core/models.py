@@ -60,6 +60,10 @@ class Doctor(models.Model):
     bio = models.TextField(blank=True)
     years_experience = models.PositiveIntegerField(default=0)
     location = models.CharField(max_length=200, blank=True, default='')
+    is_accessible_to_all = models.BooleanField(
+        default=False,
+        help_text="If true, all patients can book this doctor regardless of assignment."
+    )
 
     def __str__(self):
         return f"{self.name} ({self.specialty})"
@@ -74,6 +78,12 @@ class PatientProfile(models.Model):
     emergency_contact_phone = models.CharField(max_length=50, blank=True)
     insurance_provider = models.CharField(max_length=255, blank=True)
     insurance_policy_number = models.CharField(max_length=255, blank=True)
+    assigned_doctors = models.ManyToManyField(
+        'Doctor',
+        blank=True,
+        related_name='assigned_patients',
+        help_text="Doctors this patient is allowed to book appointments with."
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -806,6 +816,21 @@ class Bill(models.Model):
 
     def __str__(self):
         return f"Bill {self.bill_number} - {self.patient.email}"
+
+    def generate_bill_number(self):
+        """Generate a unique bill number like BILL-20260303-000042."""
+        from datetime import datetime
+        timestamp = datetime.now().strftime("%Y%m%d")
+        return f"BILL-{timestamp}-{self.pk:06d}"
+
+    def save(self, *args, **kwargs):
+        if not self.bill_number:
+            # Save first to get a PK, then generate the number
+            super().save(*args, **kwargs)
+            self.bill_number = self.generate_bill_number()
+            super().save(update_fields=["bill_number"])
+        else:
+            super().save(*args, **kwargs)
 
     def calculate_totals(self):
         """Recalculate bill totals from line items."""

@@ -13,7 +13,7 @@ function LabResults() {
 
   const fetchLabOrders = async () => {
     try {
-      const response = await api.get('/api/lab-orders/me/');
+      const response = await api.get('/lab-orders/me/');
       setLabOrders(response.data);
     } catch (err) {
       setError('Failed to load lab results');
@@ -99,7 +99,7 @@ function LabResults() {
 
   return (
     <div className="container mt-4">
-      <h1 className="mb-4"> Lab Results</h1>
+      <h1 className="mb-4">🔬 Lab Results</h1>
 
       {labOrders.length === 0 ? (
         <div className="alert alert-info">No lab orders found</div>
@@ -142,7 +142,7 @@ function LabResults() {
                   
                   {order.has_result && (
                     <div className="mt-2">
-                      <span className="badge bg-success"> Results Available</span>
+                      <span className="badge bg-success">✓ Results Available</span>
                     </div>
                   )}
                 </button>
@@ -222,7 +222,7 @@ function LabResults() {
 
                       {selectedOrder.result.is_critical && (
                         <div className="alert alert-danger">
-                          <strong> Critical Result</strong><br />
+                          <strong>⚠️ Critical Result</strong><br />
                           This result requires immediate attention. Contact your healthcare provider.
                         </div>
                       )}
@@ -270,7 +270,7 @@ function LabResults() {
                             rel="noopener noreferrer"
                             className="btn btn-primary"
                           >
-                             Download PDF Report
+                            📄 Download PDF Report
                           </a>
                         </div>
                       )}

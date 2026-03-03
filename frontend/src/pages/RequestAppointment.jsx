@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import ErrorAlert from '../components/ErrorAlert'
@@ -8,11 +8,21 @@ export default function RequestAppointment() {
     requested_start: '',
     reason: '',
     patient_notes: '',
+    doctor: '',
   })
+  const [doctors, setDoctors] = useState([])
+  const [loadingDoctors, setLoadingDoctors] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState('')
   const navigate = useNavigate()
+
+  useEffect(() => {
+    api.get('/api/my-doctors/')
+      .then(res => setDoctors(res.data.results || res.data))
+      .catch(console.error)
+      .finally(() => setLoadingDoctors(false))
+  }, [])
 
   const handleChange = (e) => {
     setFormData({
@@ -56,6 +66,36 @@ export default function RequestAppointment() {
       </p>
 
       <form onSubmit={handleSubmit} className="card shadow-sm p-4">
+        <div className="mb-3">
+          <label className="form-label" htmlFor="doctor">
+            Doctor *
+          </label>
+          {loadingDoctors ? (
+            <p className="text-muted small">Loading available doctors…</p>
+          ) : doctors.length === 0 ? (
+            <div className="alert alert-warning py-2">
+              No doctors have been assigned to your account yet. Please contact staff.
+            </div>
+          ) : (
+            <select
+              className="form-select"
+              id="doctor"
+              name="doctor"
+              value={formData.doctor}
+              onChange={handleChange}
+              required
+            >
+              <option value="">-- Select a doctor --</option>
+              {doctors.map(d => (
+                <option key={d.id} value={d.id}>
+                  {d.name} &mdash; {d.specialty}
+                  {d.is_accessible_to_all ? ' (General)' : ''}
+                </option>
+              ))}
+            </select>
+          )}
+        </div>
+
         <div className="mb-3">
           <label className="form-label" htmlFor="requested_start">
             Preferred Date & Time *

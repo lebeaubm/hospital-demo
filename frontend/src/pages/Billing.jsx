@@ -1,15 +1,241 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
 
-function Billing() {
+const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
+const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
+
+// ── Payment modal as its own component so useStripe/useElements hooks work ──
+function PaymentModal({ selectedBill, onClose, onSuccess }) {
+  const stripe = useStripe();
+  const elements = useElements();
+
+  const [paymentAmount, setPaymentAmount] = useState(selectedBill.balance_due);
+  const [paymentMethod, setPaymentMethod] = useState('CREDIT_CARD');
+  const [useStripeMode, setUseStripeMode] = useState(false);
+  const [cardComplete, setCardComplete] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [cardError, setCardError] = useState('');
+
+  const stripeAvailable = !!stripePromise;
+
+  const submitPayment = async (e) => {
+    e.preventDefault();
+    if (!selectedBill || !paymentAmount) return;
+    setSubmitting(true);
+    setCardError('');
+
+    try {
+      let stripePaymentMethodId = null;
+
+      if (useStripeMode) {
+        if (!stripe || !elements) {
+          setCardError('Stripe is not ready. Please wait and try again.');
+          setSubmitting(false);
+          return;
+        }
+        const cardElement = elements.getElement(CardElement);
+        const { error, paymentMethod: pm } = await stripe.createPaymentMethod({
+          type: 'card',
+          card: cardElement,
+        });
+        if (error) {
+          setCardError(error.message);
+          setSubmitting(false);
+          return;
+        }
+        stripePaymentMethodId = pm.id;
+      }
+
+      const payload = {
+        amount: parseFloat(paymentAmount),
+        payment_method: paymentMethod,
+      };
+      if (stripePaymentMethodId) {
+        payload.stripe_payment_method_id = stripePaymentMethodId;
+      }
+
+      await api.post(`/api/bills/${selectedBill.id}/payments/`, payload);
+      onSuccess(selectedBill.id);
+    } catch (err) {
+      const msg = err.response?.data?.error
+        || (err.response?.data && JSON.stringify(err.response.data))
+        || 'Failed to record payment';
+      setCardError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+      <div className="modal-dialog">
+        <div className="modal-content">
+          <div className="modal-header">
+            <h5 className="modal-title">💳 Make Payment</h5>
+            <button type="button" className="btn-close" onClick={onClose} />
+          </div>
+          <form onSubmit={submitPayment}>
+            <div className="modal-body">
+
+              {/* Mode banner */}
+              {useStripeMode ? (
+                <div className="alert alert-success py-2">
+                  <strong>🔒 Stripe Active</strong> — your card will be charged in real time.
+                </div>
+              ) : (
+                <div className="alert alert-warning py-2">
+                  <small><strong>⚠ Demo Mode:</strong> No real charge will be made. Payment is recorded for tracking only.</small>
+                </div>
+              )}
+
+              {/* Bill summary */}
+              <div className="alert alert-info py-2">
+                <strong>Bill:</strong> {selectedBill.bill_number}<br />
+                <strong>Balance Due:</strong> ${parseFloat(selectedBill.balance_due).toFixed(2)}
+              </div>
+
+              {/* Amount */}
+              <div className="mb-3">
+                <label className="form-label">Payment Amount</label>
+                <div className="input-group">
+                  <span className="input-group-text">$</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="form-control"
+                    value={paymentAmount}
+                    onChange={(e) => setPaymentAmount(e.target.value)}
+                    max={selectedBill.balance_due}
+                    required
+                  />
+                </div>
+                <small className="text-muted">Max: ${parseFloat(selectedBill.balance_due).toFixed(2)}</small>
+              </div>
+
+              {/* Payment method selector buttons */}
+              <div className="mb-3">
+                <label className="form-label fw-semibold">Payment Method</label>
+                <div className="d-flex gap-2">
+                  <button
+                    type="button"
+                    className={`btn flex-fill ${!useStripeMode ? 'btn-primary' : 'btn-outline-secondary'}`}
+                    onClick={() => { setUseStripeMode(false); setCardError(''); }}
+                  >
+                    📋 Demo Payment
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn flex-fill ${useStripeMode ? 'btn-success' : 'btn-outline-success'}`}
+                    onClick={() => {
+                      if (!stripeAvailable) {
+                        setCardError('Stripe is not configured. Add VITE_STRIPE_PUBLISHABLE_KEY to .env to enable.');
+                        return;
+                      }
+                      setUseStripeMode(true);
+                      setCardError('');
+                    }}
+                  >
+                    🔒 Pay with Stripe
+                  </button>
+                </div>
+              </div>
+
+              {/* Stripe card entry */}
+              {useStripeMode ? (
+                <div className="mb-3">
+                  <label className="form-label">Card Details</label>
+
+                  {/* test card hint */}
+                  <div className="alert alert-secondary py-2 mb-2">
+                    <small>
+                      <strong>Test card:</strong>{' '}
+                      <code>4242 4242 4242 4242</code> &nbsp;|&nbsp;
+                      Exp: <code>12/34</code> &nbsp;|&nbsp;
+                      CVC: <code>123</code> &nbsp;|&nbsp;
+                      ZIP: <code>00000</code>
+                    </small>
+                  </div>
+
+                  <div
+                    className="form-control"
+                    style={{ padding: '10px 12px', minHeight: '42px' }}
+                  >
+                    <CardElement
+                      options={{
+                        style: {
+                          base: {
+                            fontSize: '16px',
+                            color: 'var(--bs-body-color, #212529)',
+                            '::placeholder': { color: '#aab7c4' },
+                          },
+                          invalid: { color: '#dc3545' },
+                        },
+                        hidePostalCode: false,
+                      }}
+                      onChange={(e) => {
+                        setCardComplete(e.complete);
+                        setCardError(e.error?.message || '');
+                      }}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="mb-3">
+                  <label className="form-label">Demo Payment Method</label>
+                  <select
+                    className="form-select"
+                    value={paymentMethod}
+                    onChange={(e) => setPaymentMethod(e.target.value)}
+                    required
+                  >
+                    <option value="CREDIT_CARD">Credit Card</option>
+                    <option value="DEBIT_CARD">Debit Card</option>
+                    <option value="BANK_TRANSFER">Bank Transfer</option>
+                    <option value="CHECK">Check</option>
+                  </select>
+                </div>
+              )}
+
+              {cardError && (
+                <div className="alert alert-danger py-2">
+                  <small>{cardError}</small>
+                </div>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={onClose}>
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={submitting || (useStripeMode && (!stripe || !cardComplete))}
+              >
+                {submitting
+                  ? 'Processing...'
+                  : useStripeMode
+                    ? '🔒 Charge Card'
+                    : 'Submit Payment'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Billing component, wrapped in Elements provider ──────────────────────
+function BillingContent() {
   const [bills, setBills] = useState([]);
   const [selectedBill, setSelectedBill] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [paymentAmount, setPaymentAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('CREDIT_CARD');
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
+  const [successMsg, setSuccessMsg] = useState('');
 
   useEffect(() => {
     fetchBills();
@@ -39,28 +265,14 @@ function Billing() {
     return badges[status] || 'secondary';
   };
 
-  const submitPayment = async (e) => {
-    e.preventDefault();
-    if (!selectedBill || !paymentAmount) return;
-
-    setSubmitting(true);
+  const handlePaymentSuccess = async (billId) => {
+    setShowPaymentModal(false);
+    setSuccessMsg('Payment recorded successfully!');
+    fetchBills();
     try {
-      await api.post(`/bills/${selectedBill.id}/payments/`, {
-        amount: parseFloat(paymentAmount),
-        payment_method: paymentMethod,
-      });
-      alert('Payment recorded successfully!');
-      setShowPaymentModal(false);
-      setPaymentAmount('');
-      fetchBills();
-      // Refresh selected bill
-      const response = await api.get(`/bills/${selectedBill.id}/`);
+      const response = await api.get(`/api/bills/${billId}/`);
       setSelectedBill(response.data);
-    } catch (err) {
-      alert(err.response?.data?.error || 'Failed to record payment');
-    } finally {
-      setSubmitting(false);
-    }
+    } catch { /* non-critical */ }
   };
 
   if (loading) {
@@ -83,12 +295,19 @@ function Billing() {
     );
   }
 
+
   const unpaidBills = bills.filter((bill) => bill.balance_due > 0);
   const totalBalance = unpaidBills.reduce((sum, bill) => sum + parseFloat(bill.balance_due), 0);
 
   return (
     <div className="container mt-4">
-      <h1 className="mb-4"> Billing & Payments</h1>
+      <h1 className="mb-4">💰 Billing & Payments</h1>
+      {successMsg && (
+        <div className="alert alert-success alert-dismissible">
+          {successMsg}
+          <button type="button" className="btn-close" onClick={() => setSuccessMsg('')} />
+        </div>
+      )}
 
       {/* Summary Cards */}
       <div className="row mb-4">
@@ -310,12 +529,9 @@ function Billing() {
                   <div className="card-footer">
                     <button
                       className="btn btn-primary w-100"
-                      onClick={() => {
-                        setPaymentAmount(selectedBill.balance_due);
-                        setShowPaymentModal(true);
-                      }}
+                      onClick={() => setShowPaymentModal(true)}
                     >
-                       Make Payment
+                      💳 Make Payment
                     </button>
                   </div>
                 )}
@@ -331,84 +547,20 @@ function Billing() {
 
       {/* Payment Modal */}
       {showPaymentModal && selectedBill && (
-        <div
-          className="modal show d-block"
-          style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-        >
-          <div className="modal-dialog">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h5 className="modal-title">Make Payment</h5>
-                <button
-                  type="button"
-                  className="btn-close"
-                  onClick={() => setShowPaymentModal(false)}
-                />
-              </div>
-              <form onSubmit={submitPayment}>
-                <div className="modal-body">
-                  <div className="alert alert-info">
-                    <strong>Bill:</strong> {selectedBill.bill_number}<br />
-                    <strong>Balance Due:</strong> ${parseFloat(selectedBill.balance_due).toFixed(2)}
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label">Payment Amount</label>
-                    <div className="input-group">
-                      <span className="input-group-text">$</span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        className="form-control"
-                        value={paymentAmount}
-                        onChange={(e) => setPaymentAmount(e.target.value)}
-                        max={selectedBill.balance_due}
-                        required
-                      />
-                    </div>
-                    <small className="text-muted">
-                      Maximum: ${parseFloat(selectedBill.balance_due).toFixed(2)}
-                    </small>
-                  </div>
-
-                  <div className="mb-3">
-                    <label className="form-label">Payment Method</label>
-                    <select
-                      className="form-select"
-                      value={paymentMethod}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      required
-                    >
-                      <option value="CREDIT_CARD">Credit Card</option>
-                      <option value="DEBIT_CARD">Debit Card</option>
-                      <option value="BANK_TRANSFER">Bank Transfer</option>
-                      <option value="CHECK">Check</option>
-                    </select>
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    onClick={() => setShowPaymentModal(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    className="btn btn-primary"
-                    disabled={submitting}
-                  >
-                    {submitting ? 'Processing...' : 'Submit Payment'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
+        <PaymentModal
+          selectedBill={selectedBill}
+          onClose={() => setShowPaymentModal(false)}
+          onSuccess={handlePaymentSuccess}
+        />
       )}
     </div>
   );
 }
 
-export default Billing;
+export default function Billing() {
+  return (
+    <Elements stripe={stripePromise}>
+      <BillingContent />
+    </Elements>
+  );
+}

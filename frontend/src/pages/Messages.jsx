@@ -12,14 +12,11 @@ function Messages() {
   const [showNewThreadModal, setShowNewThreadModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
-  const [staffUsers, setStaffUsers] = useState([]);
-  const [selectedStaff, setSelectedStaff] = useState('');
   const navigate = useNavigate();
   const { threadId } = useParams();
 
   useEffect(() => {
     fetchThreads();
-    fetchStaffUsers();
   }, []);
 
   useEffect(() => {
@@ -30,7 +27,7 @@ function Messages() {
 
   const fetchThreads = async () => {
     try {
-      const response = await api.get('/api/messages/threads/');
+      const response = await api.get('/messages/threads/');
       setThreads(response.data);
     } catch (err) {
       console.error('Failed to load message threads:', err);
@@ -39,26 +36,17 @@ function Messages() {
     }
   };
 
-  const fetchStaffUsers = async () => {
-    try {
-      const response = await api.get('/api/staff-users/');
-      setStaffUsers(response.data);
-      if (response.data.length > 0) {
-        setSelectedStaff(response.data[0].id);
-      }
-    } catch (err) {
-      console.error('Failed to load staff users:', err);
-    }
-  };
-
   const loadThread = async (id) => {
     try {
-      const response = await api.get(`/api/messages/threads/${id}/`);
-      setSelectedThread(response.data);
-      setMessages(response.data.messages || []);
-      
-      // Refresh threads to update unread count
-      fetchThreads();
+      const thread = threads.find((t) => t.id === id);
+      if (thread) {
+        setSelectedThread(thread);
+        const response = await api.get(`/messages/threads/${id}/`);
+        setMessages(response.data.messages || []);
+        
+        // Refresh threads to update unread count
+        fetchThreads();
+      }
     } catch (err) {
       console.error('Failed to load thread:', err);
     }
@@ -70,7 +58,7 @@ function Messages() {
 
     setSending(true);
     try {
-      await api.post(`/api/messages/threads/${selectedThread.id}/messages/`, {
+      await api.post(`/messages/threads/${selectedThread.id}/messages/`, {
         content: newMessage,
       });
       setNewMessage('');
@@ -86,21 +74,16 @@ function Messages() {
   const createThread = async (e) => {
     e.preventDefault();
     if (!newThreadSubject.trim() || !newThreadMessage.trim()) return;
-    if (!selectedStaff) {
-      alert('Please select a staff member to message');
-      return;
-    }
 
     setSending(true);
     try {
-      const threadResponse = await api.post('/api/messages/threads/create/', {
+      const threadResponse = await api.post('/messages/threads/create/', {
         subject: newThreadSubject,
-        staff: selectedStaff,
       });
       
       const newThreadId = threadResponse.data.id;
       
-      await api.post(`/api/messages/threads/${newThreadId}/messages/`, {
+      await api.post(`/messages/threads/${newThreadId}/messages/`, {
         content: newThreadMessage,
       });
       
@@ -108,7 +91,7 @@ function Messages() {
       setNewThreadSubject('');
       setNewThreadMessage('');
       fetchThreads();
-      navigate(`/portal/messages/${newThreadId}`);
+      navigate(`/messages/${newThreadId}`);
     } catch (err) {
       alert('Failed to create thread');
       console.error(err);
@@ -135,12 +118,12 @@ function Messages() {
         {/* Thread List Sidebar */}
         <div className="col-md-4 col-lg-3">
           <div className="d-flex justify-content-between align-items-center mb-3">
-            <h2> Messages</h2>
+            <h2>💬 Messages</h2>
             <button
               className="btn btn-primary btn-sm"
               onClick={() => setShowNewThreadModal(true)}
             >
-               New
+              ✉️ New
             </button>
           </div>
 
@@ -155,7 +138,7 @@ function Messages() {
                     selectedThread?.id === thread.id ? 'active' : ''
                   }`}
                   onClick={() => {
-                    navigate(`/portal/messages/${thread.id}`);
+                    navigate(`/messages/${thread.id}`);
                   }}
                 >
                   <div className="d-flex w-100 justify-content-between">
@@ -176,7 +159,7 @@ function Messages() {
                   
                   {thread.staff_name && (
                     <p className="mb-1 small">
-                       {thread.staff_name}
+                      👨‍⚕️ {thread.staff_name}
                     </p>
                   )}
                   
@@ -231,7 +214,7 @@ function Messages() {
                         <div className="card-body p-3">
                           <div className="mb-2">
                             <strong>
-                              {message.sender_role === 'PATIENT' ? '' : ''}{' '}
+                              {message.sender_role === 'PATIENT' ? '👤' : '👨‍⚕️'}{' '}
                               {message.sender_name}
                             </strong>
                             <br />
@@ -268,7 +251,7 @@ function Messages() {
                       {sending ? (
                         <span className="spinner-border spinner-border-sm" />
                       ) : (
-                        ' Send'
+                        '📤 Send'
                       )}
                     </button>
                   </div>
@@ -301,22 +284,6 @@ function Messages() {
               </div>
               <form onSubmit={createThread}>
                 <div className="modal-body">
-                  <div className="mb-3">
-                    <label className="form-label">Send To</label>
-                    <select
-                      className="form-select"
-                      value={selectedStaff}
-                      onChange={(e) => setSelectedStaff(e.target.value)}
-                      required
-                    >
-                      <option value="">-- Select staff member --</option>
-                      {staffUsers.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name} ({s.role})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
                   <div className="mb-3">
                     <label className="form-label">Subject</label>
                     <input

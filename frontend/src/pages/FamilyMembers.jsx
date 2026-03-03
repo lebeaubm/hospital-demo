@@ -25,7 +25,7 @@ function FamilyMembers() {
 
   const fetchFamilyMembers = async () => {
     try {
-      const response = await api.get('/api/family-members/');
+      const response = await api.get('/family-members/');
       setFamilyMembers(response.data);
     } catch (err) {
       setError('Failed to load family members');
@@ -63,10 +63,10 @@ function FamilyMembers() {
 
     try {
       if (editingMember) {
-        await api.patch(`/api/family-members/${editingMember.id}/`, formData);
+        await api.patch(`/family-members/${editingMember.id}/`, formData);
         alert('Family member updated successfully!');
       } else {
-        await api.post('/api/family-members/create/', formData);
+        await api.post('/family-members/create/', formData);
         alert('Family member added successfully!');
       }
       fetchFamilyMembers();
@@ -142,7 +142,7 @@ function FamilyMembers() {
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1> Family Members</h1>
+        <h1>👨‍👩‍👧‍👦 Family Members</h1>
         <button
           className="btn btn-primary"
           onClick={() => {
@@ -150,7 +150,7 @@ function FamilyMembers() {
             setShowAddModal(true);
           }}
         >
-           Add Family Member
+          ➕ Add Family Member
         </button>
       </div>
 
@@ -243,13 +243,13 @@ function FamilyMembers() {
                     className="btn btn-sm btn-outline-primary me-2"
                     onClick={() => handleEdit(member)}
                   >
-                     Edit
+                    ✏️ Edit
                   </button>
                   <button
                     className="btn btn-sm btn-outline-danger"
                     onClick={() => handleDelete(member.id)}
                   >
-                     Remove
+                    🗑️ Remove
                   </button>
                 </div>
               </div>
