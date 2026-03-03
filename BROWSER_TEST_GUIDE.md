@@ -33,7 +33,9 @@ npm run dev
 |---|---|---|
 | Patient | `patient@example.com` | `Pass1234!` |
 | Staff | `staff@example.com` | `StaffPass123!` |
-| Admin | `admin@example.com` | (check Django admin) |
+| Admin | `lebeaubm@yahoo.com` | `Admin123!` |
+| Test Patient | `jane.christ@testpatient.com` | `JaneTest123!` |
+| Test Staff | `jack.christ@teststaff.com` | `JackStaff123!` |
 
 ---
 
