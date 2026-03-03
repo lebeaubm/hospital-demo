@@ -15,7 +15,16 @@ export default function AdminUserManagement() {
       setUsers(data)
       setError(null)
     } catch (err) {
-      setError('Failed to load users. Make sure you are logged in as an admin.')
+      const status = err.response?.status
+      if (status === 403) {
+        setError('Access denied (403). Your account does not have admin privileges.')
+      } else if (status === 401) {
+        setError('Not authenticated (401). Please log out and log back in.')
+      } else if (!err.response) {
+        setError('Cannot reach the backend server. Make sure it is running on http://127.0.0.1:8000.')
+      } else {
+        setError(`Error ${status}: ${err.response?.data?.detail || err.message}`)
+      }
     } finally {
       setLoading(false)
     }
