@@ -12,9 +12,9 @@ services:
       - key: DEBUG
         value: False
       - key: ALLOWED_HOSTS
-        sync: false
+        value: hospital-demo-api.onrender.com
       - key: CORS_ALLOWED_ORIGINS
-        sync: false
+        value: https://hospital-demo-frontend.onrender.com
       - key: DATABASE_URL
         fromDatabase:
           name: hospital-demo-db
@@ -34,7 +34,7 @@ services:
     staticPublishPath: ./dist
     envVars:
       - key: VITE_API_URL
-        sync: false
+        value: https://hospital-demo-api.onrender.com
       - key: VITE_STRIPE_PUBLISHABLE_KEY
         sync: false
     routes:
