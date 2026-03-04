@@ -1,0 +1,78 @@
+HOSPITAL DEMO — WORKING FEATURES CHECKLIST (EXCLUDING LOGIN/REGISTER)
+=====================================================================
+
+Use this as a quick validation list for what should be working in the app.
+
+PUBLIC FEATURES
+---------------
+[ ] Home page loads
+[ ] Services page loads
+[ ] Contact page loads
+[ ] Doctors list loads with provider info
+[ ] Doctor detail page loads for selected doctor
+
+PATIENT PORTAL FEATURES
+-----------------------
+[ ] Profile view/edit works and saves changes
+[ ] Appointments list loads
+[ ] New appointment request can be created
+[ ] Appointment detail can be viewed
+[ ] Requested appointment can be canceled
+[ ] Medical record page loads
+[ ] Shared notes are visible to patient
+[ ] Patient can upload medical documents
+[ ] Patient can download own documents
+[ ] Prescriptions list loads
+[ ] Refill request can be submitted
+[ ] Refill status is visible
+[ ] Lab orders/results list loads
+[ ] Lab result detail values are viewable
+[ ] Messaging thread list loads
+[ ] New message thread can be created
+[ ] Replies can be sent in existing thread
+[ ] Billing summary and bill list load
+[ ] Bill detail with line items loads
+[ ] Stripe checkout redirects for payment
+[ ] Payment success/cancel return flow works
+[ ] Payment history page loads
+[ ] Invoice download works for paid payments
+[ ] Family members list loads
+[ ] Family member can be added/updated/removed
+
+STAFF FEATURES
+--------------
+[ ] Staff dashboard loads all appointments
+[ ] Staff can update appointment status/schedule/notes
+[ ] Staff can open patient full record
+[ ] Staff can edit patient medical summary fields
+[ ] Staff can add clinical notes
+[ ] Staff can toggle note visibility (staff-only/shared)
+[ ] Staff can delete patient documents
+[ ] Staff prescriptions workflow is usable
+[ ] Staff can process refill requests
+[ ] Staff lab order workflow is usable
+[ ] Staff can enter/update lab results
+[ ] Staff billing workflow is usable
+[ ] Staff can create/update bills and line items
+[ ] Staff email logs page loads
+[ ] Staff can open email log detail
+[ ] Staff can send custom email
+
+ADMIN FEATURES
+--------------
+[ ] Admin user management page loads
+[ ] Admin can update user roles
+
+CROSS-CUTTING APP BEHAVIOR
+--------------------------
+[ ] Protected routes block unauthorized users
+[ ] Role-based navigation/menu rendering works
+[ ] Theme toggle (light/dark) works and persists
+[ ] Loading states appear on data-fetch pages
+[ ] Error states are shown gracefully when API fails
+[ ] Empty states are shown when no data exists
+
+NOTES
+-----
+- Authentication pages (Login/Register) are intentionally excluded from this checklist.
+- Optional: track pass/fail/date for each item during browser testing.
