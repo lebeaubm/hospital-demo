@@ -104,6 +104,33 @@ class StaffProfile(models.Model):
         return f"StaffProfile for {self.user.email}"
 
 
+def career_resume_upload_path(instance, filename):
+    ext = os.path.splitext(filename)[1]
+    random_name = f"{uuid.uuid4().hex}{ext}"
+    return f"career_resumes/{random_name}"
+
+
+class JobApplication(models.Model):
+    full_name = models.CharField(max_length=255)
+    email = models.EmailField()
+    phone_number = models.CharField(max_length=50, blank=True)
+    position = models.CharField(max_length=255)
+    cover_letter = models.TextField(blank=True)
+    resume = models.FileField(upload_to=career_resume_upload_path, blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
+
+    def __str__(self):
+        return f"Job Application #{self.id} - {self.full_name} ({self.position})"
+
+    def delete(self, *args, **kwargs):
+        if self.resume:
+            self.resume.delete(save=False)
+        super().delete(*args, **kwargs)
+
+
 class Appointment(models.Model):
     class Status(models.TextChoices):
         REQUESTED = "REQUESTED", "Requested"

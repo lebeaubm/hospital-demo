@@ -1,12 +1,18 @@
-import { NavLink, Route, Routes, useNavigate } from 'react-router-dom'
+import { Navigate, NavLink, Route, Routes, useNavigate } from 'react-router-dom'
 import './App.css'
 import Contact from './pages/Contact'
+import About from './pages/About'
+import Careers from './pages/Careers'
 import DoctorDetail from './pages/DoctorDetail'
 import DoctorsList from './pages/DoctorsList'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import Services from './pages/Services'
+import ServiceCardiology from './pages/ServiceCardiology'
+import ServiceOrthopedics from './pages/ServiceOrthopedics'
+import ServicePediatrics from './pages/ServicePediatrics'
+import ServicePrimaryCare from './pages/ServicePrimaryCare'
 import Profile from './pages/Profile'
 import Appointments from './pages/Appointments'
 import RequestAppointment from './pages/RequestAppointment'
@@ -18,14 +24,14 @@ import StaffDashboard from './pages/StaffDashboard'
 import StaffBilling from './pages/StaffBilling'
 import StaffEmails from './pages/StaffEmails'
 import StaffLabResults from './pages/StaffLabResults'
-import StaffMessages from './pages/StaffMessages'
 import StaffPatientRecord from './pages/StaffPatientRecord'
 import Prescriptions from './pages/Prescriptions'
-import Messages from './pages/Messages'
 import LabResults from './pages/LabResults'
 import Billing from './pages/Billing'
 import FamilyMembers from './pages/FamilyMembers'
+import AdminApplications from './pages/AdminApplications'
 import AdminUserManagement from './pages/AdminUserManagement'
+import AdminProtectedRoute from './components/AdminProtectedRoute'
 import ProtectedRoute from './components/ProtectedRoute'
 import StaffProtectedRoute from './components/StaffProtectedRoute'
 import ThemeToggle from './components/ThemeToggle'
@@ -33,7 +39,7 @@ import { useAuth } from './context/AuthContext'
 import { clearTokens } from './api/client'
 
 function App() {
-  const { isAuthenticated, isStaff, user, logout } = useAuth()
+  const { isAuthenticated, isStaff, isGuest, user, logout } = useAuth()
   const navigate = useNavigate()
 
   const handleLogout = () => {
@@ -63,21 +69,31 @@ function App() {
           <div className="collapse navbar-collapse" id="mainNav">
             <ul className="navbar-nav ms-auto">
               <li className="nav-item">
+                <NavLink className="nav-link" to="/">
+                  Home
+                </NavLink>
+              </li>
+              <li className="nav-item">
+                <NavLink className="nav-link" to="/about">
+                  About Us
+                </NavLink>
+              </li>
+              <li className="nav-item">
                 <NavLink className="nav-link" to="/services">
                   Services
                 </NavLink>
               </li>
               <li className="nav-item">
-                <NavLink className="nav-link" to="/doctors">
-                  Doctors
+                <NavLink className="nav-link" to="/careers">
+                  Career
                 </NavLink>
               </li>
               <li className="nav-item">
                 <NavLink className="nav-link" to="/contact">
-                  Contact
+                  Contact Us
                 </NavLink>
               </li>
-              {!isAuthenticated ? (
+              {isGuest ? (
                 <>
                   <li className="nav-item">
                     <NavLink className="nav-link" to="/login">
@@ -86,121 +102,118 @@ function App() {
                   </li>
                   <li className="nav-item">
                     <NavLink className="nav-link" to="/register">
-                      Register
+                      Sign Up
                     </NavLink>
                   </li>
                 </>
               ) : (
-                <>
-                  {isStaff ? (
+                <li className="nav-item dropdown">
+                  <a
+                    className="nav-link dropdown-toggle"
+                    href="#"
+                    id="moreDropdown"
+                    role="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false"
+                  >
+                      {isStaff ? 'More' : 'Patients Info'}
+                  </a>
+                  <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="moreDropdown">
+                    <li>
+                      <NavLink className="dropdown-item" to="/doctors">
+                        Doctors
+                      </NavLink>
+                    </li>
+
+                    {isStaff ? (
                     <>
-                      <li className="nav-item">
-                        <NavLink className="nav-link" to="/staff/dashboard">
+                      <li>
+                        <NavLink className="dropdown-item" to="/staff/dashboard">
                           Staff Dashboard
                         </NavLink>
                       </li>
-                      <li className="nav-item">
-                        <NavLink className="nav-link" to="/staff/lab-results">
-                           Lab Results
+                      <li>
+                        <NavLink className="dropdown-item" to="/staff/lab-results">
+                          Lab Results
                         </NavLink>
                       </li>
-                      <li className="nav-item">
-                        <NavLink className="nav-link" to="/staff/messages">
-                           Messages
+                      <li>
+                        <NavLink className="dropdown-item" to="/staff/billing">
+                          Billing
                         </NavLink>
                       </li>
-                      <li className="nav-item">
-                        <NavLink className="nav-link" to="/staff/billing">
-                          🧾 Billing
-                        </NavLink>
-                      </li>
-                      <li className="nav-item">
-                        <NavLink className="nav-link" to="/staff/emails">
+                      <li>
+                        <NavLink className="dropdown-item" to="/staff/emails">
                           Email Logs
                         </NavLink>
                       </li>
                       {user?.role === 'ADMIN' && (
-                        <li className="nav-item">
-                          <NavLink className="nav-link" to="/admin/users">
-                            👑 User Management
-                          </NavLink>
-                        </li>
+                        <>
+                          <li>
+                            <NavLink className="dropdown-item" to="/admin/users">
+                              User Management
+                            </NavLink>
+                          </li>
+                          <li>
+                            <NavLink className="dropdown-item" to="/admin/applications">
+                              Career Applications
+                            </NavLink>
+                          </li>
+                        </>
                       )}
-                      <li className="nav-item">
-                        <NavLink className="nav-link" to="/portal/profile">
+                      <li>
+                        <NavLink className="dropdown-item" to="/portal/profile">
                           My Profile
                         </NavLink>
                       </li>
                     </>
-                  ) : (
+                    ) : (
                     <>
-                      <li className="nav-item dropdown">
-                        <a
-                          className="nav-link dropdown-toggle"
-                          href="#"
-                          id="patientPortalDropdown"
-                          role="button"
-                          data-bs-toggle="dropdown"
-                          aria-expanded="false"
-                        >
-                          My Health
-                        </a>
-                        <ul className="dropdown-menu" aria-labelledby="patientPortalDropdown">
-                          <li>
-                            <NavLink className="dropdown-item" to="/portal/appointments">
-                               Appointments
-                            </NavLink>
-                          </li>
-                          <li>
-                            <NavLink className="dropdown-item" to="/portal/messages">
-                               Messages
-                            </NavLink>
-                          </li>
-                          <li>
-                            <NavLink className="dropdown-item" to="/portal/prescriptions">
-                               Prescriptions
-                            </NavLink>
-                          </li>
-                          <li>
-                            <NavLink className="dropdown-item" to="/portal/lab-results">
-                               Lab Results
-                            </NavLink>
-                          </li>
-                          <li>
-                            <NavLink className="dropdown-item" to="/portal/records">
-                               Medical Records
-                            </NavLink>
-                          </li>
-                          <li><hr className="dropdown-divider" /></li>
-                          <li>
-                            <NavLink className="dropdown-item" to="/portal/billing">
-                               Bills & Payments
-                            </NavLink>
-                          </li>
-                          <li>
-                            <NavLink className="dropdown-item" to="/portal/family">
-                               Family Members
-                            </NavLink>
-                          </li>
-                          <li>
-                            <NavLink className="dropdown-item" to="/portal/profile">
-                               My Profile
-                            </NavLink>
-                          </li>
-                        </ul>
+                      <li>
+                        <NavLink className="dropdown-item" to="/portal/appointments">
+                          Appointments
+                        </NavLink>
+                      </li>
+                      <li>
+                        <NavLink className="dropdown-item" to="/portal/prescriptions">
+                          Prescriptions
+                        </NavLink>
+                      </li>
+                      <li>
+                        <NavLink className="dropdown-item" to="/portal/lab-results">
+                          Lab Results
+                        </NavLink>
+                      </li>
+                      <li>
+                        <NavLink className="dropdown-item" to="/portal/records">
+                          Medical Records
+                        </NavLink>
+                      </li>
+                      <li>
+                        <NavLink className="dropdown-item" to="/portal/billing">
+                          Bills & Payments
+                        </NavLink>
+                      </li>
+                      <li>
+                        <NavLink className="dropdown-item" to="/portal/profile">
+                          My Profile
+                        </NavLink>
                       </li>
                     </>
-                  )}
-                  <li className="nav-item">
-                    <button 
-                      className="nav-link btn btn-link" 
-                      onClick={handleLogout}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      Logout
-                    </button>
-                  </li>
-                </>
+                    )}
+                  </ul>
+                </li>
+              )}
+              {isAuthenticated && (
+                <li className="nav-item">
+                  <button
+                    className="nav-link btn btn-link"
+                    onClick={handleLogout}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    Logout
+                  </button>
+                </li>
               )}
             </ul>
           </div>
@@ -210,7 +223,13 @@ function App() {
       <main className="container">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
           <Route path="/services" element={<Services />} />
+          <Route path="/services/primary-care" element={<ServicePrimaryCare />} />
+          <Route path="/services/cardiology" element={<ServiceCardiology />} />
+          <Route path="/services/orthopedics" element={<ServiceOrthopedics />} />
+          <Route path="/services/pediatrics" element={<ServicePediatrics />} />
+          <Route path="/careers" element={<Careers />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/doctors" element={<DoctorsList />} />
           <Route path="/doctors/:id" element={<DoctorDetail />} />
@@ -260,7 +279,7 @@ function App() {
             path="/portal/messages"
             element={
               <ProtectedRoute>
-                <Messages />
+                <Navigate to="/portal/profile" replace />
               </ProtectedRoute>
             }
           />
@@ -268,7 +287,7 @@ function App() {
             path="/portal/messages/:threadId"
             element={
               <ProtectedRoute>
-                <Messages />
+                <Navigate to="/portal/profile" replace />
               </ProtectedRoute>
             }
           />
@@ -334,7 +353,7 @@ function App() {
             path="/staff/messages"
             element={
               <StaffProtectedRoute>
-                <StaffMessages />
+                <Navigate to="/staff/dashboard" replace />
               </StaffProtectedRoute>
             }
           />
@@ -357,13 +376,44 @@ function App() {
           <Route
             path="/admin/users"
             element={
-              <StaffProtectedRoute>
+              <AdminProtectedRoute>
                 <AdminUserManagement />
-              </StaffProtectedRoute>
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/applications"
+            element={
+              <AdminProtectedRoute>
+                <AdminApplications />
+              </AdminProtectedRoute>
             }
           />
         </Routes>
       </main>
+
+      <footer className="app-footer border-top bg-light mt-auto py-4">
+        <div className="container">
+          <div className="row g-3 align-items-center">
+            <div className="col-md-6">
+              <h2 className="h6 mb-2">Site Navigation</h2>
+              <div className="d-flex flex-wrap gap-3">
+                <NavLink to="/">Home</NavLink>
+                <NavLink to="/about">About Us</NavLink>
+                <NavLink to="/services">Services</NavLink>
+                <NavLink to="/careers">Careers</NavLink>
+                <NavLink to="/doctors">Doctors</NavLink>
+                <NavLink to="/contact">Contact</NavLink>
+              </div>
+            </div>
+            <div className="col-md-6 text-md-end">
+              <p className="mb-1"><strong>Call:</strong> <a href="tel:5555555555">555-555-5555</a></p>
+              <p className="mb-0"><strong>Email:</strong> <a href="mailto:info@hospitaldemo.com">info@hospitaldemo.com</a></p>
+            </div>
+          </div>
+        </div>
+      </footer>
+
       <ThemeToggle />
     </div>
   )

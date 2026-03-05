@@ -12,3 +12,7 @@ main.container {
   font-weight: 600;
   text-decoration: underline;
 }
+
+.app-footer a {
+  color: inherit;
+}

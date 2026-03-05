@@ -11,6 +11,7 @@ from .models import (
     Doctor,
     FamilyMember,
     Invoice,
+    JobApplication,
     LabOrder,
     LabResult,
     LabResultValue,
@@ -126,6 +127,89 @@ class StaffProfileSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 
+class StaffPatientListItemSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    email = serializers.EmailField()
+
+
+class StaffUserListItemSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    role = serializers.CharField()
+
+
+class AdminUserListItemSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    email = serializers.EmailField()
+    first_name = serializers.CharField(allow_blank=True, required=False)
+    last_name = serializers.CharField(allow_blank=True, required=False)
+    role = serializers.CharField()
+    date_joined = serializers.DateTimeField()
+
+
+class AdminUserRoleUpdateRequestSerializer(serializers.Serializer):
+    role = serializers.ChoiceField(choices=[User.Role.PATIENT, User.Role.STAFF])
+
+
+class JobApplicationCreateSerializer(serializers.ModelSerializer):
+    resume = serializers.FileField(required=False, allow_null=True)
+
+    class Meta:
+        model = JobApplication
+        fields = (
+            "id",
+            "full_name",
+            "email",
+            "phone_number",
+            "position",
+            "cover_letter",
+            "resume",
+            "created_at",
+        )
+        read_only_fields = ("id", "created_at")
+
+    def validate_resume(self, value):
+        allowed_extensions = [".pdf", ".doc", ".docx"]
+        file_ext = f".{value.name.lower().split('.')[-1]}"
+        if file_ext not in allowed_extensions:
+            raise serializers.ValidationError(
+                f"Resume file type not allowed. Allowed types: {', '.join(allowed_extensions)}"
+            )
+
+        max_size = 10 * 1024 * 1024
+        if value.size > max_size:
+            raise serializers.ValidationError("Resume file exceeds maximum size of 10MB.")
+
+        return value
+
+
+class JobApplicationAdminSerializer(serializers.ModelSerializer):
+    resume_download_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = JobApplication
+        fields = (
+            "id",
+            "full_name",
+            "email",
+            "phone_number",
+            "position",
+            "cover_letter",
+            "resume_download_url",
+            "created_at",
+        )
+
+    def get_resume_download_url(self, obj):
+        if not obj.resume:
+            return None
+        request = self.context.get("request")
+        relative_url = f"/api/admin/applications/{obj.id}/resume/"
+        if request:
+            return request.build_absolute_uri(relative_url)
+        return relative_url
+
+
 class AppointmentSerializer(serializers.ModelSerializer):
     patient_email = serializers.EmailField(source="patient.email", read_only=True)
     patient_name = serializers.SerializerMethodField()
@@ -169,7 +253,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
-    def get_patient_name(self, obj):
+    def get_patient_name(self, obj) -> str:
         full_name = f"{obj.patient.first_name} {obj.patient.last_name}".strip()
         return full_name or obj.patient.email
 
@@ -253,12 +337,12 @@ class MedicalNoteSerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
-    def get_author_name(self, obj):
+    def get_author_name(self, obj) -> str:
         if obj.author:
             return obj.author.get_full_name()
         return "Unknown"
 
-    def get_shared_by_name(self, obj):
+    def get_shared_by_name(self, obj) -> str | None:
         if obj.shared_by:
             return obj.shared_by.get_full_name()
         return None
@@ -299,12 +383,12 @@ class MedicalDocumentSerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
-    def get_uploaded_by_name(self, obj):
+    def get_uploaded_by_name(self, obj) -> str:
         if obj.uploaded_by:
             return obj.uploaded_by.get_full_name()
         return "Unknown"
 
-    def get_download_url(self, obj):
+    def get_download_url(self, obj) -> str:
         request = self.context.get("request")
         if request:
             return request.build_absolute_uri(f"/api/documents/{obj.id}/download/")
@@ -376,10 +460,10 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
-    def get_patient_name(self, obj):
+    def get_patient_name(self, obj) -> str:
         return obj.patient.user.get_full_name()
 
-    def get_notes(self, obj):
+    def get_notes(self, obj) -> list[dict]:
         """Filter notes based on user's role."""
         request = self.context.get("request")
         user = request.user if request else None
@@ -396,7 +480,7 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
 
         return MedicalNoteSerializer(notes, many=True, context=self.context).data
 
-    def get_documents(self, obj):
+    def get_documents(self, obj) -> list[dict]:
         """Filter documents based on user's role."""
         request = self.context.get("request")
         user = request.user if request else None
@@ -459,7 +543,7 @@ class PaymentSerializer(serializers.ModelSerializer):
             "has_invoice",
         )
 
-    def get_has_invoice(self, obj):
+    def get_has_invoice(self, obj) -> bool:
         """Check if payment has an associated invoice."""
         return hasattr(obj, "invoice")
 
@@ -553,7 +637,7 @@ class PrescriptionSerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
-    def get_can_refill(self, obj):
+    def get_can_refill(self, obj) -> bool:
         """Check if prescription can be refilled."""
         return (
             obj.status == Prescription.Status.ACTIVE
@@ -693,14 +777,14 @@ class MessageThreadSerializer(serializers.ModelSerializer):
             "last_message_at",
         )
 
-    def get_unread_count(self, obj):
+    def get_unread_count(self, obj) -> int:
         """Get count of unread messages for current user."""
         request = self.context.get("request")
         if not request or not request.user.is_authenticated:
             return 0
         return obj.messages.filter(is_read=False).exclude(sender=request.user).count()
 
-    def get_last_message(self, obj):
+    def get_last_message(self, obj) -> dict | None:
         """Get the last message in thread."""
         last_msg = obj.messages.last()
         if last_msg:
@@ -711,7 +795,7 @@ class MessageThreadSerializer(serializers.ModelSerializer):
             }
         return None
 
-    def get_message_count(self, obj):
+    def get_message_count(self, obj) -> int:
         """Get total message count."""
         return obj.messages.count()
 
@@ -837,7 +921,7 @@ class LabOrderSerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
-    def get_has_result(self, obj):
+    def get_has_result(self, obj) -> bool:
         """Check if order has a result."""
         return hasattr(obj, "result")
 
@@ -1006,11 +1090,11 @@ class FamilyMemberSerializer(serializers.ModelSerializer):
             "updated_at",
         )
 
-    def get_full_name(self, obj):
+    def get_full_name(self, obj) -> str:
         """Get full name of family member."""
         return obj.get_full_name()
 
-    def get_age(self, obj):
+    def get_age(self, obj) -> int | None:
         """Calculate age from date of birth."""
         if not obj.date_of_birth:
             return None

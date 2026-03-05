@@ -12,7 +12,8 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-from rest_framework import status
+from drf_spectacular.utils import extend_schema
+from rest_framework import serializers, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -20,9 +21,28 @@ from rest_framework.views import APIView
 
 from .models import Payment, Invoice, User
 from .serializers import PaymentSerializer, InvoiceSerializer
+from .defaults import ensure_patient_default_data
 
 # Initialize Stripe
 stripe.api_key = settings.STRIPE_SECRET_KEY
+
+
+class CheckoutSessionRequestSerializer(serializers.Serializer):
+    appointment_id = serializers.IntegerField(required=False, allow_null=True)
+
+
+class CheckoutSessionResponseSerializer(serializers.Serializer):
+    url = serializers.URLField()
+    session_id = serializers.CharField()
+    payment_id = serializers.IntegerField()
+
+
+class PaymentErrorSerializer(serializers.Serializer):
+    error = serializers.CharField()
+
+
+class WebhookStatusSerializer(serializers.Serializer):
+    status = serializers.CharField()
 
 
 def check_stripe_configured():
@@ -36,6 +56,16 @@ class CreateCheckoutSessionView(APIView):
     """Create a Stripe Checkout Session for consultation fee payment."""
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        request=CheckoutSessionRequestSerializer,
+        responses={
+            200: CheckoutSessionResponseSerializer,
+            400: PaymentErrorSerializer,
+            403: PaymentErrorSerializer,
+            500: PaymentErrorSerializer,
+            503: PaymentErrorSerializer,
+        },
+    )
     def post(self, request):
         # Check if Stripe is configured
         is_configured, error_message = check_stripe_configured()
@@ -108,6 +138,10 @@ class CreateCheckoutSessionView(APIView):
             )
 
 
+@extend_schema(
+    request=None,
+    responses={200: WebhookStatusSerializer, 400: PaymentErrorSerializer},
+)
 @api_view(["POST"])
 @permission_classes([])  # No authentication for webhooks
 def stripe_webhook(request):
@@ -163,6 +197,16 @@ def handle_checkout_session_completed(session):
         print(f"Payment not found for session {session.id}")
 
 
+@extend_schema(
+    request=None,
+    responses={
+        200: PaymentSerializer,
+        400: PaymentErrorSerializer,
+        403: PaymentErrorSerializer,
+        404: PaymentErrorSerializer,
+        503: PaymentErrorSerializer,
+    },
+)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def verify_payment(request):
@@ -223,6 +267,10 @@ def verify_payment(request):
         )
 
 
+@extend_schema(
+    request=None,
+    responses={200: PaymentSerializer(many=True), 403: PaymentErrorSerializer},
+)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def payment_history(request):
@@ -233,11 +281,13 @@ def payment_history(request):
             status=status.HTTP_403_FORBIDDEN
         )
 
+    ensure_patient_default_data(request.user)
     payments = Payment.objects.filter(patient=request.user).select_related("appointment")
     serializer = PaymentSerializer(payments, many=True)
     return Response(serializer.data)
 
 
+@extend_schema(exclude=True)
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def download_invoice(request, payment_id):

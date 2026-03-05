@@ -14,12 +14,25 @@ import os
 from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from .env file
 load_dotenv(BASE_DIR / '.env')
+
+
+def get_bool_env(name, default=False):
+    return os.environ.get(name, str(default)).strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def get_csv_env(name, default=None):
+    raw = os.environ.get(name, '')
+    values = [item.strip() for item in raw.split(',') if item.strip()]
+    if values:
+        return values
+    return default or []
 
 
 # Quick-start development settings - unsuitable for production
@@ -32,9 +45,15 @@ SECRET_KEY = os.environ.get(
 )
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = get_bool_env('DEBUG', True)
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = get_csv_env('ALLOWED_HOSTS', ['localhost', '127.0.0.1'] if DEBUG else [])
+
+if not DEBUG and SECRET_KEY.startswith('django-insecure-'):
+    raise ImproperlyConfigured('SECRET_KEY must be explicitly set in production.')
+
+if not DEBUG and not ALLOWED_HOSTS:
+    raise ImproperlyConfigured('ALLOWED_HOSTS must be set in production.')
 
 
 # Application definition
@@ -188,19 +207,35 @@ SIMPLE_JWT = {
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Hospital Demo API',
     'VERSION': '1.0.0',
+    'ENUM_NAME_OVERRIDES': {
+        'AppointmentStatusEnum': 'core.models.Appointment.Status',
+        'NotificationLogStatusEnum': 'core.models.NotificationLog.Status',
+        'PaymentStatusEnum': 'core.models.Payment.Status',
+        'PrescriptionStatusEnum': 'core.models.Prescription.Status',
+        'PrescriptionRefillStatusEnum': 'core.models.PrescriptionRefill.Status',
+        'MessageThreadStatusEnum': 'core.models.MessageThread.Status',
+        'LabOrderStatusEnum': 'core.models.LabOrder.Status',
+        'LabResultStatusEnum': 'core.models.LabResult.Status',
+        'BillStatusEnum': 'core.models.Bill.Status',
+        'MedicalDocumentCategoryEnum': 'core.models.MedicalDocument.Category',
+        'LabTestCategoryEnum': 'core.models.LabTest.Category',
+        'BillableServiceCategoryEnum': 'core.models.BillableService.Category',
+        'MedicalNoteVisibilityEnum': 'core.models.MedicalNote.Visibility',
+        'MedicalDocumentVisibilityEnum': 'core.models.MedicalDocument.Visibility',
+    },
 }
 
 # CORS Configuration
 # In development, default to localhost
 # In production, set CORS_ALLOWED_ORIGINS environment variable
-CORS_ALLOWED_ORIGINS_ENV = os.environ.get('CORS_ALLOWED_ORIGINS', '')
-if CORS_ALLOWED_ORIGINS_ENV:
-    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS_ENV.split(',')]
-else:
+CORS_ALLOWED_ORIGINS = get_csv_env('CORS_ALLOWED_ORIGINS')
+if not CORS_ALLOWED_ORIGINS:
     CORS_ALLOWED_ORIGINS = [
         'http://localhost:5173',
         'http://127.0.0.1:5173',
     ]
+
+CSRF_TRUSTED_ORIGINS = get_csv_env('CSRF_TRUSTED_ORIGINS')
 
 # Security settings for production
 if not DEBUG:
@@ -211,6 +246,8 @@ if not DEBUG:
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
+    SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+    SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
