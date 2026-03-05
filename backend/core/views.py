@@ -1531,7 +1531,7 @@ class AdminJobApplicationResumeDownloadView(APIView):
             raise Http404("Resume file not found")
 
         response = FileResponse(application.resume.open("rb"), as_attachment=True)
-        response["Content-Disposition"] = f'attachment; filename="{application.resume.name.split('/')[-1]}"'
+        response["Content-Disposition"] = f"attachment; filename=\"{application.resume.name.split('/')[-1]}\""
         return response
 
 
