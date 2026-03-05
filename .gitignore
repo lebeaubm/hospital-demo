@@ -9,6 +9,7 @@ venv/
 
 # Django
 staticfiles/
+backend/media/medical_documents/**/*.pdf
 
 # Node
 node_modules/

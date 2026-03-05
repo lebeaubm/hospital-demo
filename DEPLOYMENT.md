@@ -95,8 +95,11 @@ Set these environment variables in your hosting platform:
 | `SECRET_KEY` | Django secret key (generate a new one!) | `django-insecure-...` |
 | `DEBUG` | Debug mode (must be `False` in production) | `False` |
 | `ALLOWED_HOSTS` | Comma-separated list of allowed hostnames | `myapp.onrender.com,www.myapp.com` |
+| `CSRF_TRUSTED_ORIGINS` | Comma-separated trusted origins for CSRF (include https:// prefixes) | `https://myapp.onrender.com` |
 | `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@host:5432/dbname` |
 | `CORS_ALLOWED_ORIGINS` | Comma-separated frontend URLs | `https://myapp-frontend.onrender.com` |
+| `PAYMENT_DEMO_MODE` | Use demo/no-charge payment mode (`False` in production) | `False` |
+| `SEED_DEMO_DATA` | Seed test accounts during deploy (`False` in production) | `False` |
 
 ### Deployment Steps (Render)
 
@@ -119,7 +122,10 @@ Set these environment variables in your hosting platform:
    SECRET_KEY=<generate-new-secret-key>
    DEBUG=False
    ALLOWED_HOSTS=<your-backend-url>.onrender.com
+   CSRF_TRUSTED_ORIGINS=https://<your-backend-url>.onrender.com
    CORS_ALLOWED_ORIGINS=https://<your-frontend-url>.onrender.com
+   PAYMENT_DEMO_MODE=False
+   SEED_DEMO_DATA=False
    DATABASE_URL=<from-render-postgres>
    ```
 

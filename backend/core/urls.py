@@ -2,6 +2,9 @@ from django.urls import path
 
 from .views import (
     APIRootView,
+    AdminJobApplicationDeleteView,
+    AdminJobApplicationListView,
+    AdminJobApplicationResumeDownloadView,
     AppointmentCreateView,
     StaffPatientListView,
     StaffUserListView,
@@ -64,6 +67,7 @@ from .views import (
     StaffRefillUpdateView,
     StaffSendEmailView,
     BillableServiceListView,
+    CareerApplicationCreateView,
     PatientMyDoctorsView,
     StaffAllDoctorsView,
     StaffPatientAssignedDoctorsView,
@@ -84,6 +88,7 @@ urlpatterns = [
     path("auth/register/", RegisterView.as_view(), name="register"),
     path("auth/login/", LoginView.as_view(), name="login"),
     path("auth/refresh/", RefreshView.as_view(), name="token_refresh"),
+    path("careers/applications/", CareerApplicationCreateView.as_view(), name="career_application_create"),
     path("doctors/", DoctorListView.as_view(), name="doctor_list"),
     path("doctors/<int:pk>/", DoctorDetailView.as_view(), name="doctor_detail"),
     path("patients/me/", PatientMeView.as_view(), name="patient_me"),
@@ -186,5 +191,8 @@ urlpatterns = [
     # ==================== ADMIN URLS ====================
     path("admin/users/", AdminUserListView.as_view(), name="admin_user_list"),
     path("admin/users/<int:user_id>/role/", AdminUserRoleUpdateView.as_view(), name="admin_user_role_update"),
+    path("admin/applications/", AdminJobApplicationListView.as_view(), name="admin_application_list"),
+    path("admin/applications/<int:application_id>/", AdminJobApplicationDeleteView.as_view(), name="admin_application_delete"),
+    path("admin/applications/<int:application_id>/resume/", AdminJobApplicationResumeDownloadView.as_view(), name="admin_application_resume_download"),
 ]
 

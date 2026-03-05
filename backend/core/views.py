@@ -3,6 +3,7 @@ from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
+from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, serializers, status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -17,6 +18,7 @@ from .models import (
     BillPayment,
     Doctor,
     FamilyMember,
+    JobApplication,
     LabOrder,
     LabResult,
     LabResultValue,
@@ -43,9 +45,12 @@ from .notifications import (
     send_email_notification,
     send_welcome_email,
 )
+from .defaults import ensure_patient_default_data
 from .permissions import IsAdminUser, IsAppointmentOwner, IsPatientUser, IsStaffUser
 from .serializers import (
     AppointmentSerializer,
+    AdminUserListItemSerializer,
+    AdminUserRoleUpdateRequestSerializer,
     BillLineItemSerializer,
     BillPaymentSerializer,
     BillSerializer,
@@ -53,6 +58,8 @@ from .serializers import (
     StaffBillWriteSerializer,
     DoctorSerializer,
     FamilyMemberSerializer,
+    JobApplicationAdminSerializer,
+    JobApplicationCreateSerializer,
     LabOrderSerializer,
     LabResultSerializer,
     LabResultValueSerializer,
@@ -72,12 +79,15 @@ from .serializers import (
     PrescriptionSerializer,
     RegisterSerializer,
     StaffAppointmentUpdateSerializer,
+    StaffPatientListItemSerializer,
     StaffProfileSerializer,
     StaffSendEmailSerializer,
+    StaffUserListItemSerializer,
 )
 from .serializers_jwt import CustomTokenObtainPairSerializer
 
 
+@extend_schema(exclude=True)
 class APIRootView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -117,6 +127,8 @@ class RegisterView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         user = serializer.save()
+        if user.role == user.Role.PATIENT:
+            ensure_patient_default_data(user)
         # Send welcome email to newly registered patient (only for PATIENT role)
         if user.role == user.Role.PATIENT:
             send_welcome_email(user)
@@ -194,6 +206,7 @@ class StaffPatientListView(generics.ListAPIView):
     GET /api/staff/patients/
     List all patient users (for staff to create lab orders etc).
     """
+    serializer_class = StaffPatientListItemSerializer
     permission_classes = [permissions.IsAuthenticated, IsStaffUser]
 
     def list(self, request, *args, **kwargs):
@@ -216,6 +229,7 @@ class StaffUserListView(generics.ListAPIView):
     GET /api/staff-users/
     List all staff/admin users (for patients to select who to message).
     """
+    serializer_class = StaffUserListItemSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def list(self, request, *args, **kwargs):
@@ -269,6 +283,7 @@ class MyAppointmentListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated, IsPatientUser]
 
     def get_queryset(self):
+        ensure_patient_default_data(self.request.user)
         return Appointment.objects.filter(patient=self.request.user).order_by("-created_at")
 
 
@@ -438,6 +453,7 @@ class StaffEmailLogDetailView(generics.RetrieveAPIView):
 
 class StaffSendEmailView(APIView):
     """Allow staff/admin to send custom emails (staff/admin only)."""
+    serializer_class = StaffSendEmailSerializer
     permission_classes = [permissions.IsAuthenticated, IsStaffUser]
 
     def post(self, request):
@@ -479,6 +495,7 @@ class PatientMedicalRecordView(APIView):
     GET /api/records/me/
     Returns: record summary + shared notes + visible documents
     """
+    serializer_class = MedicalRecordSerializer
     permission_classes = [permissions.IsAuthenticated, IsPatientUser]
 
     def get(self, request):
@@ -503,6 +520,7 @@ class PatientDocumentUploadView(APIView):
     Patient endpoint to upload documents to their own record.
     POST /api/records/me/documents/
     """
+    serializer_class = MedicalDocumentUploadSerializer
     permission_classes = [permissions.IsAuthenticated, IsPatientUser]
 
     def post(self, request):
@@ -539,6 +557,7 @@ class StaffPatientRecordView(APIView):
     GET /api/staff/patients/<patient_id>/record/
     Returns: full record with all notes and documents
     """
+    serializer_class = MedicalRecordSerializer
     permission_classes = [permissions.IsAuthenticated, IsStaffUser]
 
     def get(self, request, patient_id):
@@ -588,6 +607,7 @@ class StaffPatientNotesView(APIView):
     Staff endpoint to add notes to a patient's record.
     POST /api/staff/patients/<patient_id>/notes/
     """
+    serializer_class = MedicalNoteSerializer
     permission_classes = [permissions.IsAuthenticated, IsStaffUser]
 
     def post(self, request, patient_id):
@@ -621,6 +641,7 @@ class StaffNoteVisibilityView(APIView):
     Staff endpoint to toggle note visibility.
     PATCH /api/staff/notes/<note_id>/
     """
+    serializer_class = MedicalNoteVisibilitySerializer
     permission_classes = [permissions.IsAuthenticated, IsStaffUser]
 
     def patch(self, request, note_id):
@@ -656,6 +677,7 @@ class StaffPatientDocumentsView(APIView):
     Staff endpoint to upload documents to a patient's record.
     POST /api/staff/patients/<patient_id>/documents/
     """
+    serializer_class = MedicalDocumentUploadSerializer
     permission_classes = [permissions.IsAuthenticated, IsStaffUser]
 
     def post(self, request, patient_id):
@@ -695,6 +717,7 @@ class StaffDocumentDeleteView(APIView):
     Staff endpoint to delete a document.
     DELETE /api/staff/documents/<document_id>/
     """
+    serializer_class = MedicalDocumentSerializer
     permission_classes = [permissions.IsAuthenticated, IsStaffUser]
 
     def delete(self, request, document_id):
@@ -717,6 +740,7 @@ class DocumentDownloadView(APIView):
     GET /api/documents/<document_id>/download/
     Checks permissions before serving file.
     """
+    serializer_class = MedicalDocumentSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, document_id):
@@ -781,6 +805,7 @@ class PatientPrescriptionListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated, IsPatientUser]
 
     def get_queryset(self):
+        ensure_patient_default_data(self.request.user)
         return Prescription.objects.filter(patient=self.request.user).select_related(
             "prescribed_by", "pharmacy"
         )
@@ -1066,6 +1091,7 @@ class PatientLabOrderListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated, IsPatientUser]
 
     def get_queryset(self):
+        ensure_patient_default_data(self.request.user)
         return LabOrder.objects.filter(patient=self.request.user).select_related(
             "test", "ordered_by"
         ).prefetch_related("result__values")
@@ -1182,6 +1208,7 @@ class PatientBillListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated, IsPatientUser]
 
     def get_queryset(self):
+        ensure_patient_default_data(self.request.user)
         return Bill.objects.filter(patient=self.request.user).prefetch_related(
             "line_items__service", "payments"
         )
@@ -1397,6 +1424,7 @@ class StaffPatientAssignedDoctorsView(APIView):
     GET  /api/staff/patients/<patient_id>/assigned-doctors/  — list assigned
     POST /api/staff/patients/<patient_id>/assigned-doctors/  — assign {doctor_id}
     """
+    serializer_class = DoctorSerializer
     permission_classes = [permissions.IsAuthenticated, IsStaffUser]
 
     def _get_profile(self, patient_id):
@@ -1422,6 +1450,7 @@ class StaffPatientRemoveAssignedDoctorView(APIView):
     """
     DELETE /api/staff/patients/<patient_id>/assigned-doctors/<doctor_id>/
     """
+    serializer_class = DoctorSerializer
     permission_classes = [permissions.IsAuthenticated, IsStaffUser]
 
     def delete(self, request, patient_id, doctor_id):
@@ -1452,6 +1481,60 @@ class StaffFamilyMemberListView(generics.ListAPIView):
     queryset = FamilyMember.objects.select_related("primary_account", "member_user")
 
 
+class CareerApplicationCreateView(generics.CreateAPIView):
+    """
+    POST /api/careers/applications/
+    Public endpoint for submitting career applications with resume upload.
+    """
+    serializer_class = JobApplicationCreateSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class AdminJobApplicationListView(generics.ListAPIView):
+    """
+    GET /api/admin/applications/
+    List all job applications (admin only).
+    """
+    serializer_class = JobApplicationAdminSerializer
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    queryset = JobApplication.objects.all().order_by("-created_at")
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context["request"] = self.request
+        return context
+
+
+class AdminJobApplicationDeleteView(APIView):
+    """
+    DELETE /api/admin/applications/<application_id>/
+    Delete a job application (admin only).
+    """
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+
+    def delete(self, request, application_id):
+        application = get_object_or_404(JobApplication, id=application_id)
+        application.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class AdminJobApplicationResumeDownloadView(APIView):
+    """
+    GET /api/admin/applications/<application_id>/resume/
+    Download applicant resume file (admin only).
+    """
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+
+    def get(self, request, application_id):
+        application = get_object_or_404(JobApplication, id=application_id)
+        if not application.resume:
+            raise Http404("Resume file not found")
+
+        response = FileResponse(application.resume.open("rb"), as_attachment=True)
+        response["Content-Disposition"] = f'attachment; filename="{application.resume.name.split('/')[-1]}"'
+        return response
+
+
 # ==================== ADMIN VIEWS ====================
 
 class AdminUserListView(APIView):
@@ -1459,6 +1542,7 @@ class AdminUserListView(APIView):
     GET /api/admin/users/
     List all non-admin users with their roles.
     """
+    serializer_class = AdminUserListItemSerializer
     permission_classes = [permissions.IsAuthenticated, IsAdminUser]
 
     def get(self, request):
@@ -1482,6 +1566,7 @@ class AdminUserRoleUpdateView(APIView):
     PATCH /api/admin/users/<user_id>/role/
     Promote a patient to staff or demote a staff member to patient.
     """
+    serializer_class = AdminUserRoleUpdateRequestSerializer
     permission_classes = [permissions.IsAuthenticated, IsAdminUser]
 
     def patch(self, request, user_id):
