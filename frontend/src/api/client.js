@@ -1,9 +1,12 @@
 import axios from 'axios'
 
-const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000'
+const configuredApiUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/$/, '')
+const productionFallbackApiUrl = 'https://hospital-demo-api.onrender.com'
+const apiBaseUrl = configuredApiUrl || (import.meta.env.PROD ? productionFallbackApiUrl : 'http://127.0.0.1:8000')
 
 const api = axios.create({
   baseURL: apiBaseUrl,
+  timeout: 20000,
 })
 
 const getAccessToken = () => localStorage.getItem('accessToken')
