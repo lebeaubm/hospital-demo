@@ -1,6 +1,6 @@
-import servicesBanner from '../assets/services-banner.svg'
-
 export default function Services() {
+  const servicesBanner = 'https://images.unsplash.com/photo-1631815589968-fdb09a223b1e?auto=format&fit=crop&w=1800&q=80'
+
   const specialtyServices = [
     'I.V. Therapy/Injections',
     'TPN/Enteral Feedings',
