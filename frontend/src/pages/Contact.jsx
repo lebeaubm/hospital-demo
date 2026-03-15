@@ -12,21 +12,23 @@ export default function Contact() {
   return (
     <div className="py-4">
       <h1 className="mb-2">Get in Touch</h1>
-      <p className="lead mb-4">We would love to respond to your questions about our services.</p>
+      <p className="lead mb-4">We care for your loved ones and are available 24 hours a day, 7 days a week.</p>
 
       <div className="row g-4">
         <div className="col-lg-5">
           <div className="card shadow-sm h-100">
             <div className="card-body">
               <h2 className="h5 mb-3">Contact Information</h2>
-              <p className="mb-2"><strong>Phone:</strong> <a href="tel:5555555555">555-555-5555</a></p>
-              <p className="mb-2"><strong>Fax:</strong> 555-555-5556</p>
-              <p className="mb-2"><strong>Email:</strong> <a href="mailto:info@hospitaldemo.com">info@hospitaldemo.com</a></p>
-              <p className="mb-3"><strong>Address:</strong> 123 Care Lane, Suite 200, Cityville, CA 90000</p>
+              <p className="mb-2"><strong>Phone:</strong> <a href="tel:9516213600">(951) 621-3600</a></p>
+              <p className="mb-2"><strong>Fax:</strong> (951) 621-3606</p>
+              <p className="mb-3"><strong>Address:</strong> 1307 W 6th Street, Suite 220C, Corona, CA 92882</p>
               <hr />
               <h3 className="h6 mb-2">Office Hours</h3>
-              <p className="mb-1">Mon - Fri: 8:00 AM - 6:00 PM</p>
-              <p className="mb-0">Sat - Sun: On-call support available</p>
+              <p className="mb-1">24 Hours a Day</p>
+              <p className="mb-0">7 Days a Week</p>
+              <hr />
+              <h3 className="h6 mb-2">Counties Served</h3>
+              <p className="mb-0">Ventura, Los Angeles, Orange, San Bernardino, Riverside, and San Diego.</p>
             </div>
           </div>
         </div>

@@ -53,7 +53,7 @@ function App() {
       <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
         <div className="container">
           <NavLink className="navbar-brand" to="/">
-            Hospital Demo
+            Peaceloving Home Health Inc.
           </NavLink>
           <button
             className="navbar-toggler"
@@ -407,8 +407,9 @@ function App() {
               </div>
             </div>
             <div className="col-md-6 text-md-end">
-              <p className="mb-1"><strong>Call:</strong> <a href="tel:5555555555">555-555-5555</a></p>
-              <p className="mb-0"><strong>Email:</strong> <a href="mailto:info@hospitaldemo.com">info@hospitaldemo.com</a></p>
+              <p className="mb-1"><strong>Call:</strong> <a href="tel:9516213600">(951) 621-3600</a></p>
+              <p className="mb-1"><strong>Fax:</strong> (951) 621-3606</p>
+              <p className="mb-0"><strong>Address:</strong> 1307 W 6th Street, Suite 220C, Corona, CA 92882</p>
             </div>
           </div>
         </div>

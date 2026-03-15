@@ -1,36 +1,46 @@
-import { Link } from 'react-router-dom'
-import servicePrimaryCare from '../assets/service-primary-care.svg'
-import serviceCardiology from '../assets/service-cardiology.svg'
-import serviceOrthopedics from '../assets/service-orthopedics.svg'
-import servicePediatrics from '../assets/service-pediatrics.svg'
 import servicesBanner from '../assets/services-banner.svg'
 
 export default function Services() {
-  const serviceItems = [
-    {
-      path: '/services/primary-care',
-      title: 'Primary Care and Wellness Exams',
-      description: 'Routine checkups, preventive screenings, and personalized wellness planning for all ages.',
-      image: servicePrimaryCare,
-    },
-    {
-      path: '/services/cardiology',
-      title: 'Cardiology and Heart Health',
-      description: 'Heart-focused evaluations and follow-up support to help patients manage cardiovascular conditions.',
-      image: serviceCardiology,
-    },
-    {
-      path: '/services/orthopedics',
-      title: 'Orthopedics and Sports Medicine',
-      description: 'Joint, muscle, and mobility care designed to improve recovery and day-to-day function.',
-      image: serviceOrthopedics,
-    },
-    {
-      path: '/services/pediatrics',
-      title: 'Pediatrics and Family Care',
-      description: 'Compassionate child and family care with guidance for preventive and ongoing health needs.',
-      image: servicePediatrics,
-    },
+  const specialtyServices = [
+    'I.V. Therapy/Injections',
+    'TPN/Enteral Feedings',
+    'Ostomy Care',
+    'Blood Draws',
+    'Wound Care/Wound Vac',
+    'Diabetes Education',
+    'Glucometer Blood Sugar Monitoring',
+    'Preparation/Administration of Insulin',
+    'Foley Catheter Maintenance and Care',
+    'Central Line Maintenance and Care',
+    'Tracheotomy Maintenance and Care',
+    'Geriatric Care',
+    'Ventilator-Dependent Clients',
+  ]
+
+  const supportServices = [
+    'Medical Social Services',
+    'Dietitian Consult',
+    'Physical Therapy',
+    'Occupational Therapy',
+    'Speech Therapy',
+    'Home Health Aides',
+  ]
+
+  const arrangementServices = [
+    'Laboratory Services',
+    'Pharmaceutical Services',
+    'Respiratory Treatment',
+    'Medical Equipment and Supplies',
+  ]
+
+  const insuranceAccepted = [
+    'Medicare',
+    'Medi-Cal',
+    'Workers Compensation',
+    'Private Insurance',
+    'Private Payment',
+    'CCS',
+    'Regional Center',
   ]
 
   return (
@@ -41,25 +51,67 @@ export default function Services() {
         className="img-fluid rounded shadow-sm border mb-4"
       />
       <h1 className="mb-3">Services</h1>
-      <p className="lead">Comprehensive care tailored to your needs.</p>
+      <p className="lead">Comprehensive home health care services personalized to each patient and family.</p>
 
       <section>
         <div className="row g-3">
-          {serviceItems.map((service) => (
-            <div className="col-md-6" key={service.title}>
-              <Link to={service.path} className="card h-100 shadow-sm text-decoration-none text-reset">
-                <img
-                  src={service.image}
-                  alt={service.title}
-                  className="card-img-top"
-                />
-                <div className="card-body">
-                  <h2 className="h5 card-title">{service.title}</h2>
-                  <p className="card-text mb-0">{service.description}</p>
-                </div>
-              </Link>
+          <div className="col-md-6">
+            <div className="card h-100 shadow-sm">
+              <div className="card-body">
+                <h2 className="h5 card-title">Specialty Services</h2>
+                <ul className="mb-0 ps-3">
+                  {specialtyServices.map((service) => (
+                    <li key={service}>{service}</li>
+                  ))}
+                </ul>
+              </div>
             </div>
-          ))}
+          </div>
+
+          <div className="col-md-6">
+            <div className="card h-100 shadow-sm">
+              <div className="card-body">
+                <h2 className="h5 card-title">Professional Nursing Services</h2>
+                <p className="card-text mb-3">
+                  Skilled Registered Nurses (R.N.) and Licensed Vocational Nurses (L.V.N.) provide
+                  vital services as directed by the physician, assess treatment needs, deliver care,
+                  and report on patient health status to support optimal outcomes.
+                </p>
+                <h3 className="h6">Pediatric Services</h3>
+                <p className="card-text mb-0">
+                  In-home skilled nursing for Synagis administration to help prevent severe RSV disease.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-md-6">
+            <div className="card h-100 shadow-sm">
+              <div className="card-body">
+                <h2 className="h5 card-title">Support & Therapy Services</h2>
+                <ul className="mb-0 ps-3">
+                  {supportServices.map((service) => (
+                    <li key={service}>{service}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-md-6">
+            <div className="card h-100 shadow-sm">
+              <div className="card-body">
+                <h2 className="h5 card-title">Services by Arrangement</h2>
+                <ul className="mb-3 ps-3">
+                  {arrangementServices.map((service) => (
+                    <li key={service}>{service}</li>
+                  ))}
+                </ul>
+                <h3 className="h6">Insurance Accepted</h3>
+                <p className="mb-0">{insuranceAccepted.join(', ')}</p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </div>
