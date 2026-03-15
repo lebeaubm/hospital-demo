@@ -106,7 +106,7 @@ function App() {
                     </NavLink>
                   </li>
                 </>
-              ) : (
+              ) : isStaff ? (
                 <li className="nav-item dropdown">
                   <a
                     className="nav-link dropdown-toggle"
@@ -116,7 +116,7 @@ function App() {
                     data-bs-toggle="dropdown"
                     aria-expanded="false"
                   >
-                      {isStaff ? 'More' : 'Patients Info'}
+                      More
                   </a>
                   <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="moreDropdown">
                     <li>
@@ -125,7 +125,6 @@ function App() {
                       </NavLink>
                     </li>
 
-                    {isStaff ? (
                     <>
                       <li>
                         <NavLink className="dropdown-item" to="/staff/dashboard">
@@ -167,41 +166,13 @@ function App() {
                         </NavLink>
                       </li>
                     </>
-                    ) : (
-                    <>
-                      <li>
-                        <NavLink className="dropdown-item" to="/portal/appointments">
-                          Appointments
-                        </NavLink>
-                      </li>
-                      <li>
-                        <NavLink className="dropdown-item" to="/portal/prescriptions">
-                          Prescriptions
-                        </NavLink>
-                      </li>
-                      <li>
-                        <NavLink className="dropdown-item" to="/portal/lab-results">
-                          Lab Results
-                        </NavLink>
-                      </li>
-                      <li>
-                        <NavLink className="dropdown-item" to="/portal/records">
-                          Medical Records
-                        </NavLink>
-                      </li>
-                      <li>
-                        <NavLink className="dropdown-item" to="/portal/billing">
-                          Bills & Payments
-                        </NavLink>
-                      </li>
-                      <li>
-                        <NavLink className="dropdown-item" to="/portal/profile">
-                          My Profile
-                        </NavLink>
-                      </li>
-                    </>
-                    )}
                   </ul>
+                </li>
+              ) : (
+                <li className="nav-item">
+                  <NavLink className="nav-link" to="/portal/profile">
+                    My Profile
+                  </NavLink>
                 </li>
               )}
               {isAuthenticated && (

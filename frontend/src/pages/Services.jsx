@@ -85,7 +85,7 @@ export default function Services() {
           <div className="col-md-6">
             <div className="card h-100 marketing-card">
               <div className="card-body">
-                <h2 className="h5 card-title"><span className="section-icon" aria-hidden>🩺</span>Specialty Services</h2>
+                <h2 className="h5 card-title">Specialty Services</h2>
                 <ul className="mb-0 ps-3">
                   {specialtyServices.map((service) => (
                     <li key={service}>{service}</li>
@@ -98,7 +98,7 @@ export default function Services() {
           <div className="col-md-6">
             <div className="card h-100 marketing-card">
               <div className="card-body">
-                <h2 className="h5 card-title"><span className="section-icon" aria-hidden>👩‍⚕️</span>Professional Nursing Services</h2>
+                <h2 className="h5 card-title">Professional Nursing Services</h2>
                 <p className="card-text mb-3">
                   Skilled Registered Nurses (R.N.) and Licensed Vocational Nurses (L.V.N.) provide
                   vital services as directed by the physician, assess treatment needs, deliver care,
@@ -115,7 +115,7 @@ export default function Services() {
           <div className="col-md-6">
             <div className="card h-100 marketing-card">
               <div className="card-body">
-                <h2 className="h5 card-title"><span className="section-icon" aria-hidden>🧠</span>Support & Therapy Services</h2>
+                <h2 className="h5 card-title">Support & Therapy Services</h2>
                 {supportServices.map((service) => (
                   <div key={service.title} className="mb-3">
                     <h3 className="h6 mb-1">{service.title}</h3>
@@ -129,13 +129,13 @@ export default function Services() {
           <div className="col-md-6">
             <div className="card h-100 marketing-card">
               <div className="card-body">
-                <h2 className="h5 card-title"><span className="section-icon" aria-hidden>📋</span>Services by Arrangement</h2>
+                <h2 className="h5 card-title">Services by Arrangement</h2>
                 <ul className="mb-3 ps-3">
                   {arrangementServices.map((service) => (
                     <li key={service}>{service}</li>
                   ))}
                 </ul>
-                <h3 className="h6"><span className="section-icon" aria-hidden>✅</span>Insurance Accepted</h3>
+                <h3 className="h6">Insurance Accepted</h3>
                 <p className="mb-0">{insuranceAccepted.join(', ')}</p>
               </div>
             </div>
