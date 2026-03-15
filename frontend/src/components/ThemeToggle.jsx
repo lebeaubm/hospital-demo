@@ -1,8 +1,35 @@
+import { useEffect } from 'react'
 import { useTheme } from '../context/ThemeContext'
 import './ThemeToggle.css'
 
 export default function ThemeToggle() {
   const { theme, toggleTheme } = useTheme()
+
+  useEffect(() => {
+    const updateNavbarHeight = () => {
+      const navbar = document.querySelector('.navbar')
+      const navbarHeight = navbar ? navbar.offsetHeight : 64
+      document.documentElement.style.setProperty('--navbar-height', `${navbarHeight}px`)
+    }
+
+    updateNavbarHeight()
+
+    const navbar = document.querySelector('.navbar')
+    const resizeObserver = navbar && window.ResizeObserver
+      ? new ResizeObserver(() => updateNavbarHeight())
+      : null
+
+    if (resizeObserver && navbar) {
+      resizeObserver.observe(navbar)
+    }
+
+    window.addEventListener('resize', updateNavbarHeight)
+
+    return () => {
+      window.removeEventListener('resize', updateNavbarHeight)
+      resizeObserver?.disconnect()
+    }
+  }, [])
 
   return (
     <button
