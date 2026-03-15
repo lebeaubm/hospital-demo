@@ -1,8 +1,19 @@
-import careHeart from '../assets/care-heart.svg'
-import medicalCross from '../assets/medical-cross.svg'
-import heartShield from '../assets/heart-shield.svg'
-
 export default function About() {
+  const aboutGalleryImages = [
+    {
+      src: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80',
+      alt: 'Healthcare worker speaking with a patient',
+    },
+    {
+      src: 'https://images.unsplash.com/photo-1581595219315-a187dd40c322?auto=format&fit=crop&w=1200&q=80',
+      alt: 'Nurse assisting a patient in care setting',
+    },
+    {
+      src: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1200&q=80',
+      alt: 'Clinician providing compassionate home care',
+    },
+  ]
+
   return (
     <div className="py-4">
       <h1 className="mb-3">About Us</h1>
@@ -13,15 +24,16 @@ export default function About() {
 
       <section className="mb-4">
         <div className="row g-3">
-          <div className="col-md-4">
-            <img src={careHeart} alt="Heart care" className="img-fluid rounded shadow-sm border" />
-          </div>
-          <div className="col-md-4">
-            <img src={medicalCross} alt="Medical cross" className="img-fluid rounded shadow-sm border" />
-          </div>
-          <div className="col-md-4">
-            <img src={heartShield} alt="Protective heart" className="img-fluid rounded shadow-sm border" />
-          </div>
+          {aboutGalleryImages.map((image) => (
+            <div className="col-md-4" key={image.src}>
+              <img
+                src={image.src}
+                alt={image.alt}
+                className="img-fluid rounded shadow-sm border w-100"
+                style={{ height: '220px', objectFit: 'cover' }}
+              />
+            </div>
+          ))}
         </div>
       </section>
 
