@@ -68,7 +68,7 @@ export default function Services() {
           src={servicesBanner}
           alt="Healthcare services banner"
           className="w-100 d-block"
-          style={{ height: '384px', objectFit: 'cover', objectPosition: 'center top' }}
+          style={{ height: '461px', objectFit: 'cover', objectPosition: 'center top' }}
         />
       </div>
       <h1 className="mb-3">Services</h1>
