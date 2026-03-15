@@ -1,16 +1,16 @@
 export default function About() {
   const aboutGalleryImages = [
     {
-      src: 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=1200&q=80',
-      alt: 'Healthcare worker speaking with a patient',
+      src: 'https://images.unsplash.com/photo-1666214280557-f1b5022eb634?auto=format&fit=crop&w=1200&q=80',
+      alt: 'Healthcare team standing together in a clinical setting',
     },
     {
-      src: 'https://images.unsplash.com/photo-1581595219315-a187dd40c322?auto=format&fit=crop&w=1200&q=80',
-      alt: 'Nurse assisting a patient in care setting',
+      src: 'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=1200&q=80',
+      alt: 'Warm interaction between a healthcare worker and patient',
     },
     {
-      src: 'https://images.unsplash.com/photo-1584515979956-d9f6e5d09982?auto=format&fit=crop&w=1200&q=80',
-      alt: 'Clinician providing compassionate home care',
+      src: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1200&q=80',
+      alt: 'Family smiling together at home',
     },
   ]
 
