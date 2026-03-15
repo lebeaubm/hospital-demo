@@ -62,7 +62,7 @@ export default function Services() {
   ]
 
   return (
-    <div className="py-4">
+    <div className="pt-1 pb-4">
       <div className="rounded shadow-sm border mb-4 overflow-hidden">
         <img
           src={servicesBanner}
