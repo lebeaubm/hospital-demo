@@ -1,8 +1,6 @@
-import careHeart from '../assets/care-heart.svg'
-import medicalCross from '../assets/medical-cross.svg'
-import heartShield from '../assets/heart-shield.svg'
-
 export default function Home() {
+  const heroCareBanner = 'https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=1600&q=80'
+
   const coreCareItems = [
     'Intermittent and Extended Care',
     'Private Duty and Shift Care',
@@ -42,17 +40,12 @@ export default function Home() {
       </section>
 
       <section className="mb-4">
-        <div className="row g-3">
-          <div className="col-md-4">
-            <img src={careHeart} alt="Heart care" className="img-fluid rounded shadow-sm border" />
-          </div>
-          <div className="col-md-4">
-            <img src={medicalCross} alt="Medical cross" className="img-fluid rounded shadow-sm border" />
-          </div>
-          <div className="col-md-4">
-            <img src={heartShield} alt="Protective heart" className="img-fluid rounded shadow-sm border" />
-          </div>
-        </div>
+        <img
+          src={heroCareBanner}
+          alt="Healthcare worker helping a patient at home"
+          className="img-fluid rounded shadow-sm border w-100"
+          style={{ maxHeight: '360px', objectFit: 'cover' }}
+        />
       </section>
 
       <section>
