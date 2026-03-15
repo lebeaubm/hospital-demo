@@ -18,12 +18,30 @@ export default function Services() {
   ]
 
   const supportServices = [
-    'Medical Social Services',
-    'Dietitian Consult',
-    'Physical Therapy',
-    'Occupational Therapy',
-    'Speech Therapy',
-    'Home Health Aides',
+    {
+      title: 'Medical Social Services',
+      description: 'Social workers help patients and families with practical challenges and connect them to community services like delivered meals and transportation.',
+    },
+    {
+      title: 'Dietitian Consult',
+      description: 'Diet instructions are usually provided by nurses, with a dietitian available for patients with complex nutritional needs.',
+    },
+    {
+      title: 'Physical Therapy',
+      description: 'Certified therapists improve mobility, adjust to mobility aids, and help manage pain.',
+    },
+    {
+      title: 'Occupational Therapy',
+      description: 'Helps patients improve daily living activities like eating, bathing, dressing, and toileting.',
+    },
+    {
+      title: 'Speech Therapy',
+      description: 'Focused on restoring and enhancing daily living skills related to speech and swallowing.',
+    },
+    {
+      title: 'Home Health Aides',
+      description: 'Provide personal care and assist with housekeeping, shopping, and preparing limited meals.',
+    },
   ]
 
   const arrangementServices = [
@@ -89,11 +107,12 @@ export default function Services() {
             <div className="card h-100 shadow-sm">
               <div className="card-body">
                 <h2 className="h5 card-title">Support & Therapy Services</h2>
-                <ul className="mb-0 ps-3">
-                  {supportServices.map((service) => (
-                    <li key={service}>{service}</li>
-                  ))}
-                </ul>
+                {supportServices.map((service) => (
+                  <div key={service.title} className="mb-3">
+                    <h3 className="h6 mb-1">{service.title}</h3>
+                    <p className="mb-0">{service.description}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

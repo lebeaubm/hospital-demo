@@ -79,6 +79,7 @@ export default function Home() {
                   <li key={item}>{item}</li>
                 ))}
               </ul>
+              <p className="mt-2 mb-0 fw-semibold">All in the privacy of your home.</p>
             </div>
           </div>
         </div>
@@ -116,6 +117,37 @@ export default function Home() {
               <h3 className="h5">Insurance Accepted</h3>
               <p className="mb-2">Medicare, Medi-Cal, Workers Compensation, Private Insurance, Private Payment, CCS, and Regional Center.</p>
               <p className="mb-0"><strong>Serving:</strong> Ventura, Los Angeles, Orange, San Bernardino, Riverside, and San Diego Counties.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="row g-3 mt-2">
+        <div className="col-md-4">
+          <div className="card h-100 shadow-sm">
+            <div className="card-body">
+              <h3 className="h5">Why Families Choose Us</h3>
+              <ul className="mb-0 ps-3">
+                <li>Specialist doctor available</li>
+                <li>Fast access to care</li>
+                <li>Specialized personal care</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div className="col-md-4">
+          <div className="card h-100 shadow-sm">
+            <div className="card-body">
+              <h3 className="h5">Did You Know?</h3>
+              <p className="mb-0">Modern tools with a patient-centered digital care integrated clinical ecosystem.</p>
+            </div>
+          </div>
+        </div>
+        <div className="col-md-4">
+          <div className="card h-100 shadow-sm">
+            <div className="card-body">
+              <h3 className="h5">More One-on-One</h3>
+              <p className="mb-0">Personalized engagement and education with data-driven operations.</p>
             </div>
           </div>
         </div>

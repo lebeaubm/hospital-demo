@@ -37,7 +37,8 @@ export default function About() {
               <h2 className="h5">Value</h2>
               <p className="mb-0">
                 We prioritize strong family relationships in a healing, comfortable environment and provide
-                respectful, empathetic care tailored to each patient.
+                respectful, empathetic care tailored to each patient, guided by the Christian principles
+                of our foundation.
               </p>
             </div>
           </div>
@@ -48,7 +49,9 @@ export default function About() {
               <h2 className="h5">Vision</h2>
               <p className="mb-3">
                 To set a benchmark for excellence in home health care through innovative,
-                patient-centered solutions and best practices.
+                patient-centered solutions grounded in compassionate delivery, committed to ensuring
+                every patient receives the highest quality care utilizing advanced methodologies
+                and best practices in the field.
               </p>
               <h2 className="h5">Our Promise</h2>
               <p className="mb-0">To treat every patient with dignity, respect, and empathy.</p>
