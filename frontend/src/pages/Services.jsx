@@ -63,11 +63,14 @@ export default function Services() {
 
   return (
     <div className="py-4">
-      <img
-        src={servicesBanner}
-        alt="Healthcare services banner"
-        className="img-fluid rounded shadow-sm border mb-4"
-      />
+      <div className="rounded shadow-sm border mb-4 overflow-hidden">
+        <img
+          src={servicesBanner}
+          alt="Healthcare services banner"
+          className="w-100 d-block"
+          style={{ height: '384px', objectFit: 'cover', objectPosition: 'center top' }}
+        />
+      </div>
       <h1 className="mb-3">Services</h1>
       <p className="lead">Comprehensive home health care services personalized to each patient and family.</p>
 
