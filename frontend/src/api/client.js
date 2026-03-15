@@ -37,6 +37,16 @@ const logout = () => {
 let refreshPromise = null
 
 api.interceptors.request.use((config) => {
+  const requestUrl = config.url || ''
+  const isAuthEndpoint =
+    requestUrl.includes('/api/auth/login/') ||
+    requestUrl.includes('/api/auth/register/') ||
+    requestUrl.includes('/api/auth/refresh/')
+
+  if (isAuthEndpoint) {
+    return config
+  }
+
   const token = getAccessToken()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
