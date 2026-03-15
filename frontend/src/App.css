@@ -1,6 +1,8 @@
 .app-shell {
   min-height: 100vh;
-  background: #f4f7fb;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  transition: background 0.3s ease, color 0.3s ease;
 }
 
 main.container {
@@ -15,4 +17,9 @@ main.container {
 
 .app-footer a {
   color: inherit;
+}
+
+.app-footer {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary);
 }
