@@ -373,7 +373,6 @@ function App() {
                 <NavLink to="/about">About Us</NavLink>
                 <NavLink to="/services">Services</NavLink>
                 <NavLink to="/careers">Careers</NavLink>
-                <NavLink to="/doctors">Doctors</NavLink>
                 <NavLink to="/contact">Contact</NavLink>
               </div>
             </div>
