@@ -11,12 +11,13 @@ export default function Contact() {
 
   return (
     <div className="py-4">
+      <p className="section-kicker">Contact</p>
       <h1 className="mb-2">Get in Touch</h1>
       <p className="lead mb-4">We care for your loved ones and are available 24 hours a day, 7 days a week.</p>
 
       <div className="row g-4">
         <div className="col-lg-5">
-          <div className="card shadow-sm h-100">
+          <div className="card marketing-card h-100">
             <div className="card-body">
               <h2 className="h5 mb-3">Contact Information</h2>
               <p className="mb-2"><strong>Phone:</strong> <a href="tel:9516213600">(951) 621-3600</a></p>
@@ -34,7 +35,7 @@ export default function Contact() {
         </div>
 
         <div className="col-lg-7">
-          <div className="card shadow-sm">
+          <div className="card marketing-card">
             <div className="card-body">
               <h2 className="h5 mb-3">Leave Us a Message</h2>
               {submitted && (

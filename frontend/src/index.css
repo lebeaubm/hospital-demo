@@ -115,6 +115,10 @@ body {
   color: #fff;
 }
 
+[data-theme="dark"] .badge.text-bg-primary {
+  background-color: #8b5cf6 !important;
+}
+
 [data-theme="dark"] h1, 
 [data-theme="dark"] h2, 
 [data-theme="dark"] h3, 
@@ -135,4 +139,31 @@ body {
 [data-theme="dark"] .border-bottom,
 [data-theme="dark"] .border-start {
   border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .text-muted,
+[data-theme="dark"] .section-intro,
+[data-theme="dark"] .section-kicker {
+  color: #b8c1cf !important;
+}
+
+[data-theme="dark"] .marketing-card {
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] .marketing-card:hover {
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35) !important;
+}
+
+[data-theme="dark"] .navbar .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.18);
+}
+
+[data-theme="dark"] .navbar .nav-link.active {
+  background-color: rgba(255, 255, 255, 0.26);
+}
+
+[data-theme="dark"] .section-icon {
+  background: rgba(167, 139, 250, 0.24);
+  color: #ddd6fe;
 }

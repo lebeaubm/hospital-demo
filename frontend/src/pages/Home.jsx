@@ -1,4 +1,9 @@
+import { useAuth } from '../context/AuthContext'
+
 export default function Home() {
+  const { user } = useAuth()
+  const isAdmin = user?.role === 'ADMIN'
+
   const heroCareBanner = 'https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=1600&q=80'
 
   const coreCareItems = [
@@ -21,10 +26,10 @@ export default function Home() {
   ]
 
   return (
-    <div className="py-4">
+    <div className="pt-2 pb-4">
       <section className="mb-4 p-4 rounded bg-light border">
         <p className="text-uppercase text-muted mb-2 fw-semibold">A Choice That Puts You First</p>
-        <h1 className="mb-3">Peaceloving Home Health Inc.</h1>
+        <h1 className="display-6 fw-semibold mb-3">Peaceloving Home Health Inc.</h1>
         <p className="lead mb-3">
           A home health team dedicated to compassionate, high-quality care with advanced technology and
           personalized attention in the comfort and privacy of your home.
@@ -40,19 +45,34 @@ export default function Home() {
       </section>
 
       <section className="mb-4">
-        <img
-          src={heroCareBanner}
-          alt="Healthcare worker helping a patient at home"
-          className="img-fluid rounded shadow-sm border w-100"
-          style={{ maxHeight: '360px', objectFit: 'cover' }}
-        />
+        <div className="hero-banner-wrap" style={{ '--hero-height': '360px' }}>
+          <img
+            src={heroCareBanner}
+            alt="Healthcare worker helping a patient at home"
+            className="hero-banner-image"
+          />
+          <div className="hero-overlay">
+            <p className="hero-overlay-title">Compassionate In-Home Health Care</p>
+            <p className="hero-overlay-subtitle">Supporting patients and families with warmth, dignity, and clinical excellence.</p>
+          </div>
+        </div>
+      </section>
+
+      <section className="mb-4">
+        <div className="trust-strip d-flex flex-wrap gap-3 justify-content-between align-items-center">
+          <span className="trust-chip">24/7 Availability</span>
+          <span className="trust-chip">Personalized In-Home Care</span>
+          <span className="trust-chip">Insurance Accepted</span>
+        </div>
       </section>
 
       <section>
+        <p className="section-kicker">Our Advantage</p>
         <h2 className="h4 mb-3">Why Choose Us</h2>
+        <p className="section-intro">A coordinated care model designed to keep families informed, supported, and confident.</p>
         <div className="row g-3 mt-1">
         <div className="col-md-4">
-          <div className="card h-100 shadow-sm">
+          <div className="card h-100 marketing-card">
             <div className="card-body">
               <h5 className="card-title">Comprehensive In-Home Care</h5>
               <ul className="mb-0 ps-3">
@@ -64,7 +84,7 @@ export default function Home() {
           </div>
         </div>
         <div className="col-md-4">
-          <div className="card h-100 shadow-sm">
+          <div className="card h-100 marketing-card">
             <div className="card-body">
               <h5 className="card-title">Personalized Care Planning</h5>
               <ul className="mb-0 ps-3">
@@ -77,7 +97,7 @@ export default function Home() {
           </div>
         </div>
         <div className="col-md-4">
-          <div className="card h-100 shadow-sm">
+          <div className="card h-100 marketing-card">
             <div className="card-body">
               <h5 className="card-title">We Care for All Ages</h5>
               <p className="card-text mb-2">Our services have no age limits.</p>
@@ -93,7 +113,7 @@ export default function Home() {
 
       <div className="row g-3 mt-2">
         <div className="col-md-6">
-          <div className="card h-100 shadow-sm">
+          <div className="card h-100 marketing-card">
             <div className="card-body">
               <h3 className="h5">What We Offer</h3>
               <ul className="mb-0 ps-3">
@@ -105,7 +125,7 @@ export default function Home() {
           </div>
         </div>
         <div className="col-md-6">
-          <div className="card h-100 shadow-sm">
+          <div className="card h-100 marketing-card">
             <div className="card-body">
               <h3 className="h5">Insurance Accepted</h3>
               <p className="mb-2">Medicare, Medi-Cal, Workers Compensation, Private Insurance, Private Payment, CCS, and Regional Center.</p>
@@ -117,7 +137,7 @@ export default function Home() {
 
       <div className="row g-3 mt-2">
         <div className="col-md-4">
-          <div className="card h-100 shadow-sm">
+          <div className="card h-100 marketing-card">
             <div className="card-body">
               <h3 className="h5">Why Families Choose Us</h3>
               <ul className="mb-0 ps-3">
@@ -129,7 +149,7 @@ export default function Home() {
           </div>
         </div>
         <div className="col-md-4">
-          <div className="card h-100 shadow-sm">
+          <div className="card h-100 marketing-card">
             <div className="card-body">
               <h3 className="h5">Did You Know?</h3>
               <p className="mb-0">Modern tools with a patient-centered digital care integrated clinical ecosystem.</p>
@@ -137,7 +157,7 @@ export default function Home() {
           </div>
         </div>
         <div className="col-md-4">
-          <div className="card h-100 shadow-sm">
+          <div className="card h-100 marketing-card">
             <div className="card-body">
               <h3 className="h5">More One-on-One</h3>
               <p className="mb-0">Personalized engagement and education with data-driven operations.</p>
@@ -146,11 +166,11 @@ export default function Home() {
         </div>
       </div>
 
-        <div className="mt-4 d-flex flex-wrap gap-2">
-          <span className="fw-semibold align-self-center me-2">Book An Appointment Now</span>
-          <a className="btn btn-outline-secondary" href="/services">View Services</a>
-          <a className="btn btn-outline-secondary" href="/doctors">Meet Doctors</a>
-          <a className="btn btn-outline-secondary" href="/contact">Get in Touch</a>
+        <div className="mt-4 d-flex flex-wrap gap-2 cta-group">
+          {isAdmin && <a className="btn btn-primary" href="/contact">Book Appointment</a>}
+          <a className="btn btn-outline-primary" href="/services">View Services</a>
+          {isAdmin && <a className="btn btn-outline-primary" href="/doctors">Meet Doctors</a>}
+          <a className="btn btn-outline-primary" href="/contact">Get in Touch</a>
         </div>
       </section>
     </div>

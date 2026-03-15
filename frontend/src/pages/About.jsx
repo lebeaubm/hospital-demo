@@ -15,7 +15,8 @@ export default function About() {
   ]
 
   return (
-    <div className="py-4">
+    <div className="pt-2 pb-4">
+      <p className="section-kicker">Who We Are</p>
       <h1 className="mb-3">About Us</h1>
       <p className="lead mb-4">
         Peaceloving Home Health Inc. provides compassionate, professional home health care that improves
@@ -29,8 +30,7 @@ export default function About() {
               <img
                 src={image.src}
                 alt={image.alt}
-                className="img-fluid rounded shadow-sm border w-100"
-                style={{ height: '220px', objectFit: 'cover' }}
+                className="gallery-image"
               />
             </div>
           ))}
@@ -39,7 +39,7 @@ export default function About() {
 
       <div className="row g-3">
         <div className="col-md-6">
-          <div className="card h-100 shadow-sm">
+          <div className="card h-100 marketing-card">
             <div className="card-body">
               <h2 className="h5">Mission</h2>
               <p className="mb-3">
@@ -56,7 +56,7 @@ export default function About() {
           </div>
         </div>
         <div className="col-md-6">
-          <div className="card h-100 shadow-sm">
+          <div className="card h-100 marketing-card">
             <div className="card-body">
               <h2 className="h5">Vision</h2>
               <p className="mb-3">
@@ -73,7 +73,7 @@ export default function About() {
       </div>
 
       <section className="mt-4">
-        <div className="card shadow-sm">
+        <div className="card marketing-card">
           <div className="card-body">
             <h2 className="h5 mb-2">Service Area</h2>
             <p className="mb-0">We serve cities in Ventura, Los Angeles, Orange, San Bernardino, Riverside, and San Diego Counties.</p>
@@ -82,7 +82,7 @@ export default function About() {
       </section>
 
       <section className="mt-4">
-        <div className="card shadow-sm">
+        <div className="card marketing-card">
           <div className="card-body">
             <h2 className="h5 mb-3">Get in Touch</h2>
             <p className="mb-1"><strong>Phone:</strong> <a href="tel:9516213600">(951) 621-3600</a></p>
