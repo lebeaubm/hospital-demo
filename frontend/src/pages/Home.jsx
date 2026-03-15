@@ -154,6 +154,7 @@ export default function Home() {
       </div>
 
         <div className="mt-4 d-flex flex-wrap gap-2">
+          <span className="fw-semibold align-self-center me-2">Book An Appointment Now</span>
           <a className="btn btn-outline-secondary" href="/services">View Services</a>
           <a className="btn btn-outline-secondary" href="/doctors">Meet Doctors</a>
           <a className="btn btn-outline-secondary" href="/contact">Get in Touch</a>
