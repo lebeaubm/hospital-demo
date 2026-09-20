@@ -9,6 +9,16 @@ const api = axios.create({
   timeout: 20000,
 })
 
+const authRetryDelays = [1000, 3000]
+
+const isAuthEndpoint = (requestUrl = '') =>
+  requestUrl.includes('/api/auth/login/') ||
+  requestUrl.includes('/api/auth/register/') ||
+  requestUrl.includes('/api/auth/refresh/')
+
+const isTimeoutError = (error) =>
+  !error.response && (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT')
+
 const getAccessToken = () => localStorage.getItem('accessToken')
 const getRefreshToken = () => localStorage.getItem('refreshToken')
 
@@ -38,12 +48,8 @@ let refreshPromise = null
 
 api.interceptors.request.use((config) => {
   const requestUrl = config.url || ''
-  const isAuthEndpoint =
-    requestUrl.includes('/api/auth/login/') ||
-    requestUrl.includes('/api/auth/register/') ||
-    requestUrl.includes('/api/auth/refresh/')
 
-  if (isAuthEndpoint) {
+  if (isAuthEndpoint(requestUrl)) {
     return config
   }
 
@@ -60,10 +66,18 @@ api.interceptors.response.use(
     const originalRequest = error.config
     const refreshToken = getRefreshToken()
     const requestUrl = originalRequest?.url || ''
-    const isAuthEndpoint =
-      requestUrl.includes('/api/auth/login/') ||
-      requestUrl.includes('/api/auth/register/') ||
-      requestUrl.includes('/api/auth/refresh/')
+    const authEndpoint = isAuthEndpoint(requestUrl)
+
+    if (authEndpoint && isTimeoutError(error)) {
+      const retryCount = originalRequest._authRetryCount || 0
+      const retryDelay = authRetryDelays[retryCount]
+
+      if (retryDelay !== undefined) {
+        originalRequest._authRetryCount = retryCount + 1
+        await new Promise((resolve) => setTimeout(resolve, retryDelay))
+        return api(originalRequest)
+      }
+    }
 
     // Don't try to refresh if:
     // 1. Not a 401 error
@@ -109,7 +123,7 @@ api.interceptors.response.use(
     // For 401 errors that can't be refreshed, logout for protected API calls
     if (
       error.response?.status === 401 &&
-      !isAuthEndpoint &&
+      !authEndpoint &&
       (originalRequest._retry || !refreshToken)
     ) {
       logout()
