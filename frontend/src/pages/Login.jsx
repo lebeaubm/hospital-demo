@@ -48,7 +48,7 @@ export default function Login() {
 
   return (
     <div className="py-4" style={{ maxWidth: '480px' }}>
-      <h1 className="mb-3">Login</h1>
+      <h1 className="mb-3">Staff</h1>
       <p className="text-muted">Use your email and password to sign in.</p>
       <form onSubmit={handleSubmit} className="card shadow-sm p-4">
         <div className="mb-3">

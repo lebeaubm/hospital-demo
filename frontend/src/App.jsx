@@ -97,7 +97,7 @@ function App() {
                 <>
                   <li className="nav-item">
                     <NavLink className="nav-link" to="/login">
-                      Login
+                      Staff
                     </NavLink>
                   </li>
                   <li className="nav-item">
