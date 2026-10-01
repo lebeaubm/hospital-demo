@@ -14,6 +14,8 @@
 .career-answer-grid dt { color: var(--text-secondary); font-size: 0.82rem; font-weight: 600; }
 .career-answer-grid dd { margin: 0.2rem 0 0; overflow-wrap: anywhere; white-space: pre-wrap; }
 .career-answer-grid dl { margin-top: 0.75rem; }
+.career-protected-answer { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; }
+.career-protected-answer code { font-size: 0.8rem; overflow-wrap: anywhere; }
 .career-answer-entry { padding: 0.8rem 0; border-bottom: 1px solid var(--border-color); }
 .career-answer-entry:first-child { padding-top: 0; }
 .career-answer-entry dl { margin-bottom: 0; }

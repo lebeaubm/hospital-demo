@@ -1,9 +1,12 @@
 import copy
 import json
 import tempfile
+from importlib import import_module
+from types import SimpleNamespace
 
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
+from django.apps import apps
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from rest_framework.test import APIClient
@@ -11,6 +14,7 @@ from rest_framework.test import APIClient
 from .models import JobApplication
 from .serializers import DEMO_APPLICATION_LOCKED_FIELDS, DEMO_APPLICATION_MASK
 from .views import admin_application_queryset
+from .security import decrypt_ssn, protected_answer_token, protect_application_answers
 
 
 @override_settings(
@@ -124,6 +128,7 @@ class CareerApplicationTests(TestCase):
             for entry in answers[section]:
                 entry.update({field: "" for field in entry if field not in locked})
         answers["certification"] = {"signature": "", "printed_name": "", "date": "", "accepted": False}
+        answers["demo"] = False
         response = self.submit(answers)
         self.assertEqual(response.status_code, 201)
         application = JobApplication.objects.get()
@@ -148,7 +153,7 @@ class CareerApplicationTests(TestCase):
         application = JobApplication.objects.get()
         self.assertEqual(application.full_name, "")
         self.assertEqual(application.email, "")
-        self.assertTrue(application.application_data["demo"])
+        self.assertFalse(application.application_data["demo"])
         self.assertEqual(application.application_data["personal"]["ssn"], DEMO_APPLICATION_MASK)
         self.assertFalse(application.application_data["certification"]["accepted"])
 
@@ -164,19 +169,19 @@ class CareerApplicationTests(TestCase):
         answers["references"] = [{}, {}, {}]
         self.assertEqual(self.submit(answers).status_code, 201)
 
-    def test_real_sensitive_values_or_unsupported_nested_fields_are_rejected(self):
+    def test_invalid_sensitive_values_or_unsupported_nested_fields_are_rejected(self):
         cases = [
-            ("personal", "ssn", "000-00-0000"),
-            ("personal", "date_of_birth", "2000-01-01"),
-            ("employment_eligibility", "felony_conviction", "No"),
-            ("employment_eligibility", "driver_license_number", "DEMO"),
-            ("additional", "disability", "Prefer not to answer"),
-            ("additional", "hispanic_latino", "No"),
+            ("personal", "ssn", "invalid"),
+            ("personal", "date_of_birth", "2026-02-30"),
+            ("employment_eligibility", "felony_conviction", "Maybe"),
+            ("employment_eligibility", "driver_license_number", []),
+            ("additional", "disability", "Unknown"),
+            ("additional", "hispanic_latino", "Maybe"),
             ("additional", "race_categories", ["Demo"]),
-            ("employers", "starting_pay", "1"),
+            ("employers", "starting_pay", "-1"),
             ("references", "ssn", "000-00-0000"),
             ("education", "date_of_birth", "2000-01-01"),
-            ("root", "military", {"veteran": "Yes"}),
+            ("root", "military", {"veteran": "Maybe"}),
         ]
         for section, field, value in cases:
             with self.subTest(section=section, field=field):
@@ -190,6 +195,87 @@ class CareerApplicationTests(TestCase):
                 target[field] = value
                 self.assertEqual(self.submit(answers).status_code, 400)
         self.assertEqual(JobApplication.objects.count(), 0)
+
+    def sensitive_answers(self, is_test=False):
+        answers = self.application_answers()
+        answers["demo"] = is_test
+        answers["certification"]["accepted"] = is_test
+        answers["personal"].update(ssn="000-00-0000", date_of_birth="2000-01-01")
+        answers["employment_eligibility"].update(felony_conviction="No", felony_explanation="Synthetic explanation", driver_license_number="FAKE-LICENSE", driver_license_state="CA")
+        answers["employers"][0].update(starting_pay="10.25", starting_pay_type="Hour", ending_pay="15.50", ending_pay_type="Salary")
+        answers["military"].update(veteran="Yes", branch="Sample branch", rank_at_discharge="Sample rank", **{"from": "2010-01-01", "to": "2012-01-01"}, type_of_discharge="Sample discharge", discharge_explanation="Sample explanation")
+        answers["additional"].update(disability="Prefer not to answer", hispanic_latino="No", race_categories=["Asian (not Hispanic or Latino)"])
+        return answers
+
+    def test_sensitive_answers_are_encrypted_and_do_not_enter_readable_json_or_api(self):
+        answers = self.sensitive_answers()
+        safe, protected = protect_application_answers(answers)
+        response = self.submit(answers)
+        self.assertEqual(response.status_code, 201)
+        application = JobApplication.objects.get()
+        self.assertEqual(application.application_data, safe)
+        self.assertTrue(application.sensitive_data_encrypted.startswith("gAAAA"))
+        self.assertEqual(json.loads(decrypt_ssn(application.sensitive_data_encrypted)), protected)
+        self.assertEqual(application.ssn_encrypted, "")
+        self.client.force_authenticate(user=self.admin_user())
+        detail = self.client.get(f"/api/admin/applications/{application.id}/")
+        self.assertEqual(detail.status_code, 200)
+        self.assertFalse(detail.data["application_data"]["demo"])
+        self.assertNotIn("sensitive_data_encrypted", detail.data)
+        rendered = json.dumps(detail.data)
+        for value in ("000-00-0000", "2000-01-01", "FAKE-LICENSE", "Synthetic explanation", "10.25", "15.50", "Sample branch", "Asian (not Hispanic or Latino)", application.sensitive_data_encrypted):
+            self.assertNotIn(value, rendered)
+        self.assertEqual(detail.data["application_data"]["personal"]["ssn"], protected_answer_token(application.id, "personal.ssn"))
+        listing = self.client.get("/api/admin/applications/")
+        self.assertFalse(listing.data["results"][0]["is_test"])
+        before = application.sensitive_data_encrypted
+        self.client.patch(f"/api/admin/applications/{application.id}/", {"status": "REVIEWING"}, format="json")
+        application.refresh_from_db()
+        self.assertEqual(application.sensitive_data_encrypted, before)
+
+    def test_checked_test_checkbox_preserves_supplied_values_in_encrypted_storage(self):
+        answers = self.sensitive_answers(is_test=True)
+        self.assertEqual(self.submit(answers).status_code, 201)
+        application = JobApplication.objects.get()
+        self.assertTrue(application.application_data["demo"])
+        self.assertEqual(json.loads(decrypt_ssn(application.sensitive_data_encrypted))["personal.ssn"], answers["personal"]["ssn"])
+
+    def test_encryption_is_randomized_for_identical_answers(self):
+        self.assertEqual(self.submit(self.sensitive_answers()).status_code, 201)
+        self.assertEqual(self.submit(self.sensitive_answers()).status_code, 201)
+        first, second = JobApplication.objects.order_by("id")
+        self.assertNotEqual(first.sensitive_data_encrypted, second.sensitive_data_encrypted)
+        self.assertEqual(decrypt_ssn(first.sensitive_data_encrypted), decrypt_ssn(second.sensitive_data_encrypted))
+
+    @override_settings(APPLICATION_ENCRYPTION_KEY="")
+    def test_missing_encryption_key_fails_closed_without_saving_or_echoing_answers(self):
+        response = self.submit(self.sensitive_answers())
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(JobApplication.objects.count(), 0)
+        self.assertNotIn("000-00-0000", json.dumps(response.data))
+
+    def test_model_save_protects_sensitive_values_outside_the_submission_serializer(self):
+        answers = self.sensitive_answers()
+        application = JobApplication.objects.create(full_name="Sample", email="sample@example.com", position="Nurse", application_data=answers)
+        application.refresh_from_db()
+        self.assertEqual(application.application_data["personal"]["ssn"], DEMO_APPLICATION_MASK)
+        self.assertEqual(json.loads(decrypt_ssn(application.sensitive_data_encrypted))["personal.ssn"], "000-00-0000")
+
+    def test_migration_encrypts_legacy_plaintext_answers_and_is_safe_to_repeat(self):
+        application = JobApplication.objects.create(full_name="Legacy Sample", email="legacy@example.com", position="Nurse")
+        answers = self.sensitive_answers()
+        JobApplication.objects.filter(pk=application.pk).update(application_data=answers)
+        migrate = import_module("core.migrations.0024_jobapplication_sensitive_data_encrypted").protect_existing_answers
+        editor = SimpleNamespace(connection=SimpleNamespace(alias="default"))
+        migrate(apps, editor)
+        application.refresh_from_db()
+        safe, protected = protect_application_answers(answers)
+        self.assertEqual(application.application_data, safe)
+        self.assertEqual(json.loads(decrypt_ssn(application.sensitive_data_encrypted)), protected)
+        ciphertext = application.sensitive_data_encrypted
+        migrate(apps, editor)
+        application.refresh_from_db()
+        self.assertEqual(application.sensitive_data_encrypted, ciphertext)
 
     def test_supplied_answers_types_choices_dates_and_nested_shapes_are_validated(self):
         changes = [
@@ -312,7 +398,7 @@ class CareerApplicationTests(TestCase):
         )
         JobApplication.objects.create(full_name="No Resume", email="other@example.com", position="Nurse")
         metadata = admin_application_queryset().get(id=application.id)
-        self.assertTrue({"resume_content", "ssn_encrypted"}.issubset(metadata.get_deferred_fields()))
+        self.assertTrue({"resume_content", "ssn_encrypted", "sensitive_data_encrypted"}.issubset(metadata.get_deferred_fields()))
         self.assertTrue(metadata.has_resume_file)
         self.client.force_authenticate(user=self.admin_user())
         with self.assertNumQueries(2):
@@ -325,7 +411,7 @@ class CareerApplicationTests(TestCase):
             detail = self.client.get(f"/api/admin/applications/{application.id}/")
         self.assertEqual(detail.status_code, 200)
         self.assertNotIn("ssn", detail.data)
-        self.assertEqual(detail.data["application_data"], answers)
+        self.assertEqual(detail.data["application_data"]["personal"]["ssn"], protected_answer_token(application.id, "personal.ssn"))
         self.assertIn("no-store", detail["Cache-Control"])
         response = self.client.patch(f"/api/admin/applications/{application.id}/", {"status": "REVIEWING"}, format="json")
         self.assertEqual(response.status_code, 200)
@@ -334,7 +420,7 @@ class CareerApplicationTests(TestCase):
         self.assertIn("no-store", response["Cache-Control"])
         application.refresh_from_db()
         self.assertEqual(application.status, "REVIEWING")
-        self.assertEqual(application.application_data, legacy_answers)
+        self.assertEqual(application.application_data, protect_application_answers(legacy_answers)[0])
         self.assertEqual(application.ssn_encrypted, "opaque-legacy-encrypted-value")
         self.assertEqual(bytes(application.resume_content), content)
 

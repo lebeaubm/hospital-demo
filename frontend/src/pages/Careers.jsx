@@ -6,7 +6,7 @@ export default function Careers() {
       <p className="section-kicker">Join Our Team</p>
       <h1 className="mb-3">Careers</h1>
       <p className="lead mb-4">
-        Explore our sample online job application, recreated from the original paper form.
+        Apply to join our home health team.
       </p>
       <CareerApplicationForm />
     </div>

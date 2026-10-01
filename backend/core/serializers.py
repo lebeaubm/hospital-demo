@@ -36,17 +36,17 @@ from .models import (
     PrescriptionRefill,
     StaffProfile,
 )
-from .security import validate_resume_file
+from .security import APPLICATION_MASK, APPLICATION_SENSITIVE_FIELDS, protected_answer_token, validate_resume_file
 
 User = get_user_model()
 
-DEMO_APPLICATION_MASK = "****"
-DEMO_APPLICATION_LOCKED_FIELDS = {
-    "personal": {"ssn", "date_of_birth"},
-    "employment_eligibility": {"felony_conviction", "felony_explanation", "driver_license_number", "driver_license_state"},
-    "employers": {"starting_pay", "starting_pay_type", "ending_pay", "ending_pay_type"},
-    "military": {"veteran", "branch", "rank_at_discharge", "from", "to", "type_of_discharge", "discharge_explanation"},
-    "additional": {"disability", "hispanic_latino"},
+DEMO_APPLICATION_MASK = APPLICATION_MASK
+# Keep aliases for legacy application fixtures and masked records.
+DEMO_APPLICATION_LOCKED_FIELDS = {section: fields - {"race_categories"} for section, fields in APPLICATION_SENSITIVE_FIELDS.items()}
+APPLICATION_RACE_CHOICES = {
+    "Hispanic or Latino", "White (not Hispanic or Latino)", "Black or African American (not Hispanic or Latino)",
+    "Asian (not Hispanic or Latino)", "Native Hawaiian or Other Pacific Islander (not Hispanic or Latino)",
+    "American Indian or Alaska Native (not Hispanic or Latino)", "Two or More Races (not Hispanic or Latino)",
 }
 
 
@@ -209,9 +209,8 @@ class JobApplicationCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Application answers contain unsupported sections.")
         if not required_sections.issubset(data):
             raise serializers.ValidationError("Complete each application section before submitting.")
-        if "demo" in data and data["demo"] is not True:
-            raise serializers.ValidationError("This application endpoint accepts demo submissions only.")
-        data["demo"] = True
+        if "demo" in data and type(data["demo"]) is not bool:
+            raise serializers.ValidationError("The test-information flag must be true or false.")
 
         def invalid(path, message):
             raise serializers.ValidationError({path: message})
@@ -225,9 +224,7 @@ class JobApplicationCreateSerializer(serializers.ModelSerializer):
 
         def locked_answers(answer, section):
             for field in DEMO_APPLICATION_LOCKED_FIELDS[section]:
-                if field in answer and answer[field] != DEMO_APPLICATION_MASK:
-                    invalid(section, "Locked demo fields must contain only the fixed demo placeholder.")
-                answer[field] = DEMO_APPLICATION_MASK
+                answer.setdefault(field, DEMO_APPLICATION_MASK)
 
         def text_answers(answer, path, max_lengths=None):
             for field, text in answer.items():
@@ -240,12 +237,12 @@ class JobApplicationCreateSerializer(serializers.ModelSerializer):
 
         def choice(answer, field, options, path):
             selected = answer.get(field, "")
-            if selected and selected not in options:
+            if selected and selected != DEMO_APPLICATION_MASK and selected not in options:
                 invalid(path, f"Choose a valid {field.replace('_', ' ')} option.")
 
         def date_answer(answer, field, path):
             entered = answer.get(field, "")
-            if entered:
+            if entered and entered != DEMO_APPLICATION_MASK:
                 if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", entered):
                     invalid(path, "Use valid dates in YYYY-MM-DD format.")
                 try:
@@ -256,8 +253,15 @@ class JobApplicationCreateSerializer(serializers.ModelSerializer):
         def date_range(answer, start, end, path):
             date_answer(answer, start, path)
             date_answer(answer, end, path)
-            if answer.get(start) and answer.get(end) and answer[start] > answer[end]:
+            if answer.get(start) not in (None, "", DEMO_APPLICATION_MASK) and answer.get(end) not in (None, "", DEMO_APPLICATION_MASK) and answer[start] > answer[end]:
                 invalid(path, "The end date must be on or after the start date.")
+
+        def pay_answer(answer, field, path):
+            if answer.get(field) not in (None, "", DEMO_APPLICATION_MASK):
+                try:
+                    serializers.DecimalField(max_digits=12, decimal_places=2, min_value=0).run_validation(answer[field])
+                except serializers.ValidationError:
+                    invalid(path, "Pay must be a nonnegative amount with at most two decimal places.")
 
         def email_answer(answer, field, path):
             if answer.get(field):
@@ -271,16 +275,17 @@ class JobApplicationCreateSerializer(serializers.ModelSerializer):
             "date_available", "desired_pay", "pay_type", "employment_desired",
         } | DEMO_APPLICATION_LOCKED_FIELDS["personal"], "personal")
         locked_answers(personal, "personal")
-        text_answers(personal, "personal", max_lengths={"full_name": 255, "email": 254, "phone_number": 50, "position": 255})
+        text_answers(personal, "personal", max_lengths={"full_name": 255, "email": 254, "phone_number": 50, "position": 255, "ssn": 11, "date_of_birth": 10})
         email_answer(personal, "email", "personal")
         date_answer(personal, "date_available", "personal")
+        date_answer(personal, "date_of_birth", "personal")
+        if personal.get("date_of_birth") not in (None, "", DEMO_APPLICATION_MASK) and personal["date_of_birth"] > timezone.localdate().isoformat():
+            invalid("personal", "Birth date cannot be in the future.")
+        if personal.get("ssn") not in (None, "", DEMO_APPLICATION_MASK) and not re.fullmatch(r"(?:\d{9}|\d{3}-\d{2}-\d{4})", personal["ssn"]):
+            invalid("personal", "Use nine digits or the XXX-XX-XXXX format for SSN.")
         choice(personal, "employment_desired", {"Full Time", "Part Time", "Seasonal"}, "personal")
         choice(personal, "pay_type", {"Hour", "Salary"}, "personal")
-        if personal.get("desired_pay"):
-            try:
-                serializers.DecimalField(max_digits=12, decimal_places=2, min_value=0).run_validation(personal["desired_pay"])
-            except serializers.ValidationError:
-                invalid("personal", "Desired pay must be a nonnegative amount with at most two decimal places.")
+        pay_answer(personal, "desired_pay", "personal")
 
         availability = answer_object(data["availability"], {"days", "days_preference", "nights_preference"}, "availability")
         weekdays = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
@@ -304,7 +309,7 @@ class JobApplicationCreateSerializer(serializers.ModelSerializer):
         } | DEMO_APPLICATION_LOCKED_FIELDS["employment_eligibility"], "employment_eligibility")
         locked_answers(eligibility, "employment_eligibility")
         text_answers(eligibility, "employment_eligibility")
-        for field in ("legally_eligible", "previously_employed", "driver_license"):
+        for field in ("legally_eligible", "previously_employed", "driver_license", "felony_conviction"):
             choice(eligibility, field, {"Yes", "No"}, "employment_eligibility")
         date_range(eligibility, "previous_start_date", "previous_end_date", "employment_eligibility")
 
@@ -335,22 +340,31 @@ class JobApplicationCreateSerializer(serializers.ModelSerializer):
                 if section == "employers":
                     email_answer(answers, "secondary_email", section)
                     date_range(answers, "from", "to", section)
+                    for field in ("starting_pay", "ending_pay"):
+                        pay_answer(answers, field, section)
+                    for field in ("starting_pay_type", "ending_pay_type"):
+                        choice(answers, field, {"Hour", "Salary"}, section)
 
         military = answer_object(data.get("military", {}), DEMO_APPLICATION_LOCKED_FIELDS["military"], "military")
         locked_answers(military, "military")
+        text_answers(military, "military")
+        choice(military, "veteran", {"Yes", "No"}, "military")
+        date_range(military, "from", "to", "military")
         data["military"] = military
         additional = answer_object(data["additional"], {
             "additional_information", "background_check_consent", "drug_test_consent", "race_categories",
         } | DEMO_APPLICATION_LOCKED_FIELDS["additional"], "additional")
         locked_answers(additional, "additional")
-        if "race_categories" in additional and additional["race_categories"] != [DEMO_APPLICATION_MASK]:
-            invalid("additional", "Locked demo fields must contain only the fixed demo placeholder.")
-        additional["race_categories"] = [DEMO_APPLICATION_MASK]
+        races = additional.setdefault("race_categories", [DEMO_APPLICATION_MASK])
+        if not isinstance(races, list) or len(races) > 7 or any(not isinstance(race, str) or race not in APPLICATION_RACE_CHOICES | {DEMO_APPLICATION_MASK} for race in races) or len(set(races)) != len(races):
+            invalid("additional", "Select listed race categories without duplicates.")
         additional_text = {field: value for field, value in additional.items() if field != "race_categories"}
         text_answers(additional_text, "additional")
         additional.update(additional_text)
         for field in ("background_check_consent", "drug_test_consent"):
             choice(additional, field, {"Yes", "No"}, "additional")
+        choice(additional, "hispanic_latino", {"Yes", "No"}, "additional")
+        choice(additional, "disability", {"Yes", "No", "Prefer not to answer"}, "additional")
         certification = answer_object(data["certification"], {"signature", "printed_name", "date", "accepted"}, "certification")
         if "accepted" in certification and type(certification["accepted"]) is not bool:
             invalid("certification", "Certification acceptance must be true or false.")
@@ -359,6 +373,9 @@ class JobApplicationCreateSerializer(serializers.ModelSerializer):
         text_answers(certification_text, "certification")
         certification.update(certification_text)
         date_answer(certification, "date", "certification")
+        if "demo" in data and data["demo"] != certification["accepted"]:
+            invalid("certification", "The test-information flag must match the checkbox.")
+        data["demo"] = certification["accepted"]
         return data
 
     def validate_resume(self, value):
@@ -393,6 +410,7 @@ class JobApplicationCreateSerializer(serializers.ModelSerializer):
 
 class JobApplicationAdminSerializer(serializers.ModelSerializer):
     has_resume = serializers.BooleanField(source="has_resume_file", read_only=True)
+    is_test = serializers.BooleanField(source="application_data.demo", read_only=True, default=False)
 
     class Meta:
         model = JobApplication
@@ -403,6 +421,7 @@ class JobApplicationAdminSerializer(serializers.ModelSerializer):
             "phone_number",
             "position",
             "status",
+            "is_test",
             "has_resume",
             "created_at",
             "submitted_at",
@@ -432,7 +451,7 @@ class JobApplicationAdminDetailSerializer(serializers.ModelSerializer):
         )
 
     def get_application_data(self, obj):
-        """Keep legacy sensitive answers out of the API without changing stored records."""
+        """Never return protected originals or their ciphertext, including legacy records."""
         source = obj.application_data if isinstance(obj.application_data, dict) else {}
 
         def text_fields(answer, fields):
@@ -452,9 +471,9 @@ class JobApplicationAdminDetailSerializer(serializers.ModelSerializer):
                 safe[section] = text_fields(source[section], fields)
         safe["demo"] = source.get("demo") is True
         for section in ("personal", "employment_eligibility", "additional"):
-            safe.setdefault(section, {}).update({field: DEMO_APPLICATION_MASK for field in DEMO_APPLICATION_LOCKED_FIELDS[section]})
-        safe["additional"]["race_categories"] = [DEMO_APPLICATION_MASK]
-        safe["military"] = {field: DEMO_APPLICATION_MASK for field in DEMO_APPLICATION_LOCKED_FIELDS["military"]}
+            safe.setdefault(section, {}).update({field: protected_answer_token(obj.pk, f"{section}.{field}") for field in DEMO_APPLICATION_LOCKED_FIELDS[section]})
+        safe["additional"]["race_categories"] = [protected_answer_token(obj.pk, "additional.race_categories")]
+        safe["military"] = {field: protected_answer_token(obj.pk, f"military.{field}") for field in DEMO_APPLICATION_LOCKED_FIELDS["military"]}
         if isinstance(source.get("certification"), dict) and type(source["certification"].get("accepted")) is bool:
             safe["certification"]["accepted"] = source["certification"]["accepted"]
 
@@ -485,8 +504,8 @@ class JobApplicationAdminDetailSerializer(serializers.ModelSerializer):
             if isinstance(source.get(section), list):
                 safe[section] = [text_fields(answer, fields) for answer in source[section][:3]]
                 if section == "employers":
-                    for answer in safe[section]:
-                        answer.update({field: DEMO_APPLICATION_MASK for field in DEMO_APPLICATION_LOCKED_FIELDS["employers"]})
+                    for index, answer in enumerate(safe[section]):
+                        answer.update({field: protected_answer_token(obj.pk, f"employers.{index}.{field}") for field in DEMO_APPLICATION_LOCKED_FIELDS["employers"]})
         return safe
 
 

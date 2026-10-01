@@ -1,5 +1,6 @@
 from django.db.models import BooleanField, Case, Q, Value, When
 from django.http import FileResponse, Http404, HttpResponse
+from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.http import content_disposition_header
@@ -1502,9 +1503,12 @@ class CareerApplicationCreateView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        try:
+            serializer.save()
+        except ImproperlyConfigured:
+            return Response({"message": "Applications are temporarily unavailable. Please try again later."}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
         return Response(
-            {"message": "Thank you. Your demo application to PeaceLoving Home Health has been received."},
+            {"message": "Thank you. Your application to PeaceLoving Home Health has been received."},
             status=status.HTTP_201_CREATED,
         )
 
@@ -1533,7 +1537,7 @@ class AdminApplicationPagination(PageNumberPagination):
 
 
 def admin_application_queryset():
-    return JobApplication.objects.defer("resume_content", "ssn_encrypted").annotate(
+    return JobApplication.objects.defer("resume_content", "ssn_encrypted", "sensitive_data_encrypted").annotate(
         has_resume_file=Case(
             When(Q(resume_content__isnull=False) | (Q(resume__isnull=False) & ~Q(resume="")), then=Value(True)),
             default=Value(False),

@@ -131,6 +131,7 @@ class JobApplication(models.Model):
     resume_storage_id = models.UUIDField(blank=True, null=True, editable=False)
     application_data = models.JSONField(default=dict, blank=True)
     ssn_encrypted = models.CharField(max_length=512, blank=True)
+    sensitive_data_encrypted = models.TextField(blank=True, default="", editable=False)
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.NEW)
     created_at = models.DateTimeField(auto_now_add=True)
     submitted_at = models.DateTimeField(blank=True, null=True)
@@ -143,6 +144,13 @@ class JobApplication(models.Model):
         return f"Job Application #{self.id} - {self.full_name} ({self.position})"
 
     def save(self, *args, **kwargs):
+        from .security import protect_application_answers, encrypt_application_answers
+        safe, protected = protect_application_answers(self.application_data)
+        if protected:
+            self.sensitive_data_encrypted = encrypt_application_answers(protected)
+            self.application_data = safe
+            if kwargs.get("update_fields") is not None:
+                kwargs["update_fields"] = set(kwargs["update_fields"]) | {"application_data", "sensitive_data_encrypted"}
         self.updated_at = timezone.now()
         super().save(*args, **kwargs)
 

@@ -19,6 +19,7 @@ const sectionNames = {
   employers: 'Previous Employment',
   references: 'Professional References',
   additional: 'Additional Information',
+  military: 'Military Service',
   certification: 'Certification',
 }
 
@@ -29,7 +30,7 @@ function isPdfResume(application) {
 }
 
 function applicantName(application) {
-  return application.full_name?.trim() || 'Blank demo application'
+  return application.full_name?.trim() || 'Blank application'
 }
 
 function humanize(value) {
@@ -37,7 +38,10 @@ function humanize(value) {
 }
 
 function AnswerList({ value }) {
+  const protectedToken = typeof value === 'string' && /^protected:[a-f0-9]{24}$/.test(value)
+  if (protectedToken) return <dd className="career-protected-answer"><span className="badge text-bg-secondary">Sensitive</span><code>{value.slice('protected:'.length)}</code></dd>
   if (Array.isArray(value)) {
+    if (value.some(item => typeof item === 'string' && item.startsWith('protected:'))) return <div>{value.map((item, index) => <AnswerList value={item} key={index} />)}</div>
     if (value.every((item) => item === null || typeof item !== 'object')) {
       return <dd>{value.length ? value.join(', ') : '—'}</dd>
     }
@@ -45,7 +49,7 @@ function AnswerList({ value }) {
   }
 
   if (value && typeof value === 'object') {
-    return <dl className="career-answer-grid">{Object.entries(value).map(([key, answer]) => <div key={key}><dt>{humanize(key)}</dt><AnswerList value={answer} /></div>)}</dl>
+    return <dl className="career-answer-grid">{Object.entries(value).map(([key, answer]) => <div key={key}><dt>{key === 'accepted' ? 'Test Information' : humanize(key)}</dt><AnswerList value={answer} /></div>)}</dl>
   }
 
   return <dd>{typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value || '—'}</dd>
@@ -265,7 +269,7 @@ export default function AdminApplications() {
             <table className="table table-hover align-middle">
               <thead><tr><th scope="col">Applicant</th><th scope="col">Position</th><th scope="col">Contact</th><th scope="col">Date Applied</th><th scope="col">Status</th><th scope="col">Resume</th><th scope="col"><span className="visually-hidden">Actions</span></th></tr></thead>
               <tbody>{applications.map((application) => <tr key={application.id}>
-                <td className="fw-semibold">{applicantName(application)}</td><td>{application.position?.trim() || 'Position not provided'}</td>
+                <td className="fw-semibold">{applicantName(application)}{application.is_test && <div><span className="badge text-bg-info mt-1">Test information</span></div>}</td><td>{application.position?.trim() || 'Position not provided'}</td>
                 <td>{application.email?.trim() ? <a href={`mailto:${application.email}`}>{application.email}</a> : <span className="text-muted">No email provided</span>}<div className="small text-muted">{application.phone_number || '—'}</div></td>
                 <td>{new Date(application.submitted_at || application.created_at).toLocaleDateString()}</td>
                 <td><span className="badge text-bg-secondary">{statuses.find(([value]) => value === application.status)?.[1] || application.status}</span></td>
@@ -293,7 +297,8 @@ export default function AdminApplications() {
             <div><label className="form-label" htmlFor="application-status">Application status</label><select id="application-status" className="form-select" value={selected.status} onChange={(event) => changeStatus(event.target.value)} disabled={savingStatus || deletingId === selected.id}>{statuses.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select><button className="btn btn-outline-danger mt-2" onClick={() => handleDelete(selected.id)} disabled={deletingId !== null || savingStatus}>{deletingId === selected.id ? 'Deleting…' : 'Delete Application'}</button></div>
           </div>
         </section>
-        {selected.application_data?.demo === true && <div className="alert alert-info" role="note"><strong>Demo application.</strong> This application contains sample data.</div>}
+        {selected.application_data?.demo === true && <div className="alert alert-info" role="note"><strong>Test information.</strong> The applicant marked this submission as test information.</div>}
+        <p className="small text-muted">Sensitive answers are encrypted in storage and shown here as unreadable placeholders.</p>
         <section className="mb-4"><h3 className="h5">Contact</h3><p className="mb-1">{selected.email?.trim() ? <a href={`mailto:${selected.email}`}>{selected.email}</a> : <span className="text-muted">No email provided</span>}</p><p className="mb-0">{selected.phone_number || 'No phone number provided'}</p></section>
         {Object.entries(selected.application_data || {}).filter(([key]) => key !== 'demo').map(([key, value]) => <section className="mb-4" key={key}><h3 className="h5 border-bottom pb-2">{sectionNames[key] || humanize(key)}</h3><AnswerList value={value} /></section>)}
         <section className="mb-4">
