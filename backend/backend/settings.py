@@ -44,6 +44,8 @@ SECRET_KEY = os.environ.get(
     'django-insecure-4_^ia5rf4cs=!z_!b(91aj6n)z%e^x&notx(-oq)4^)z$q-=e8'
 )
 
+APPLICATION_ENCRYPTION_KEY = os.environ.get('APPLICATION_ENCRYPTION_KEY', '')
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = get_bool_env('DEBUG', True)
 
@@ -51,6 +53,9 @@ ALLOWED_HOSTS = get_csv_env('ALLOWED_HOSTS', ['localhost', '127.0.0.1'] if DEBUG
 
 if not DEBUG and SECRET_KEY.startswith('django-insecure-'):
     raise ImproperlyConfigured('SECRET_KEY must be explicitly set in production.')
+
+if DEBUG and not APPLICATION_ENCRYPTION_KEY:
+    APPLICATION_ENCRYPTION_KEY = SECRET_KEY
 
 if not DEBUG and not ALLOWED_HOSTS:
     raise ImproperlyConfigured('ALLOWED_HOSTS must be set in production.')
@@ -167,6 +172,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Media files (user-uploaded content)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+DATA_UPLOAD_MAX_MEMORY_SIZE = 12 * 1024 * 1024
 
 # WhiteNoise configuration for production static file serving
 STORAGES = {
@@ -192,6 +198,10 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_THROTTLE_RATES': {
+        'career_application': '10/hour',
+        'contact_message': '10/hour',
+    },
 }
 
 # JWT Token Lifetime Configuration

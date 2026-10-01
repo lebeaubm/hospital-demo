@@ -2,6 +2,7 @@ import { Navigate, NavLink, Route, Routes, useNavigate } from 'react-router-dom'
 import './App.css'
 import Contact from './pages/Contact'
 import About from './pages/About'
+import Team from './pages/Team'
 import Careers from './pages/Careers'
 import DoctorDetail from './pages/DoctorDetail'
 import DoctorsList from './pages/DoctorsList'
@@ -30,6 +31,7 @@ import LabResults from './pages/LabResults'
 import Billing from './pages/Billing'
 import FamilyMembers from './pages/FamilyMembers'
 import AdminApplications from './pages/AdminApplications'
+import AdminContactMessages from './pages/AdminContactMessages'
 import AdminUserManagement from './pages/AdminUserManagement'
 import AdminProtectedRoute from './components/AdminProtectedRoute'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -96,8 +98,8 @@ function App() {
               {isGuest ? (
                 <>
                   <li className="nav-item">
-                    <NavLink className="nav-link" to="/login">
-                      Staff
+                    <NavLink className="nav-link" to="/team">
+                      Our Team
                     </NavLink>
                   </li>
                   <li className="nav-item">
@@ -158,6 +160,11 @@ function App() {
                               Career Applications
                             </NavLink>
                           </li>
+                          <li>
+                            <NavLink className="dropdown-item" to="/admin/contact-messages">
+                              Contact Messages
+                            </NavLink>
+                          </li>
                         </>
                       )}
                       <li>
@@ -195,6 +202,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
+          <Route path="/team" element={<Team />} />
           <Route path="/services" element={<Services />} />
           <Route path="/services/primary-care" element={<ServicePrimaryCare />} />
           <Route path="/services/cardiology" element={<ServiceCardiology />} />
@@ -357,6 +365,14 @@ function App() {
             element={
               <AdminProtectedRoute>
                 <AdminApplications />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/contact-messages"
+            element={
+              <AdminProtectedRoute>
+                <AdminContactMessages />
               </AdminProtectedRoute>
             }
           />

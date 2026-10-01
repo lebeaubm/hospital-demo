@@ -2,7 +2,9 @@ from django.urls import path
 
 from .views import (
     APIRootView,
-    AdminJobApplicationDeleteView,
+    AdminContactMessageDetailView,
+    AdminContactMessageListView,
+    AdminJobApplicationDetailView,
     AdminJobApplicationListView,
     AdminJobApplicationResumeDownloadView,
     AppointmentCreateView,
@@ -68,6 +70,7 @@ from .views import (
     StaffSendEmailView,
     BillableServiceListView,
     CareerApplicationCreateView,
+    ContactMessageCreateView,
     PatientMyDoctorsView,
     StaffAllDoctorsView,
     StaffPatientAssignedDoctorsView,
@@ -89,6 +92,7 @@ urlpatterns = [
     path("auth/login/", LoginView.as_view(), name="login"),
     path("auth/refresh/", RefreshView.as_view(), name="token_refresh"),
     path("careers/applications/", CareerApplicationCreateView.as_view(), name="career_application_create"),
+    path("contact/messages/", ContactMessageCreateView.as_view(), name="contact_message_create"),
     path("doctors/", DoctorListView.as_view(), name="doctor_list"),
     path("doctors/<int:pk>/", DoctorDetailView.as_view(), name="doctor_detail"),
     path("patients/me/", PatientMeView.as_view(), name="patient_me"),
@@ -189,10 +193,12 @@ urlpatterns = [
     path("staff/family-members/", StaffFamilyMemberListView.as_view(), name="staff_family_member_list"),
 
     # ==================== ADMIN URLS ====================
+    path("admin/contact-messages/", AdminContactMessageListView.as_view(), name="admin_contact_message_list"),
+    path("admin/contact-messages/<int:pk>/", AdminContactMessageDetailView.as_view(), name="admin_contact_message_detail"),
     path("admin/users/", AdminUserListView.as_view(), name="admin_user_list"),
     path("admin/users/<int:user_id>/role/", AdminUserRoleUpdateView.as_view(), name="admin_user_role_update"),
     path("admin/applications/", AdminJobApplicationListView.as_view(), name="admin_application_list"),
-    path("admin/applications/<int:application_id>/", AdminJobApplicationDeleteView.as_view(), name="admin_application_delete"),
+    path("admin/applications/<int:application_id>/", AdminJobApplicationDetailView.as_view(), name="admin_application_detail"),
     path("admin/applications/<int:application_id>/resume/", AdminJobApplicationResumeDownloadView.as_view(), name="admin_application_resume_download"),
 ]
 

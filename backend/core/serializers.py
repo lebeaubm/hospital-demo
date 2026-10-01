@@ -1,3 +1,8 @@
+import copy
+import json
+import re
+import uuid
+
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from rest_framework import serializers
@@ -8,6 +13,7 @@ from .models import (
     BillableService,
     BillLineItem,
     BillPayment,
+    ContactMessage,
     Doctor,
     FamilyMember,
     Invoice,
@@ -30,8 +36,18 @@ from .models import (
     PrescriptionRefill,
     StaffProfile,
 )
+from .security import validate_resume_file
 
 User = get_user_model()
+
+DEMO_APPLICATION_MASK = "****"
+DEMO_APPLICATION_LOCKED_FIELDS = {
+    "personal": {"ssn", "date_of_birth"},
+    "employment_eligibility": {"felony_conviction", "felony_explanation", "driver_license_number", "driver_license_state"},
+    "employers": {"starting_pay", "starting_pay_type", "ending_pay", "ending_pay_type"},
+    "military": {"veteran", "branch", "rank_at_discharge", "from", "to", "type_of_discharge", "discharge_explanation"},
+    "additional": {"disability", "hispanic_latino"},
+}
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -153,39 +169,249 @@ class AdminUserRoleUpdateRequestSerializer(serializers.Serializer):
 
 
 class JobApplicationCreateSerializer(serializers.ModelSerializer):
-    resume = serializers.FileField(required=False, allow_null=True)
+    full_name = serializers.CharField(required=False, allow_blank=True, default="", max_length=255)
+    email = serializers.EmailField(required=False, allow_blank=True, default="", max_length=254)
+    phone_number = serializers.CharField(required=False, allow_blank=True, default="", max_length=50)
+    position = serializers.CharField(required=False, allow_blank=True, default="", max_length=255)
+    application_data = serializers.JSONField(write_only=True)
+    resume = serializers.FileField(required=False, allow_null=True, write_only=True)
 
     class Meta:
         model = JobApplication
         fields = (
-            "id",
             "full_name",
             "email",
             "phone_number",
             "position",
             "cover_letter",
+            "application_data",
             "resume",
-            "created_at",
         )
-        read_only_fields = ("id", "created_at")
+
+    def validate_application_data(self, value):
+        if not isinstance(value, dict):
+            raise serializers.ValidationError("Application answers must be an object.")
+        if len(json.dumps(value, ensure_ascii=True)) > 250_000:
+            raise serializers.ValidationError("Application answers are too large.")
+
+        data = copy.deepcopy(value)
+        required_sections = {
+            "personal",
+            "availability",
+            "employment_eligibility",
+            "education",
+            "employers",
+            "references",
+            "additional",
+            "certification",
+        }
+        if set(data) - (required_sections | {"demo", "military"}):
+            raise serializers.ValidationError("Application answers contain unsupported sections.")
+        if not required_sections.issubset(data):
+            raise serializers.ValidationError("Complete each application section before submitting.")
+        if "demo" in data and data["demo"] is not True:
+            raise serializers.ValidationError("This application endpoint accepts demo submissions only.")
+        data["demo"] = True
+
+        def invalid(path, message):
+            raise serializers.ValidationError({path: message})
+
+        def answer_object(answer, fields, path):
+            if not isinstance(answer, dict):
+                invalid(path, "Answers must be an object.")
+            if set(answer) - set(fields):
+                invalid(path, "This section contains unsupported fields.")
+            return answer
+
+        def locked_answers(answer, section):
+            for field in DEMO_APPLICATION_LOCKED_FIELDS[section]:
+                if field in answer and answer[field] != DEMO_APPLICATION_MASK:
+                    invalid(section, "Locked demo fields must contain only the fixed demo placeholder.")
+                answer[field] = DEMO_APPLICATION_MASK
+
+        def text_answers(answer, path, max_lengths=None):
+            for field, text in answer.items():
+                if not isinstance(text, str):
+                    invalid(path, f"{field.replace('_', ' ').capitalize()} must be text.")
+                limit = (max_lengths or {}).get(field, 5000)
+                if len(text) > limit:
+                    invalid(path, f"{field.replace('_', ' ').capitalize()} is too long.")
+                answer[field] = text.strip()
+
+        def choice(answer, field, options, path):
+            selected = answer.get(field, "")
+            if selected and selected not in options:
+                invalid(path, f"Choose a valid {field.replace('_', ' ')} option.")
+
+        def date_answer(answer, field, path):
+            entered = answer.get(field, "")
+            if entered:
+                if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", entered):
+                    invalid(path, "Use valid dates in YYYY-MM-DD format.")
+                try:
+                    answer[field] = serializers.DateField().run_validation(entered).isoformat()
+                except serializers.ValidationError:
+                    invalid(path, "Use valid dates in YYYY-MM-DD format.")
+
+        def date_range(answer, start, end, path):
+            date_answer(answer, start, path)
+            date_answer(answer, end, path)
+            if answer.get(start) and answer.get(end) and answer[start] > answer[end]:
+                invalid(path, "The end date must be on or after the start date.")
+
+        def email_answer(answer, field, path):
+            if answer.get(field):
+                try:
+                    answer[field] = serializers.EmailField(max_length=254).run_validation(answer[field])
+                except serializers.ValidationError:
+                    invalid(path, "Enter a valid email address.")
+
+        personal = answer_object(data["personal"], {
+            "full_name", "address", "city", "state", "phone_number", "email", "position",
+            "date_available", "desired_pay", "pay_type", "employment_desired",
+        } | DEMO_APPLICATION_LOCKED_FIELDS["personal"], "personal")
+        locked_answers(personal, "personal")
+        text_answers(personal, "personal", max_lengths={"full_name": 255, "email": 254, "phone_number": 50, "position": 255})
+        email_answer(personal, "email", "personal")
+        date_answer(personal, "date_available", "personal")
+        choice(personal, "employment_desired", {"Full Time", "Part Time", "Seasonal"}, "personal")
+        choice(personal, "pay_type", {"Hour", "Salary"}, "personal")
+        if personal.get("desired_pay"):
+            try:
+                serializers.DecimalField(max_digits=12, decimal_places=2, min_value=0).run_validation(personal["desired_pay"])
+            except serializers.ValidationError:
+                invalid("personal", "Desired pay must be a nonnegative amount with at most two decimal places.")
+
+        availability = answer_object(data["availability"], {"days", "days_preference", "nights_preference"}, "availability")
+        weekdays = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"}
+        days = answer_object(availability.get("days"), weekdays, "availability")
+        if set(days) != weekdays:
+            invalid("availability", "Include availability for each day of the week.")
+        for field in ("days_preference", "nights_preference"):
+            if field in availability and type(availability[field]) is not bool:
+                invalid("availability", "Day and night preferences must be true or false.")
+        for day, answers in days.items():
+            answers = answer_object(answers, {"available", "start", "end"}, "availability")
+            if type(answers.get("available")) is not bool:
+                invalid("availability", "Each day's availability must be true or false.")
+            text_answers({field: answers[field] for field in ("start", "end") if field in answers}, "availability")
+            for field in ("start", "end"):
+                if answers.get(field) and not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", answers[field]):
+                    invalid("availability", "Use valid times in HH:MM format.")
+
+        eligibility = answer_object(data["employment_eligibility"], {
+            "legally_eligible", "previously_employed", "previous_start_date", "previous_end_date", "driver_license",
+        } | DEMO_APPLICATION_LOCKED_FIELDS["employment_eligibility"], "employment_eligibility")
+        locked_answers(eligibility, "employment_eligibility")
+        text_answers(eligibility, "employment_eligibility")
+        for field in ("legally_eligible", "previously_employed", "driver_license"):
+            choice(eligibility, field, {"Yes", "No"}, "employment_eligibility")
+        date_range(eligibility, "previous_start_date", "previous_end_date", "employment_eligibility")
+
+        education = answer_object(data["education"], {
+            "high_school", "college", "other_education_1", "other_education_2",
+        }, "education")
+        for school, answers in education.items():
+            fields = {"name", "city_state", "from", "to"}
+            fields.update({"graduated", "diploma"} if school in {"high_school", "college"} else {"degree"})
+            answers = answer_object(answers, fields, "education")
+            text_answers(answers, "education")
+            choice(answers, "graduated", {"Yes", "No"}, "education")
+            date_range(answers, "from", "to", "education")
+
+        entry_fields = {
+            "employers": {"name", "address", "email", "secondary_email", "phone", "job_title", "responsibilities", "from", "to", "reason_for_leaving"} | DEMO_APPLICATION_LOCKED_FIELDS["employers"],
+            "references": {"name", "company", "email", "relationship", "title", "phone"},
+        }
+        for section, fields in entry_fields.items():
+            if not isinstance(data[section], list) or len(data[section]) != 3:
+                invalid(section, "Include all three optional sections, using blank answers where needed.")
+            for answers in data[section]:
+                answers = answer_object(answers, fields, section)
+                if section == "employers":
+                    locked_answers(answers, section)
+                text_answers(answers, section, max_lengths={"secondary_email": 254} if section == "employers" else None)
+                email_answer(answers, "email", section)
+                if section == "employers":
+                    email_answer(answers, "secondary_email", section)
+                    date_range(answers, "from", "to", section)
+
+        military = answer_object(data.get("military", {}), DEMO_APPLICATION_LOCKED_FIELDS["military"], "military")
+        locked_answers(military, "military")
+        data["military"] = military
+        additional = answer_object(data["additional"], {
+            "additional_information", "background_check_consent", "drug_test_consent", "race_categories",
+        } | DEMO_APPLICATION_LOCKED_FIELDS["additional"], "additional")
+        locked_answers(additional, "additional")
+        if "race_categories" in additional and additional["race_categories"] != [DEMO_APPLICATION_MASK]:
+            invalid("additional", "Locked demo fields must contain only the fixed demo placeholder.")
+        additional["race_categories"] = [DEMO_APPLICATION_MASK]
+        additional_text = {field: value for field, value in additional.items() if field != "race_categories"}
+        text_answers(additional_text, "additional")
+        additional.update(additional_text)
+        for field in ("background_check_consent", "drug_test_consent"):
+            choice(additional, field, {"Yes", "No"}, "additional")
+        certification = answer_object(data["certification"], {"signature", "printed_name", "date", "accepted"}, "certification")
+        if "accepted" in certification and type(certification["accepted"]) is not bool:
+            invalid("certification", "Certification acceptance must be true or false.")
+        certification.setdefault("accepted", False)
+        certification_text = {field: certification[field] for field in ("signature", "printed_name", "date") if field in certification}
+        text_answers(certification_text, "certification")
+        certification.update(certification_text)
+        date_answer(certification, "date", "certification")
+        return data
 
     def validate_resume(self, value):
-        allowed_extensions = [".pdf", ".doc", ".docx"]
-        file_ext = f".{value.name.lower().split('.')[-1]}"
-        if file_ext not in allowed_extensions:
-            raise serializers.ValidationError(
-                f"Resume file type not allowed. Allowed types: {', '.join(allowed_extensions)}"
-            )
-
-        max_size = 10 * 1024 * 1024
-        if value.size > max_size:
-            raise serializers.ValidationError("Resume file exceeds maximum size of 10MB.")
-
+        if value is None:
+            return value
+        try:
+            self._resume_original_filename = validate_resume_file(value)
+        except Exception as error:
+            raise serializers.ValidationError(str(error)) from error
         return value
+
+    def create(self, validated_data):
+        resume = validated_data.pop("resume", None)
+        application_data = validated_data.pop("application_data")
+        resume_content = resume.read() if resume else None
+        for field in ("full_name", "email", "phone_number", "position"):
+            validated_data[field] = application_data["personal"].get(field, "")
+        validated_data["cover_letter"] = application_data["additional"].get("additional_information", "")
+        application = JobApplication(
+            **validated_data,
+            application_data=application_data,
+            resume_content=resume_content,
+            resume_original_filename=(
+                self._resume_original_filename if resume else ""
+            ),
+            resume_storage_id=uuid.uuid4() if resume else None,
+            submitted_at=timezone.now(),
+        )
+        application.save()
+        return application
 
 
 class JobApplicationAdminSerializer(serializers.ModelSerializer):
-    resume_download_url = serializers.SerializerMethodField()
+    has_resume = serializers.BooleanField(source="has_resume_file", read_only=True)
+
+    class Meta:
+        model = JobApplication
+        fields = (
+            "id",
+            "full_name",
+            "email",
+            "phone_number",
+            "position",
+            "status",
+            "has_resume",
+            "created_at",
+            "submitted_at",
+        )
+
+
+class JobApplicationAdminDetailSerializer(serializers.ModelSerializer):
+    application_data = serializers.SerializerMethodField()
+    has_resume = serializers.BooleanField(source="has_resume_file", read_only=True)
 
     class Meta:
         model = JobApplication
@@ -196,18 +422,91 @@ class JobApplicationAdminSerializer(serializers.ModelSerializer):
             "phone_number",
             "position",
             "cover_letter",
-            "resume_download_url",
+            "application_data",
+            "has_resume",
+            "resume_original_filename",
+            "status",
             "created_at",
+            "submitted_at",
+            "updated_at",
         )
 
-    def get_resume_download_url(self, obj):
-        if not obj.resume:
-            return None
-        request = self.context.get("request")
-        relative_url = f"/api/admin/applications/{obj.id}/resume/"
-        if request:
-            return request.build_absolute_uri(relative_url)
-        return relative_url
+    def get_application_data(self, obj):
+        """Keep legacy sensitive answers out of the API without changing stored records."""
+        source = obj.application_data if isinstance(obj.application_data, dict) else {}
+
+        def text_fields(answer, fields):
+            if not isinstance(answer, dict):
+                return {}
+            return {key: value for key, value in answer.items() if key in fields and isinstance(value, str)}
+
+        safe = {}
+        field_sets = {
+            "personal": {"full_name", "address", "city", "state", "phone_number", "email", "position", "date_available", "desired_pay", "pay_type", "employment_desired"},
+            "employment_eligibility": {"legally_eligible", "previously_employed", "previous_start_date", "previous_end_date", "driver_license"},
+            "additional": {"additional_information", "background_check_consent", "drug_test_consent"},
+            "certification": {"signature", "printed_name", "date"},
+        }
+        for section, fields in field_sets.items():
+            if section in source:
+                safe[section] = text_fields(source[section], fields)
+        safe["demo"] = source.get("demo") is True
+        for section in ("personal", "employment_eligibility", "additional"):
+            safe.setdefault(section, {}).update({field: DEMO_APPLICATION_MASK for field in DEMO_APPLICATION_LOCKED_FIELDS[section]})
+        safe["additional"]["race_categories"] = [DEMO_APPLICATION_MASK]
+        safe["military"] = {field: DEMO_APPLICATION_MASK for field in DEMO_APPLICATION_LOCKED_FIELDS["military"]}
+        if isinstance(source.get("certification"), dict) and type(source["certification"].get("accepted")) is bool:
+            safe["certification"]["accepted"] = source["certification"]["accepted"]
+
+        if isinstance(source.get("availability"), dict):
+            availability = source["availability"]
+            safe["availability"] = {key: value for key, value in availability.items()
+                                    if key in {"days_preference", "nights_preference"} and type(value) is bool}
+            if isinstance(availability.get("days"), dict):
+                safe["availability"]["days"] = {}
+                for day in ("Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"):
+                    answers = availability["days"].get(day)
+                    if isinstance(answers, dict):
+                        entry = text_fields(answers, {"start", "end"})
+                        if type(answers.get("available")) is bool:
+                            entry["available"] = answers["available"]
+                        safe["availability"]["days"][day] = entry
+        if isinstance(source.get("education"), dict):
+            safe["education"] = {}
+            for school in ("high_school", "college", "other_education_1", "other_education_2"):
+                if school in source["education"]:
+                    fields = {"name", "city_state", "from", "to"}
+                    fields.update({"graduated", "diploma"} if school in {"high_school", "college"} else {"degree"})
+                    safe["education"][school] = text_fields(source["education"][school], fields)
+        for section, fields in {
+            "employers": {"name", "address", "email", "secondary_email", "phone", "job_title", "responsibilities", "from", "to", "reason_for_leaving"},
+            "references": {"name", "company", "email", "relationship", "title", "phone"},
+        }.items():
+            if isinstance(source.get(section), list):
+                safe[section] = [text_fields(answer, fields) for answer in source[section][:3]]
+                if section == "employers":
+                    for answer in safe[section]:
+                        answer.update({field: DEMO_APPLICATION_MASK for field in DEMO_APPLICATION_LOCKED_FIELDS["employers"]})
+        return safe
+
+
+class JobApplicationStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobApplication
+        fields = ("status",)
+
+
+class ContactMessageCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactMessage
+        fields = ("full_name", "email", "subject", "message")
+
+
+class ContactMessageAdminSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactMessage
+        fields = ("id", "full_name", "email", "subject", "message", "status", "is_demo", "created_at")
+        read_only_fields = ("id", "full_name", "email", "subject", "message", "is_demo", "created_at")
 
 
 class AppointmentSerializer(serializers.ModelSerializer):

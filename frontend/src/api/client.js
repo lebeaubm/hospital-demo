@@ -83,9 +83,10 @@ api.interceptors.response.use(
     // 1. Not a 401 error
     // 2. No refresh token available
     // 3. Already retried
-    // 4. Request is to the refresh endpoint itself
+    // 4. Request is to an authentication endpoint
     if (
       error.response?.status === 401 && 
+      !authEndpoint &&
       refreshToken && 
       !originalRequest._retry &&
       !originalRequest.url?.includes('/api/auth/refresh/')

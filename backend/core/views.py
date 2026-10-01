@@ -1,11 +1,13 @@
-from django.db.models import Q
-from django.http import FileResponse, Http404
+from django.db.models import BooleanField, Case, Q, Value, When
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from django.utils.http import content_disposition_header
 from django.utils.dateparse import parse_datetime
 from drf_spectacular.utils import extend_schema
 from rest_framework import generics, permissions, serializers, status
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -16,6 +18,7 @@ from .models import (
     BillableService,
     BillLineItem,
     BillPayment,
+    ContactMessage,
     Doctor,
     FamilyMember,
     JobApplication,
@@ -53,13 +56,17 @@ from .serializers import (
     AdminUserRoleUpdateRequestSerializer,
     BillLineItemSerializer,
     BillPaymentSerializer,
+    ContactMessageAdminSerializer,
+    ContactMessageCreateSerializer,
     BillSerializer,
     BillableServiceSerializer,
     StaffBillWriteSerializer,
     DoctorSerializer,
     FamilyMemberSerializer,
     JobApplicationAdminSerializer,
+    JobApplicationAdminDetailSerializer,
     JobApplicationCreateSerializer,
+    JobApplicationStatusSerializer,
     LabOrderSerializer,
     LabResultSerializer,
     LabResultValueSerializer,
@@ -1488,16 +1495,105 @@ class CareerApplicationCreateView(generics.CreateAPIView):
     """
     serializer_class = JobApplicationCreateSerializer
     permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "career_application"
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {"message": "Thank you. Your demo application to PeaceLoving Home Health has been received."},
+            status=status.HTTP_201_CREATED,
+        )
 
 
-class AdminJobApplicationListView(generics.ListAPIView):
+class ContactMessageCreateView(generics.CreateAPIView):
+    serializer_class = ContactMessageCreateSerializer
+    permission_classes = [permissions.AllowAny]
+    authentication_classes = []
+    throttle_classes = [ScopedRateThrottle]
+    throttle_scope = "contact_message"
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(is_demo=True, status=ContactMessage.Status.NEW)
+        return Response(
+            {"message": "Your demo message has been saved for administrator review."},
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class AdminApplicationPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = "page_size"
+    max_page_size = 100
+
+
+def admin_application_queryset():
+    return JobApplication.objects.defer("resume_content", "ssn_encrypted").annotate(
+        has_resume_file=Case(
+            When(Q(resume_content__isnull=False) | (Q(resume__isnull=False) & ~Q(resume="")), then=Value(True)),
+            default=Value(False),
+            output_field=BooleanField(),
+        )
+    )
+
+
+class PrivateApplicationResponseMixin:
+    def finalize_response(self, request, response, *args, **kwargs):
+        response = super().finalize_response(request, response, *args, **kwargs)
+        response["Cache-Control"] = "private, no-store"
+        return response
+
+
+class AdminContactMessageListView(PrivateApplicationResponseMixin, generics.ListAPIView):
+    serializer_class = ContactMessageAdminSerializer
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    pagination_class = AdminApplicationPagination
+
+    def get_queryset(self):
+        queryset = ContactMessage.objects.all()
+        message_status = self.request.query_params.get("status", "").strip()
+        if message_status in ContactMessage.Status.values:
+            queryset = queryset.filter(status=message_status)
+        return queryset
+
+
+class AdminContactMessageDetailView(PrivateApplicationResponseMixin, generics.RetrieveUpdateAPIView):
+    serializer_class = ContactMessageAdminSerializer
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    queryset = ContactMessage.objects.all()
+    http_method_names = ["get", "patch", "head", "options"]
+
+
+class AdminJobApplicationListView(PrivateApplicationResponseMixin, generics.ListAPIView):
     """
     GET /api/admin/applications/
     List all job applications (admin only).
     """
     serializer_class = JobApplicationAdminSerializer
     permission_classes = [permissions.IsAuthenticated, IsAdminUser]
-    queryset = JobApplication.objects.all().order_by("-created_at")
+    pagination_class = AdminApplicationPagination
+
+    def get_queryset(self):
+        queryset = admin_application_queryset()
+        search = self.request.query_params.get("search", "").strip()
+        position = self.request.query_params.get("position", "").strip()
+        application_status = self.request.query_params.get("status", "").strip()
+        ordering = self.request.query_params.get("ordering", "-created_at")
+
+        if search:
+            queryset = queryset.filter(Q(full_name__icontains=search) | Q(email__icontains=search))
+        if position:
+            queryset = queryset.filter(position__icontains=position)
+        if application_status in JobApplication.Status.values:
+            queryset = queryset.filter(status=application_status)
+        if ordering not in {"created_at", "-created_at"}:
+            ordering = "-created_at"
+        return queryset.order_by(ordering)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -1505,20 +1601,31 @@ class AdminJobApplicationListView(generics.ListAPIView):
         return context
 
 
-class AdminJobApplicationDeleteView(APIView):
+class AdminJobApplicationDetailView(PrivateApplicationResponseMixin, APIView):
     """
-    DELETE /api/admin/applications/<application_id>/
-    Delete a job application (admin only).
+    GET/PATCH/DELETE /api/admin/applications/<application_id>/
+    Retrieve, update status, or delete a job application (admin only).
     """
     permission_classes = [permissions.IsAuthenticated, IsAdminUser]
 
+    def get(self, request, application_id):
+        application = get_object_or_404(admin_application_queryset(), id=application_id)
+        return Response(JobApplicationAdminDetailSerializer(application).data)
+
+    def patch(self, request, application_id):
+        application = get_object_or_404(admin_application_queryset(), id=application_id)
+        serializer = JobApplicationStatusSerializer(application, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(JobApplicationAdminDetailSerializer(application).data)
+
     def delete(self, request, application_id):
-        application = get_object_or_404(JobApplication, id=application_id)
+        application = get_object_or_404(admin_application_queryset(), id=application_id)
         application.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class AdminJobApplicationResumeDownloadView(APIView):
+class AdminJobApplicationResumeDownloadView(PrivateApplicationResponseMixin, APIView):
     """
     GET /api/admin/applications/<application_id>/resume/
     Download applicant resume file (admin only).
@@ -1527,11 +1634,24 @@ class AdminJobApplicationResumeDownloadView(APIView):
 
     def get(self, request, application_id):
         application = get_object_or_404(JobApplication, id=application_id)
-        if not application.resume:
+        if application.resume_content is None and not application.resume:
             raise Http404("Resume file not found")
 
+        if application.resume_content is not None:
+            filename = application.resume_original_filename or "resume"
+            extension = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+            content_type = {
+                "pdf": "application/pdf",
+                "doc": "application/msword",
+                "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            }.get(extension, "application/octet-stream")
+            inline = request.query_params.get("download") != "1"
+            response = HttpResponse(bytes(application.resume_content), content_type=content_type)
+            response["Content-Disposition"] = content_disposition_header(not inline, filename)
+            response["X-Content-Type-Options"] = "nosniff"
+            return response
+
         response = FileResponse(application.resume.open("rb"), as_attachment=True)
-        response["Content-Disposition"] = f"attachment; filename=\"{application.resume.name.split('/')[-1]}\""
         return response
 
 

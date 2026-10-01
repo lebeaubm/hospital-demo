@@ -3,6 +3,7 @@ import uuid
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
+from django.utils import timezone
 
 
 class UserManager(BaseUserManager):
@@ -111,13 +112,29 @@ def career_resume_upload_path(instance, filename):
 
 
 class JobApplication(models.Model):
+    class Status(models.TextChoices):
+        NEW = "NEW", "New"
+        REVIEWING = "REVIEWING", "Reviewing"
+        INTERVIEW = "INTERVIEW", "Interview"
+        OFFER = "OFFER", "Offer"
+        HIRED = "HIRED", "Hired"
+        NOT_SELECTED = "NOT_SELECTED", "Not Selected"
+
     full_name = models.CharField(max_length=255)
     email = models.EmailField()
     phone_number = models.CharField(max_length=50, blank=True)
     position = models.CharField(max_length=255)
     cover_letter = models.TextField(blank=True)
     resume = models.FileField(upload_to=career_resume_upload_path, blank=True, null=True)
+    resume_content = models.BinaryField(blank=True, null=True)
+    resume_original_filename = models.CharField(max_length=255, blank=True)
+    resume_storage_id = models.UUIDField(blank=True, null=True, editable=False)
+    application_data = models.JSONField(default=dict, blank=True)
+    ssn_encrypted = models.CharField(max_length=512, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.NEW)
     created_at = models.DateTimeField(auto_now_add=True)
+    submitted_at = models.DateTimeField(blank=True, null=True)
+    updated_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         ordering = ("-created_at",)
@@ -125,10 +142,31 @@ class JobApplication(models.Model):
     def __str__(self):
         return f"Job Application #{self.id} - {self.full_name} ({self.position})"
 
+    def save(self, *args, **kwargs):
+        self.updated_at = timezone.now()
+        super().save(*args, **kwargs)
+
     def delete(self, *args, **kwargs):
         if self.resume:
             self.resume.delete(save=False)
         super().delete(*args, **kwargs)
+
+
+class ContactMessage(models.Model):
+    class Status(models.TextChoices):
+        NEW = "NEW", "New"
+        REVIEWED = "REVIEWED", "Reviewed"
+
+    full_name = models.CharField(max_length=255)
+    email = models.EmailField()
+    subject = models.CharField(max_length=200)
+    message = models.TextField(max_length=5000)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.NEW)
+    is_demo = models.BooleanField(default=True, editable=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-created_at",)
 
 
 class Appointment(models.Model):
