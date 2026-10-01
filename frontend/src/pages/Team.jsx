@@ -64,6 +64,11 @@ export default function Team() {
             Team Login
           </Link>
         </div>
+        <div className="card-body pt-0">
+          <Link className="btn btn-outline-primary" to="/register">
+            Sign Up
+          </Link>
+        </div>
       </section>
     </div>
   )

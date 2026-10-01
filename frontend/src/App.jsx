@@ -102,11 +102,6 @@ function App() {
                       Our Team
                     </NavLink>
                   </li>
-                  <li className="nav-item">
-                    <NavLink className="nav-link" to="/register">
-                      Sign Up
-                    </NavLink>
-                  </li>
                 </>
               ) : isStaff ? (
                 <li className="nav-item dropdown">
