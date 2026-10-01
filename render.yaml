@@ -18,7 +18,7 @@ services:
       - key: CSRF_TRUSTED_ORIGINS
         value: https://hospital-demo-api.onrender.com
       - key: CORS_ALLOWED_ORIGINS
-        value: https://hospital-demo-frontend.onrender.com
+        value: https://hospital-demo-frontend.onrender.com,https://peacelovinghomehealth.org,https://www.peacelovinghomehealth.org
       - key: PAYMENT_DEMO_MODE
         value: false
       - key: SEED_DEMO_DATA
@@ -38,6 +38,8 @@ services:
     name: hospital-demo-frontend
     runtime: static
     rootDir: frontend
+    domains:
+      - peacelovinghomehealth.org
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
     envVars:
