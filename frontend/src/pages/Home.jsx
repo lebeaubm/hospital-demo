@@ -1,8 +1,10 @@
 import { useAuth } from '../context/AuthContext'
+import { Link } from 'react-router-dom'
 
 export default function Home() {
   const { user } = useAuth()
-  const isAdmin = user?.role === 'ADMIN'
+  const isStaff = user?.role === 'STAFF' || user?.role === 'ADMIN'
+  const isPatient = user?.role === 'PATIENT'
 
   const heroCareBanner = 'https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=1600&q=80'
 
@@ -27,7 +29,7 @@ export default function Home() {
 
   return (
     <div className="pt-2 pb-4">
-      <section className="mb-4 p-4 rounded bg-light border">
+      <section className="mb-4 p-4 rounded marketing-card border">
         <p className="text-uppercase text-muted mb-2 fw-semibold">A Choice That Puts You First</p>
         <h1 className="display-6 fw-semibold mb-3">Peaceloving Home Health Inc.</h1>
         <p className="lead mb-3">
@@ -38,9 +40,9 @@ export default function Home() {
           <a className="btn btn-primary" href="tel:9516213600">
             Call (951) 621-3600
           </a>
-          <a className="btn btn-outline-primary" href="/contact">
+          <Link className="btn btn-outline-primary" to="/contact">
             Leave Us a Message
-          </a>
+          </Link>
         </div>
       </section>
 
@@ -50,6 +52,8 @@ export default function Home() {
             src={heroCareBanner}
             alt="Healthcare worker helping a patient at home"
             className="hero-banner-image"
+            fetchPriority="high"
+            decoding="async"
           />
           <div className="hero-overlay">
             <p className="hero-overlay-title">Compassionate In-Home Health Care</p>
@@ -74,7 +78,7 @@ export default function Home() {
         <div className="col-md-4">
           <div className="card h-100 marketing-card">
             <div className="card-body">
-              <h5 className="card-title">Comprehensive In-Home Care</h5>
+              <h3 className="h5 card-title">Comprehensive In-Home Care</h3>
               <ul className="mb-0 ps-3">
                 {coreCareItems.slice(0, 3).map((item) => (
                   <li key={item}>{item}</li>
@@ -86,7 +90,7 @@ export default function Home() {
         <div className="col-md-4">
           <div className="card h-100 marketing-card">
             <div className="card-body">
-              <h5 className="card-title">Personalized Care Planning</h5>
+              <h3 className="h5 card-title">Personalized Care Planning</h3>
               <ul className="mb-0 ps-3">
                 {coreCareItems.slice(3).map((item) => (
                   <li key={item}>{item}</li>
@@ -99,7 +103,7 @@ export default function Home() {
         <div className="col-md-4">
           <div className="card h-100 marketing-card">
             <div className="card-body">
-              <h5 className="card-title">We Care for All Ages</h5>
+              <h3 className="h5 card-title">We Care for All Ages</h3>
               <p className="card-text mb-2">Our services have no age limits.</p>
               <div className="d-flex flex-wrap gap-2">
                 <span className="badge text-bg-primary">Children</span>
@@ -151,8 +155,8 @@ export default function Home() {
         <div className="col-md-4">
           <div className="card h-100 marketing-card">
             <div className="card-body">
-              <h3 className="h5">Did You Know?</h3>
-              <p className="mb-0">Modern tools with a patient-centered digital care integrated clinical ecosystem.</p>
+              <h3 className="h5">Stay Connected</h3>
+              <p className="mb-0">A patient portal brings appointment requests and shared care information together in one place.</p>
             </div>
           </div>
         </div>
@@ -160,17 +164,45 @@ export default function Home() {
           <div className="card h-100 marketing-card">
             <div className="card-body">
               <h3 className="h5">More One-on-One</h3>
-              <p className="mb-0">Personalized engagement and education with data-driven operations.</p>
+              <p className="mb-0">Clear communication helps patients and families understand the plan for each visit.</p>
             </div>
           </div>
         </div>
       </div>
 
         <div className="mt-4 d-flex flex-wrap gap-2 cta-group">
-          {isAdmin && <a className="btn btn-primary" href="/contact">Book Appointment</a>}
-          <a className="btn btn-outline-primary" href="/services">View Services</a>
-          {isAdmin && <a className="btn btn-outline-primary" href="/doctors">Meet Doctors</a>}
-          <a className="btn btn-outline-primary" href="/contact">Get in Touch</a>
+          {isPatient && <Link className="btn btn-primary" to="/portal/appointments/request">Request Appointment</Link>}
+          {isStaff && <Link className="btn btn-primary" to="/staff/dashboard">Open Staff Dashboard</Link>}
+          <Link className="btn btn-outline-primary" to="/services">View Services</Link>
+          <Link className="btn btn-outline-primary" to="/team">Meet Our Team</Link>
+          <Link className="btn btn-outline-primary" to="/contact">Get in Touch</Link>
+        </div>
+      </section>
+
+      <section className="mt-5" aria-labelledby="demo-overview-title">
+        <h2 className="h4 mb-3" id="demo-overview-title">Quick Access</h2>
+        <div className="row g-3">
+          <div className="col-md-4">
+            <article className="card marketing-card h-100"><div className="card-body d-flex flex-column">
+              <h3 className="h5">Careers</h3>
+              <p>Join our home health team.</p>
+              <Link className="btn btn-outline-primary mt-auto align-self-start" to="/careers">Apply Now</Link>
+            </div></article>
+          </div>
+          <div className="col-md-4">
+            <article className="card marketing-card h-100"><div className="card-body d-flex flex-column">
+              <h3 className="h5">Contact Us</h3>
+              <p>Get in touch with our office.</p>
+              <Link className="btn btn-outline-primary mt-auto align-self-start" to="/contact">Leave a Message</Link>
+            </div></article>
+          </div>
+          <div className="col-md-4">
+            <article className="card marketing-card h-100"><div className="card-body d-flex flex-column">
+              <h3 className="h5">Patient & Staff Portal</h3>
+              <p>Manage appointments and care information.</p>
+              <Link className="btn btn-outline-primary mt-auto align-self-start" to={isStaff ? '/staff/dashboard' : isPatient ? '/portal/profile' : '/login'}>{isStaff || isPatient ? 'Open Workspace' : 'Sign In'}</Link>
+            </div></article>
+          </div>
         </div>
       </section>
     </div>

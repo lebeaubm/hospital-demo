@@ -78,7 +78,7 @@ function MedicalRecords() {
       link.click()
       link.remove()
       window.URL.revokeObjectURL(url)
-    } catch (err) {
+    } catch {
       alert('Failed to download document')
     }
   }
@@ -95,7 +95,7 @@ function MedicalRecords() {
         ...doc,
         url,
       })
-    } catch (err) {
+    } catch {
       alert('Failed to preview document')
     } finally {
       setPreviewLoading(false)

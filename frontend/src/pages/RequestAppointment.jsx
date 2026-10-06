@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import ErrorAlert from '../components/ErrorAlert'
+import { doctorListFromResponse, prepareAppointmentRequest } from '../utils/appointments'
 
 export default function RequestAppointment() {
   const [formData, setFormData] = useState({
@@ -12,17 +13,37 @@ export default function RequestAppointment() {
   })
   const [doctors, setDoctors] = useState([])
   const [loadingDoctors, setLoadingDoctors] = useState(true)
+  const [doctorError, setDoctorError] = useState(null)
+  const [doctorReload, setDoctorReload] = useState(0)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
-  const [success, setSuccess] = useState('')
   const navigate = useNavigate()
+  const pendingSubmission = useRef(null)
 
   useEffect(() => {
-    api.get('/api/my-doctors/')
-      .then(res => setDoctors(res.data.results || res.data))
-      .catch(console.error)
-      .finally(() => setLoadingDoctors(false))
-  }, [])
+    const controller = new AbortController()
+    const loadDoctors = async () => {
+      setLoadingDoctors(true)
+      setDoctorError(null)
+      try {
+        const { data } = await api.get('/api/my-doctors/', { signal: controller.signal, timeout: 90000 })
+        const availableDoctors = doctorListFromResponse(data)
+        if (controller.signal.aborted) return
+        setDoctors(availableDoctors)
+        setFormData(current => availableDoctors.some(doctor => String(doctor.id) === current.doctor)
+          ? current : { ...current, doctor: '' })
+      } catch (requestError) {
+        if (controller.signal.aborted) return
+        setDoctorError(requestError)
+      } finally {
+        if (!controller.signal.aborted) setLoadingDoctors(false)
+      }
+    }
+    loadDoctors()
+    return () => controller.abort()
+  }, [doctorReload])
+
+  useEffect(() => () => pendingSubmission.current?.abort(), [])
 
   const handleChange = (e) => {
     setFormData({
@@ -33,27 +54,21 @@ export default function RequestAppointment() {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (pendingSubmission.current || loadingDoctors || doctorError) return
     setError(null)
-    setSuccess('')
-    setSubmitting(true)
 
+    const controller = new AbortController()
     try {
-      // Convert local datetime to ISO format
-      const requestData = {
-        ...formData,
-        requested_start: new Date(formData.requested_start).toISOString(),
-      }
-      
-      await api.post('/api/appointments/', requestData)
-      setSuccess('Appointment requested successfully!')
-      
-      setTimeout(() => {
-        navigate('/portal/appointments')
-      }, 1000)
+      const requestData = prepareAppointmentRequest(formData, doctors)
+      pendingSubmission.current = controller
+      setSubmitting(true)
+      await api.post('/api/appointments/', requestData, { signal: controller.signal, timeout: 90000 })
+      if (!controller.signal.aborted) navigate('/portal/appointments')
     } catch (err) {
-      setError(err)
+      if (!controller.signal.aborted) setError(err)
     } finally {
-      setSubmitting(false)
+      pendingSubmission.current = null
+      if (!controller.signal.aborted) setSubmitting(false)
     }
   }
 
@@ -64,14 +79,18 @@ export default function RequestAppointment() {
         Fill out the form below to request an appointment. Our staff will review
         and confirm your request.
       </p>
+      <p className="small text-muted">Demo test</p>
 
-      <form onSubmit={handleSubmit} className="card shadow-sm p-4">
+      <form onSubmit={handleSubmit} className="card shadow-sm p-4" aria-busy={submitting}>
+        <fieldset disabled={submitting}>
         <div className="mb-3">
           <label className="form-label" htmlFor="doctor">
             Doctor *
           </label>
           {loadingDoctors ? (
-            <p className="text-muted small">Loading available doctors…</p>
+            <p className="text-muted small" role="status">Loading available doctors…</p>
+          ) : doctorError ? (
+            <ErrorAlert error={doctorError} onRetry={() => setDoctorReload(current => current + 1)} />
           ) : doctors.length === 0 ? (
             <div className="alert alert-warning py-2">
               No doctors have been assigned to your account yet. Please contact staff.
@@ -125,6 +144,7 @@ export default function RequestAppointment() {
             type="text"
             placeholder="e.g., Annual checkup, Follow-up, Consultation"
             value={formData.reason}
+            maxLength={255}
             onChange={handleChange}
             required
           />
@@ -141,18 +161,18 @@ export default function RequestAppointment() {
             rows="4"
             placeholder="Any additional information or preferences..."
             value={formData.patient_notes}
+            maxLength={5000}
             onChange={handleChange}
           />
         </div>
 
         {error && <ErrorAlert error={error} />}
-        {success && <div className="alert alert-success">{success}</div>}
 
         <div className="d-flex gap-2">
           <button
             className="btn btn-primary"
             type="submit"
-            disabled={submitting}
+            disabled={submitting || loadingDoctors || !!doctorError || !formData.doctor || doctors.length === 0}
           >
             {submitting ? 'Submitting...' : 'Submit Request'}
           </button>
@@ -165,6 +185,7 @@ export default function RequestAppointment() {
             Cancel
           </button>
         </div>
+        </fieldset>
       </form>
     </div>
   )

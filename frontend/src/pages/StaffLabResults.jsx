@@ -151,9 +151,11 @@ export default function StaffLabResults() {
       // Post each non-empty value row
       const filledRows = valueRows.filter(r => r.parameter_name.trim() && r.value.trim());
       await Promise.all(
-        filledRows.map(({ _key, ...row }) =>
-          api.post(`/api/staff/lab-results/${resultId}/values/`, row)
-        )
+        filledRows.map((row) => {
+          const payload = { ...row };
+          delete payload._key;
+          return api.post(`/api/staff/lab-results/${resultId}/values/`, payload);
+        })
       );
 
       setShowResultEditor(false);

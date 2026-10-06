@@ -48,8 +48,8 @@ export default function Login() {
 
   return (
     <div className="py-4" style={{ maxWidth: '480px' }}>
-      <h1 className="mb-3">Staff</h1>
-      <p className="text-muted">Use your email and password to sign in.</p>
+      <h1 className="mb-3">Sign In</h1>
+      <p className="text-muted">Use your patient, staff, or administrator account to open your workspace.</p>
       <form onSubmit={handleSubmit} className="card shadow-sm p-4">
         <div className="mb-3">
           <label className="form-label" htmlFor="email">Email</label>
@@ -57,6 +57,8 @@ export default function Login() {
             className="form-control"
             id="email"
             type="email"
+            autoComplete="username"
+            autoCapitalize="none"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             required
@@ -68,6 +70,7 @@ export default function Login() {
             className="form-control"
             id="password"
             type="password"
+            autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required

@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 
 function Prescriptions() {
-  const [prescriptions, setprescriptions] = useState([]);
+  const [prescriptions, setPrescriptions] = useState([]);
   const [refills, setRefills] = useState([]);
   const [pharmacies, setPharmacies] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -11,7 +10,6 @@ function Prescriptions() {
   const [activeTab, setActiveTab] = useState('active'); // active, refills
   const [selectedPharmacy, setSelectedPharmacy] = useState('');
   const [refillLoading, setRefillLoading] = useState({});
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPrescriptions();
@@ -58,7 +56,7 @@ function Prescriptions() {
       return;
     }
 
-    setRefillLoading({ ...refillLoading, [prescriptionId]: true });
+    setRefillLoading((previous) => ({ ...previous, [prescriptionId]: true }));
 
     try {
       await api.post(`/prescriptions/${prescriptionId}/refill/`, {
@@ -70,7 +68,7 @@ function Prescriptions() {
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to request refill');
     } finally {
-      setRefillLoading({ ...refillLoading, [prescriptionId]: false });
+      setRefillLoading((previous) => ({ ...previous, [prescriptionId]: false }));
     }
   };
 

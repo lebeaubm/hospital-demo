@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { SkeletonTable } from '../components/SkeletonLoader'
@@ -45,10 +45,6 @@ export default function StaffDashboard() {
     fetchDoctors()
   }, [])
 
-  useEffect(() => {
-    fetchAppointments()
-  }, [statusFilter, doctorFilter, dateFrom, dateTo, currentPage])
-
   const fetchDoctors = async () => {
     try {
       const { data } = await api.get('/api/doctors/')
@@ -58,7 +54,7 @@ export default function StaffDashboard() {
     }
   }
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async (options = {}) => {
     setLoading(true)
     setError(null)
     try {
@@ -68,24 +64,31 @@ export default function StaffDashboard() {
       if (dateFrom) params.date_from = dateFrom
       if (dateTo) params.date_to = dateTo
 
-      const { data } = await api.get('/api/staff/appointments/', { params })
+      const { data } = await api.get('/api/staff/appointments/', { params, signal: options.signal })
+      if (options.signal?.aborted) return
       
       // Handle paginated response
       if (data.results) {
         setAppointments(data.results)
         setTotalCount(data.count)
-        setTotalPages(Math.ceil(data.count / 20))
+        setTotalPages(Math.max(1, Math.ceil(data.count / 20)))
       } else {
         setAppointments(data)
         setTotalCount(data.length)
         setTotalPages(1)
       }
     } catch (err) {
-      setError(err)
+      if (!options.signal?.aborted) setError(err)
     } finally {
-      setLoading(false)
+      if (!options.signal?.aborted) setLoading(false)
     }
-  }
+  }, [statusFilter, doctorFilter, dateFrom, dateTo, currentPage])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    fetchAppointments({ signal: controller.signal })
+    return () => controller.abort()
+  }, [fetchAppointments])
 
   const handleEdit = (appointment) => {
     setEditingId(appointment.id)

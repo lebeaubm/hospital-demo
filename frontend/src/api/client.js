@@ -1,8 +1,10 @@
 import axios from 'axios'
+import { getUserFromToken, isTokenUsable } from '../utils/auth.js'
 
-const configuredApiUrl = (import.meta.env.VITE_API_URL || '').trim().replace(/\/$/, '')
+const clientEnvironment = import.meta.env || {}
+const configuredApiUrl = (clientEnvironment.VITE_API_URL || '').trim().replace(/\/$/, '')
 const productionFallbackApiUrl = 'https://hospital-demo-api.onrender.com'
-const apiBaseUrl = configuredApiUrl || (import.meta.env.PROD ? productionFallbackApiUrl : 'http://127.0.0.1:8000')
+const apiBaseUrl = configuredApiUrl || (clientEnvironment.PROD ? productionFallbackApiUrl : 'http://127.0.0.1:8000')
 
 const api = axios.create({
   baseURL: apiBaseUrl,
@@ -23,9 +25,10 @@ const getAccessToken = () => localStorage.getItem('accessToken')
 const getRefreshToken = () => localStorage.getItem('refreshToken')
 
 const setTokens = ({ access, refresh }) => {
-  if (access) {
-    localStorage.setItem('accessToken', access)
+  if (!getUserFromToken(access) || (refresh && !isTokenUsable(refresh, 'refresh'))) {
+    throw new Error('Your sign-in session could not be read. Please sign in again.')
   }
+  localStorage.setItem('accessToken', access)
   if (refresh) {
     localStorage.setItem('refreshToken', refresh)
   }
@@ -45,6 +48,30 @@ const logout = () => {
 }
 
 let refreshPromise = null
+
+const refreshAccessToken = async () => {
+  if (refreshPromise) return refreshPromise
+  const refreshToken = getRefreshToken()
+  if (!isTokenUsable(refreshToken, 'refresh')) {
+    const error = new Error('Your session has expired. Please sign in again.')
+    error.code = 'INVALID_SESSION'
+    throw error
+  }
+  refreshPromise = axios.post(`${apiBaseUrl}/api/auth/refresh/`, {
+    refresh: refreshToken,
+  }, { timeout: 20000 }).then(({ data }) => {
+    if (!getUserFromToken(data?.access) || getRefreshToken() !== refreshToken) {
+      const error = new Error('Your session could not be restored. Please sign in again.')
+      error.code = 'INVALID_SESSION'
+      throw error
+    }
+    setTokens({ access: data.access, refresh: data.refresh })
+    return data.access
+  }).finally(() => {
+    refreshPromise = null
+  })
+  return refreshPromise
+}
 
 api.interceptors.request.use((config) => {
   const requestUrl = config.url || ''
@@ -94,29 +121,13 @@ api.interceptors.response.use(
       originalRequest._retry = true
 
       try {
-        if (!refreshPromise) {
-          refreshPromise = axios.post(`${apiBaseUrl}/api/auth/refresh/`, {
-            refresh: refreshToken,
-          })
-        }
-
-        const { data } = await refreshPromise
-        refreshPromise = null
-
-        if (data?.access) {
-          setTokens({ access: data.access })
-          originalRequest.headers.Authorization = `Bearer ${data.access}`
-          return api(originalRequest)
-        } else {
-          // No access token in response, logout
-          logout()
-          return Promise.reject(error)
-        }
+        const access = await refreshAccessToken()
+        originalRequest.headers.Authorization = `Bearer ${access}`
+        return api(originalRequest)
       } catch (refreshError) {
-        // Refresh failed, logout user
-        refreshPromise = null
-        console.error('Token refresh failed:', refreshError)
-        logout()
+        // An older request must not clear a new sign-in or replay its mutation under another account.
+        const newerSession = getRefreshToken() !== refreshToken && getUserFromToken(getAccessToken())
+        if (!newerSession) logout()
         return Promise.reject(refreshError)
       }
     }
@@ -159,4 +170,4 @@ export const downloadInvoice = async (paymentId) => {
   return response.data
 }
 
-export { api, clearTokens, getAccessToken, setTokens, logout }
+export { api, clearTokens, getAccessToken, setTokens, logout, refreshAccessToken }

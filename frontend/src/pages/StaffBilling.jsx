@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api/client'
 import ErrorAlert from '../components/ErrorAlert'
 
@@ -46,26 +46,32 @@ export default function StaffBilling() {
 
   const [successMsg, setSuccessMsg] = useState('')
 
-  useEffect(() => {
-    fetchBills()
-    fetchPatients()
-    fetchServices()
-  }, [statusFilter])
-
-  const fetchBills = async () => {
+  const fetchBills = useCallback(async (options = {}) => {
     setLoading(true)
     setError(null)
     try {
       const params = {}
       if (statusFilter) params.status = statusFilter
-      const { data } = await api.get('/api/staff/bills/', { params })
+      const { data } = await api.get('/api/staff/bills/', { params, signal: options.signal })
+      if (options.signal?.aborted) return
       setBills(data.results || data)
     } catch (err) {
-      setError(err)
+      if (!options.signal?.aborted) setError(err)
     } finally {
-      setLoading(false)
+      if (!options.signal?.aborted) setLoading(false)
     }
-  }
+  }, [statusFilter])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    fetchBills({ signal: controller.signal })
+    return () => controller.abort()
+  }, [fetchBills])
+
+  useEffect(() => {
+    fetchPatients()
+    fetchServices()
+  }, [])
 
   const fetchPatients = async () => {
     try {
@@ -84,7 +90,7 @@ export default function StaffBilling() {
   const openDetail = async (bill) => {
     setDetailLoading(true)
     setSelectedBill(bill)
-    setLineItemForm({ service: '', quantity: '1', unit_price: '', description: '' })
+    setLineItemForm({ service: '', quantity: '1', unit_price: '', description: '', service_date: new Date().toISOString().slice(0, 10) })
     try {
       const { data } = await api.get(`/api/bills/${bill.id}/`)
       setSelectedBill(data)

@@ -31,7 +31,7 @@ npm run dev
 
 | Role | Email | Password |
 |---|---|---|
-| Patient | `patient@example.com` | `Pass1234!` |
+| Patient | `patient@example.com` | `Are ` |
 | Staff | `staff@example.com` | `StaffPass123!` |
 | Admin (you) | `lebeaubm@yahoo.com` | `Admin123!` |
 | Test Admin | `testadmin@hospital.com` | `TestAdmin123!` |

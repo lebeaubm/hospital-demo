@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import Loading from '../components/Loading'
@@ -40,36 +40,40 @@ function StaffPatientRecord() {
   const [selectedNewDoctor, setSelectedNewDoctor] = useState('')
   const [doctorsSaving, setDoctorsSaving] = useState(false)
 
-  useEffect(() => {
-    loadRecord()
-    loadAssignedDoctors()
-  }, [patientId])
-
-  const loadRecord = async () => {
+  const loadRecord = useCallback(async (signal) => {
     try {
       setLoading(true)
-      const response = await api.get(`/api/staff/patients/${patientId}/record/`)
+      const response = await api.get(`/api/staff/patients/${patientId}/record/`, { signal })
+      if (signal?.aborted) return
       setRecord(response.data)
       setError(null)
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load patient record')
+      if (!signal?.aborted) setError(err.response?.data?.error || 'Failed to load patient record')
     } finally {
-      setLoading(false)
+      if (!signal?.aborted) setLoading(false)
     }
-  }
+  }, [patientId])
 
-  const loadAssignedDoctors = async () => {
+  const loadAssignedDoctors = useCallback(async (signal) => {
     try {
       const [assignedRes, allRes] = await Promise.all([
-        api.get(`/api/staff/patients/${patientId}/assigned-doctors/`),
-        api.get('/api/staff/all-doctors/'),
+        api.get(`/api/staff/patients/${patientId}/assigned-doctors/`, { signal }),
+        api.get('/api/staff/all-doctors/', { signal }),
       ])
+      if (signal?.aborted) return
       setAssignedDoctors(assignedRes.data)
       setAllDoctors(allRes.data)
     } catch (err) {
-      console.error('Failed to load doctors', err)
+      if (!signal?.aborted) console.error('Failed to load doctors', err)
     }
-  }
+  }, [patientId])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    loadRecord(controller.signal)
+    loadAssignedDoctors(controller.signal)
+    return () => controller.abort()
+  }, [loadRecord, loadAssignedDoctors])
 
   const assignDoctor = async () => {
     if (!selectedNewDoctor) return
@@ -80,7 +84,7 @@ function StaffPatientRecord() {
       await loadAssignedDoctors()
       setSuccessMsg('Doctor assigned successfully.')
       setTimeout(() => setSuccessMsg(null), 3000)
-    } catch (err) {
+    } catch {
       alert('Failed to assign doctor')
     } finally {
       setDoctorsSaving(false) }
@@ -93,7 +97,7 @@ function StaffPatientRecord() {
       await loadAssignedDoctors()
       setSuccessMsg('Doctor removed.')
       setTimeout(() => setSuccessMsg(null), 3000)
-    } catch (err) {
+    } catch {
       alert('Failed to remove doctor')
     }
   }
@@ -144,7 +148,7 @@ function StaffPatientRecord() {
       setTimeout(() => setSuccessMsg(null), 3000)
 
       await loadRecord()
-    } catch (err) {
+    } catch {
       alert('Failed to update note visibility')
     }
   }
@@ -186,7 +190,7 @@ function StaffPatientRecord() {
       setTimeout(() => setSuccessMsg(null), 3000)
 
       await loadRecord()
-    } catch (err) {
+    } catch {
       alert('Failed to delete document')
     }
   }
@@ -205,7 +209,7 @@ function StaffPatientRecord() {
       link.click()
       link.remove()
       window.URL.revokeObjectURL(url)
-    } catch (err) {
+    } catch {
       alert('Failed to download document')
     }
   }
@@ -222,7 +226,7 @@ function StaffPatientRecord() {
         ...doc,
         url,
       })
-    } catch (err) {
+    } catch {
       alert('Failed to preview document')
     } finally {
       setPreviewLoading(false)
@@ -251,7 +255,7 @@ function StaffPatientRecord() {
       setTimeout(() => setSuccessMsg(null), 3000)
 
       await loadRecord()
-    } catch (err) {
+    } catch {
       alert('Failed to update record summary')
     }
   }

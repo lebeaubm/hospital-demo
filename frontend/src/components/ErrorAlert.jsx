@@ -68,6 +68,7 @@ export default function ErrorAlert({ error, onRetry }) {
         {onRetry && (
           <button 
             className="btn btn-sm btn-outline-danger ms-3" 
+            type="button"
             onClick={onRetry}
           >
             Try Again

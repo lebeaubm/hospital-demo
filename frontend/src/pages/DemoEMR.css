@@ -1,0 +1,56 @@
+.emr-workspace { --emr-accent: var(--bs-primary); }
+.emr-demo-label { color: var(--text-secondary); font-size: 0.8rem; border: 1px solid var(--border-color); border-radius: 999px; padding: 0.35rem 0.8rem; }
+.emr-layout { display: grid; grid-template-columns: 245px minmax(0, 1fr); gap: 1.25rem; align-items: start; }
+.emr-patient-panel { overflow: hidden; }
+.emr-patient-list { max-height: 65vh; overflow-y: auto; }
+.emr-patient-button { display: flex; align-items: center; gap: 0.65rem; padding: 1rem; text-align: left; }
+.emr-patient-button strong, .emr-patient-button small { display: block; }
+.emr-patient-button small { margin-top: 0.2rem; color: var(--text-secondary); }
+.emr-patient-button.active { background: var(--emr-accent); border-color: var(--emr-accent); color: #fff; }
+.emr-patient-button.active small { color: #fff; opacity: 0.9; }
+.emr-avatar { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; background: var(--bg-secondary); color: var(--text-primary); font-size: 0.75rem; font-weight: 700; }
+.emr-patient-button.active .emr-avatar { background: rgba(255,255,255,0.18); color: #fff; }
+.emr-chart { min-width: 0; }
+.emr-patient-button > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.emr-chart-header p, .emr-chart-header h2 { overflow-wrap: anywhere; }
+.emr-chart-header { border-left: 4px solid var(--emr-accent); }
+.emr-tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--border-color); }
+.emr-tabs button { border: 0; border-bottom: 3px solid transparent; padding: 0.7rem 0.8rem; background: transparent; color: var(--text-secondary); font-weight: 600; }
+.emr-tabs button.active { color: var(--text-primary); border-bottom-color: var(--emr-accent); }
+.emr-tabs button:focus-visible { outline: 2px solid var(--emr-accent); outline-offset: -2px; }
+.emr-vitals { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1rem; }
+.emr-vitals dt { color: var(--text-secondary); font-size: 0.75rem; font-weight: 500; }
+.emr-vitals dd { margin: 0.2rem 0 0; font-weight: 600; font-size: 1.1rem; }
+.emr-vitals dd small { font-weight: 400; font-size: 0.7rem; }
+.emr-summary-list { padding-left: 1.2rem; }
+.emr-summary-list li { margin-bottom: 0.65rem; }
+.emr-note-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.emr-note-vitals { border-top: 1px solid var(--border-color); padding-top: 1rem; }
+.emr-note-editor { border-top: 3px solid var(--emr-accent); }
+.emr-note-editor h3 { scroll-margin-top: 1rem; }
+.emr-note-editor h3:focus { outline: none; }
+.emr-history-table { min-width: 750px; }
+.emr-history-table th, .emr-history-table td { padding: 0.75rem 0.5rem; vertical-align: middle; }
+.emr-assessment-table { min-width: 1100px; }
+.emr-assessment-table th, .emr-assessment-table td { padding: 0.85rem 0.65rem; vertical-align: top; }
+.emr-assessment-table th:first-child { width: 200px; max-width: 240px; }
+.emr-work-item { border-top: 1px solid var(--border-color); padding: 1rem 0; overflow-wrap: anywhere; }
+.emr-work-item:last-child { padding-bottom: 0; }
+.emr-status-filter { max-width: 210px; }
+.emr-chart-link { text-decoration: none; font-size: 0.85rem; }
+.emr-entry-modal .modal-content { max-height: calc(100dvh - 2rem); }
+.emr-entry-modal .modal-body { overflow-y: auto; }
+.emr-entry-modal .btn-outline-secondary { --bs-btn-color: var(--text-secondary); --bs-btn-border-color: var(--border-color); }
+.emr-chart .card-body { padding: 1.25rem; }
+[data-theme="dark"] .emr-workspace .btn-outline-secondary { --bs-btn-color: #cbd5e1; --bs-btn-border-color: #94a3b8; --bs-btn-hover-color: #fff; }
+@media (max-width: 991px) {
+  .emr-layout { grid-template-columns: 205px minmax(0, 1fr); gap: 1rem; }
+  .emr-vitals { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 767px) {
+  .emr-layout { grid-template-columns: minmax(0, 1fr); }
+  .emr-patient-list { max-height: 205px; }
+  .emr-patient-button { padding: 0.6rem 1rem; }
+  .emr-tabs button { flex: 1; padding: 0.6rem 0.35rem; font-size: 0.8rem; }
+  .emr-chart .card-body { padding: 1rem; }
+}

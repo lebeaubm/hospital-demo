@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api/client';
 
@@ -12,45 +12,63 @@ function Messages() {
   const [showNewThreadModal, setShowNewThreadModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+  const activeThreadId = useRef(null);
+  const threadRequest = useRef(0);
   const navigate = useNavigate();
   const { threadId } = useParams();
 
-  useEffect(() => {
-    fetchThreads();
-  }, []);
-
-  useEffect(() => {
-    if (threadId) {
-      loadThread(parseInt(threadId));
-    }
-  }, [threadId]);
-
-  const fetchThreads = async () => {
+  const fetchThreads = useCallback(async () => {
     try {
       const response = await api.get('/messages/threads/');
       setThreads(response.data);
     } catch (err) {
+      setError('Failed to load message threads. Please try again.');
       console.error('Failed to load message threads:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const loadThread = async (id) => {
+  const loadThread = useCallback(async (id, signal) => {
+    if (id !== activeThreadId.current) return;
+    const request = ++threadRequest.current;
+    setError('');
+    setSelectedThread((previous) => previous?.id === id ? previous : null);
+    if (id === null) {
+      setMessages([]);
+      return;
+    }
     try {
-      const thread = threads.find((t) => t.id === id);
-      if (thread) {
-        setSelectedThread(thread);
-        const response = await api.get(`/messages/threads/${id}/`);
-        setMessages(response.data.messages || []);
-        
-        // Refresh threads to update unread count
-        fetchThreads();
-      }
+      const response = await api.get(`/messages/threads/${id}/`, { signal });
+      if (signal?.aborted || request !== threadRequest.current || id !== activeThreadId.current) return;
+      setSelectedThread(response.data);
+      setMessages(response.data.messages || []);
+
+      // The detail endpoint supplies the thread, even before its list has loaded.
+      fetchThreads();
     } catch (err) {
+      if (signal?.aborted || request !== threadRequest.current || id !== activeThreadId.current) return;
+      setSelectedThread(null);
+      setMessages([]);
+      setError('Failed to load this conversation. Please try again.');
       console.error('Failed to load thread:', err);
     }
-  };
+  }, [fetchThreads]);
+
+  useEffect(() => {
+    fetchThreads();
+  }, [fetchThreads]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    activeThreadId.current = threadId ? Number(threadId) : null;
+    loadThread(activeThreadId.current, controller.signal);
+    return () => {
+      activeThreadId.current = null;
+      controller.abort();
+    };
+  }, [threadId, loadThread]);
 
   const sendMessage = async (e) => {
     e.preventDefault();
@@ -114,6 +132,7 @@ function Messages() {
 
   return (
     <div className="container-fluid mt-4">
+      {error && <div className="alert alert-danger" role="alert">{error}</div>}
       <div className="row">
         {/* Thread List Sidebar */}
         <div className="col-md-4 col-lg-3">

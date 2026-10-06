@@ -1,11 +1,12 @@
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Loading from './Loading'
 
 export default function AdminProtectedRoute({ children }) {
   const { isAuthenticated, user, authLoading } = useAuth()
 
   if (authLoading) {
-    return null
+    return <Loading message="Checking your sign-in session…" />
   }
 
   if (!isAuthenticated) {

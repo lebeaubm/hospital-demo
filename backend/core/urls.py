@@ -1,4 +1,9 @@
 from django.urls import path
+from .emr_views import DemoEMRChartView, DemoEMRNoteCreateView, DemoEMRNoteUpdateView, DemoEMRPatientListView
+from .emr_workflow_views import (
+    DemoEMRAssessmentCreateView, DemoEMRDashboardView, DemoEMRPatientStatusView,
+    DemoEMRTaskCreateView, DemoEMRTaskStatusView, DemoEMRVisitCreateView, DemoEMRVisitStatusView,
+)
 
 from .views import (
     APIRootView,
@@ -87,6 +92,17 @@ from .payment_views import (
 )
 
 urlpatterns = [
+    path("staff/demo-emr/patients/", DemoEMRPatientListView.as_view(), name="demo_emr_patients"),
+    path("staff/demo-emr/patients/<int:patient_id>/", DemoEMRChartView.as_view(), name="demo_emr_chart"),
+    path("staff/demo-emr/patients/<int:patient_id>/notes/", DemoEMRNoteCreateView.as_view(), name="demo_emr_note_create"),
+    path("staff/demo-emr/notes/<int:note_id>/", DemoEMRNoteUpdateView.as_view(), name="demo_emr_note_update"),
+    path("staff/demo-emr/patients/<int:patient_id>/status/", DemoEMRPatientStatusView.as_view(), name="demo_emr_patient_status"),
+    path("staff/demo-emr/patients/<int:patient_id>/assessments/", DemoEMRAssessmentCreateView.as_view(), name="demo_emr_assessment_create"),
+    path("staff/demo-emr/dashboard/", DemoEMRDashboardView.as_view(), name="demo_emr_dashboard"),
+    path("staff/demo-emr/visits/", DemoEMRVisitCreateView.as_view(), name="demo_emr_visit_create"),
+    path("staff/demo-emr/visits/<int:visit_id>/", DemoEMRVisitStatusView.as_view(), name="demo_emr_visit_status"),
+    path("staff/demo-emr/tasks/", DemoEMRTaskCreateView.as_view(), name="demo_emr_task_create"),
+    path("staff/demo-emr/tasks/<int:task_id>/", DemoEMRTaskStatusView.as_view(), name="demo_emr_task_status"),
     path("", APIRootView.as_view(), name="api_root"),
     path("auth/register/", RegisterView.as_view(), name="register"),
     path("auth/login/", LoginView.as_view(), name="login"),

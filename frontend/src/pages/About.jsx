@@ -31,6 +31,8 @@ export default function About() {
                 src={image.src}
                 alt={image.alt}
                 className="gallery-image"
+                loading="lazy"
+                decoding="async"
               />
             </div>
           ))}

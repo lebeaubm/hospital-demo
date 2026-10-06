@@ -64,7 +64,7 @@ export default function Contact() {
       })
       if (controller.signal.aborted) return
       if (response.status !== 201) throw new Error('Unexpected response status')
-      setSuccess('Your sample message has been saved for administrator review.')
+      setSuccess('Your message has been saved for review.')
       form.reset()
     } catch (requestError) {
       if (controller.signal.aborted) return
@@ -103,10 +103,8 @@ export default function Contact() {
         <div className="col-lg-7">
           <div className="card marketing-card">
             <div className="card-body">
-              <h2 className="h5 mb-3">Leave a Sample Message</h2>
-              <div className="alert alert-info" id="contact-demo-notice">
-                This demo form saves sample messages for administrator review. Use made-up contact details and avoid personal or medical information.
-              </div>
+              <h2 className="h5 mb-3">Leave a Message</h2>
+              <p className="small text-muted" id="contact-demo-notice">Demo test</p>
               {success && <div className="alert alert-success" role="status">{success}</div>}
               {error && <div className="alert alert-danger" role="alert">{error}</div>}
               <form onSubmit={handleSubmit} aria-describedby="contact-demo-notice" aria-busy={submitting}>
@@ -139,7 +137,7 @@ export default function Contact() {
                     </div>
                     <div className="col-12">
                       <button type="submit" className="btn btn-primary" disabled={submitting}>
-                        {submitting ? 'Saving Sample Message…' : 'Save Sample Message'}
+                        {submitting ? 'Submitting…' : 'Submit Message'}
                       </button>
                     </div>
                   </div>

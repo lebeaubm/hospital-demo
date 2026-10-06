@@ -177,6 +177,125 @@ class ContactMessage(models.Model):
         ordering = ("-created_at",)
 
 
+class DemoEMRPatient(models.Model):
+    client_id = models.UUIDField(null=True, blank=True, unique=True, editable=False)
+    chart_number = models.CharField(max_length=20, unique=True)
+    full_name = models.CharField(max_length=150)
+    date_of_birth = models.DateField()
+    primary_condition = models.CharField(max_length=200)
+    allergies = models.JSONField(default=list)
+    medications = models.JSONField(default=list)
+    care_plan = models.JSONField(default=list)
+    history = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    revision = models.PositiveIntegerField(default=1)
+    removed_at = models.DateTimeField(null=True, blank=True)
+    removed_by_name = models.CharField(max_length=200, blank=True)
+
+    class Meta:
+        ordering = ("full_name",)
+
+
+class DemoEMRNote(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = "DRAFT", "Draft"
+        FINAL = "FINAL", "Finalized"
+
+    client_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    patient = models.ForeignKey(DemoEMRPatient, on_delete=models.PROTECT, related_name="notes")
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="demo_emr_notes")
+    author_name = models.CharField(max_length=200)
+    visit_at = models.DateTimeField(default=timezone.now)
+    assessment = models.TextField(blank=True, max_length=5000)
+    interventions = models.TextField(blank=True, max_length=5000)
+    response = models.TextField(blank=True, max_length=5000)
+    plan = models.TextField(blank=True, max_length=5000)
+    vitals = models.JSONField(default=dict)
+    completed_tasks = models.JSONField(default=list)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.DRAFT)
+    amendment_of = models.ForeignKey("self", on_delete=models.PROTECT, null=True, blank=True, related_name="amendments")
+    revision = models.PositiveIntegerField(default=1)
+    finalized_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="finalized_demo_emr_notes")
+    finalized_by_name = models.CharField(max_length=200, blank=True)
+    finalized_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-visit_at", "-created_at")
+
+
+class DemoEMRAssessment(models.Model):
+    client_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    patient = models.ForeignKey(DemoEMRPatient, on_delete=models.PROTECT, related_name="assessments")
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="demo_emr_assessments")
+    author_name = models.CharField(max_length=200)
+    observed_at = models.DateTimeField()
+    findings = models.JSONField(default=dict)
+    notes = models.TextField(blank=True, max_length=5000)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("-observed_at", "-created_at")
+
+
+class DemoEMRVisit(models.Model):
+    class Status(models.TextChoices):
+        SCHEDULED = "SCHEDULED", "Scheduled"
+        IN_PROGRESS = "IN_PROGRESS", "In progress"
+        COMPLETED = "COMPLETED", "Completed"
+        CANCELLED = "CANCELLED", "Cancelled"
+
+    client_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    patient = models.ForeignKey(DemoEMRPatient, on_delete=models.PROTECT, related_name="visits")
+    purpose = models.CharField(max_length=200)
+    scheduled_start = models.DateTimeField()
+    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="demo_emr_visits")
+    assigned_name = models.CharField(max_length=200, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.SCHEDULED)
+    revision = models.PositiveIntegerField(default=1)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="created_demo_emr_visits")
+    created_by_name = models.CharField(max_length=200, blank=True)
+    updated_by_name = models.CharField(max_length=200, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("scheduled_start", "id")
+
+
+class DemoEMRTask(models.Model):
+    class Status(models.TextChoices):
+        OPEN = "OPEN", "Open"
+        DONE = "DONE", "Done"
+
+    class Priority(models.TextChoices):
+        NORMAL = "NORMAL", "Normal"
+        HIGH = "HIGH", "High"
+
+    client_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    patient = models.ForeignKey(DemoEMRPatient, on_delete=models.PROTECT, related_name="tasks")
+    visit = models.ForeignKey(DemoEMRVisit, on_delete=models.PROTECT, null=True, blank=True, related_name="tasks")
+    title = models.CharField(max_length=200)
+    details = models.TextField(blank=True, max_length=1000)
+    due_at = models.DateTimeField(null=True, blank=True)
+    priority = models.CharField(max_length=10, choices=Priority.choices, default=Priority.NORMAL)
+    assigned_to = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="demo_emr_tasks")
+    assigned_name = models.CharField(max_length=200, blank=True)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.OPEN)
+    revision = models.PositiveIntegerField(default=1)
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="created_demo_emr_tasks")
+    created_by_name = models.CharField(max_length=200, blank=True)
+    completed_by_name = models.CharField(max_length=200, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("due_at", "id")
+
+
 class Appointment(models.Model):
     class Status(models.TextChoices):
         REQUESTED = "REQUESTED", "Requested"

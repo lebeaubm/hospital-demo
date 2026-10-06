@@ -15,6 +15,7 @@ export default function Team() {
           src="https://images.unsplash.com/photo-1666214280557-f1b5022eb634?auto=format&fit=crop&w=1800&q=85"
           alt="Home health professionals working together to support patient care"
           className="gallery-image w-100"
+          decoding="async"
         />
       </section>
 
@@ -22,10 +23,10 @@ export default function Team() {
         <div className="col-md-4">
           <section className="card h-100 marketing-card">
             <div className="card-body">
-              <h2 className="h5">Care with heart</h2>
+              <h2 className="h5">Skilled nursing</h2>
               <p className="mb-0">
-                Our caregivers meet each person with respect, warmth, and attention to the things
-                that make them feel safe and understood.
+                Nurses support each person's care plan and keep patients and families informed
+                throughout their home health visits.
               </p>
             </div>
           </section>
@@ -33,10 +34,10 @@ export default function Team() {
         <div className="col-md-4">
           <section className="card h-100 marketing-card">
             <div className="card-body">
-              <h2 className="h5">People who show up</h2>
+              <h2 className="h5">Therapy and daily support</h2>
               <p className="mb-0">
-                From clinical professionals to the people coordinating each visit, our team works
-                hard behind the scenes and at the bedside to make care dependable.
+                Therapists and home health aides bring practical support to daily routines,
+                with attention to each person's goals and needs.
               </p>
             </div>
           </section>
@@ -44,10 +45,10 @@ export default function Team() {
         <div className="col-md-4">
           <section className="card h-100 marketing-card">
             <div className="card-body">
-              <h2 className="h5">One team, working together</h2>
+              <h2 className="h5">Care coordination</h2>
               <p className="mb-0">
-                We stay connected with patients and families, sharing information and coordinating
-                support around each person’s needs and goals.
+                Our coordinators help organize visits and keep the care team, patients,
+                and families connected.
               </p>
             </div>
           </section>

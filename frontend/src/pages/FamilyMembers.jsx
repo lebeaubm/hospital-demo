@@ -101,7 +101,7 @@ function FamilyMembers() {
       await api.delete(`/family-members/${id}/`);
       alert('Family member removed successfully!');
       fetchFamilyMembers();
-    } catch (err) {
+    } catch {
       alert('Failed to remove family member');
     }
   };
