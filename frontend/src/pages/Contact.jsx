@@ -79,10 +79,7 @@ export default function Contact() {
 
   return (
     <div className="public-page">
-      <PageHero eyebrow="Contact Us" title="Let’s talk about care." description="Whether you are exploring home health or have a question for our team, we are here to help.">
-        <a className="btn btn-primary" href="tel:9516213600">Call Our Team</a>
-        <a className="page-text-link" href="#send-message">Send a Message <span aria-hidden="true">↓</span></a>
-      </PageHero>
+      <PageHero eyebrow="Contact Us" title="Let’s talk about care." />
       <div className="contact-layout page-section">
         <div>
           <section className="contact-call-card" aria-labelledby="contact-call-title">
