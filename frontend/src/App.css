@@ -356,7 +356,10 @@ main.container h1[tabindex="-1"]:focus { outline: none; }
   line-height: 1.04;
 }
 
-.home-hero h1 { max-width: 620px; }
+.home-hero h1 {
+  max-width: 620px;
+  font-size: clamp(2.4rem, 4.2vw, 3.4rem);
+}
 
 .home-hero__intro {
   max-width: 620px;
