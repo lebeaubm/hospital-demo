@@ -26,8 +26,30 @@ accounts used by both websites. Use the branch-1 website for the new Owner role.
 - 52 focused backend tests passed, including owner promotion, demotion, protected
   admin accounts, and denial of role changes by non-admin users.
 - The original `render.yaml` is retained for the existing main deployment.
-- The new Render backend has not been created yet; the live role update remains
-  unverified until this Blueprint is deployed.
+- On October 7, 2026, the branch-1 Blueprint deployed both services successfully
+  from commit `45b66f4` in **billy's Workspace**.
+- The new backend's `/api/` endpoint returned HTTP 200 and the expected CORS
+  origin for the test frontend. Its build applied
+  `0025_owner_role_and_staff_assignments` successfully, and no recent error logs
+  were reported after it went live.
+- The deployed frontend bundle includes the new backend URL and Owner role.
+- The original main backend remains on commit `c14c7e6` and its `/api/` endpoint
+  returned HTTP 200.
+- A live account promotion has not been submitted during deployment. Refresh the
+  branch-1 site and retry the Owner role change as an administrator.
+
+## Deployed services
+
+| Resource | URL |
+| --- | --- |
+| Branch-1 test frontend | <https://peacelovinghomehealth.onrender.com/> |
+| Branch-1 backend | <https://peaceloving-branch-1-api.onrender.com/> |
+| Branch-1 Blueprint | <https://dashboard.render.com/blueprint/exs-db373ehsrm7s73c30t60/resources> |
+
+The backend uses the Free compute plan and automatically deploys changes from
+`branch-1`. The test frontend is now managed by the same Blueprint. Their
+database, signing key, and application encryption key are connected through the
+Render service references in `render-branch-1.yaml`.
 
 References: [Render Blueprint service references](https://render.com/docs/blueprint-spec#referencing-service-properties),
 [Render environment variables](https://render.com/docs/environment-variables),
