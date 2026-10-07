@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { PUBLIC_SITE_URL } from '../config/site'
 
 export default function PaymentCancel() {
   return (
@@ -21,9 +22,9 @@ export default function PaymentCancel() {
                 <Link to="/portal/appointments" className="btn btn-primary">
                   Back to Appointments
                 </Link>
-                <Link to="/contact" className="btn btn-outline-secondary">
+                <a href={`${PUBLIC_SITE_URL}/contact`} className="btn btn-outline-secondary">
                   Contact Support
-                </Link>
+                </a>
               </div>
             </div>
           </div>

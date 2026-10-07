@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { PORTAL_SITE_URL } from '../config/site'
 
 export default function Team() {
   return (
@@ -61,14 +61,14 @@ export default function Team() {
             <h2 className="h5 mb-1">Part of the care team?</h2>
             <p className="mb-0">Sign in to continue to your team workspace.</p>
           </div>
-          <Link className="btn btn-primary flex-shrink-0" to="/login">
+          <a className="btn btn-primary flex-shrink-0" href={`${PORTAL_SITE_URL}/login`}>
             Team Login
-          </Link>
+          </a>
         </div>
         <div className="card-body pt-0">
-          <Link className="btn btn-outline-primary" to="/register">
+          <a className="btn btn-outline-primary" href={`${PORTAL_SITE_URL}/register`}>
             Sign Up
-          </Link>
+          </a>
         </div>
       </section>
     </div>

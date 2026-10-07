@@ -22,9 +22,9 @@ function submissionError(error) {
     return 'Too many messages have been submitted. Please wait a few minutes and try again.'
   }
   if (!error.response) {
-    return 'We could not confirm that your sample message was saved. Please check your connection and try again later.'
+    return 'We could not confirm that your message was saved. Please check your connection and try again later.'
   }
-  return 'Your sample message could not be saved. Please try again later.'
+  return 'Your message could not be saved. Please try again later.'
 }
 
 export default function Contact() {
@@ -64,7 +64,7 @@ export default function Contact() {
       })
       if (controller.signal.aborted) return
       if (response.status !== 201) throw new Error('Unexpected response status')
-      setSuccess('Your message has been saved for review.')
+      setSuccess('Your message has been received. Our team will review it.')
       form.reset()
     } catch (requestError) {
       if (controller.signal.aborted) return
@@ -104,12 +104,11 @@ export default function Contact() {
           <div className="card marketing-card">
             <div className="card-body">
               <h2 className="h5 mb-3">Leave a Message</h2>
-              <p className="small text-muted" id="contact-demo-notice">Demo test</p>
               {success && <div className="alert alert-success" role="status">{success}</div>}
               {error && <div className="alert alert-danger" role="alert">{error}</div>}
-              <form onSubmit={handleSubmit} aria-describedby="contact-demo-notice" aria-busy={submitting}>
+              <form onSubmit={handleSubmit} aria-busy={submitting}>
                 <fieldset disabled={submitting}>
-                  <legend className="visually-hidden">Sample contact message</legend>
+                  <legend className="visually-hidden">Contact message</legend>
                   <div className="row g-3">
                     <div className="col-md-6">
                       <label className="form-label" htmlFor="name">Full Name</label>

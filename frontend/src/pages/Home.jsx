@@ -1,11 +1,7 @@
-import { useAuth } from '../context/AuthContext'
 import { Link } from 'react-router-dom'
+import { PORTAL_SITE_URL } from '../config/site'
 
 export default function Home() {
-  const { user } = useAuth()
-  const isStaff = user?.role === 'STAFF' || user?.role === 'ADMIN'
-  const isPatient = user?.role === 'PATIENT'
-
   const heroCareBanner = 'https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=1600&q=80'
 
   const coreCareItems = [
@@ -171,16 +167,14 @@ export default function Home() {
       </div>
 
         <div className="mt-4 d-flex flex-wrap gap-2 cta-group">
-          {isPatient && <Link className="btn btn-primary" to="/portal/appointments/request">Request Appointment</Link>}
-          {isStaff && <Link className="btn btn-primary" to="/staff/dashboard">Open Staff Dashboard</Link>}
           <Link className="btn btn-outline-primary" to="/services">View Services</Link>
           <Link className="btn btn-outline-primary" to="/team">Meet Our Team</Link>
           <Link className="btn btn-outline-primary" to="/contact">Get in Touch</Link>
         </div>
       </section>
 
-      <section className="mt-5" aria-labelledby="demo-overview-title">
-        <h2 className="h4 mb-3" id="demo-overview-title">Quick Access</h2>
+      <section className="mt-5" aria-labelledby="get-started-title">
+        <h2 className="h4 mb-3" id="get-started-title">Get Started</h2>
         <div className="row g-3">
           <div className="col-md-4">
             <article className="card marketing-card h-100"><div className="card-body d-flex flex-column">
@@ -200,7 +194,7 @@ export default function Home() {
             <article className="card marketing-card h-100"><div className="card-body d-flex flex-column">
               <h3 className="h5">Patient & Staff Portal</h3>
               <p>Manage appointments and care information.</p>
-              <Link className="btn btn-outline-primary mt-auto align-self-start" to={isStaff ? '/staff/dashboard' : isPatient ? '/portal/profile' : '/login'}>{isStaff || isPatient ? 'Open Workspace' : 'Sign In'}</Link>
+              <a className="btn btn-outline-primary mt-auto align-self-start" href={PORTAL_SITE_URL}>Open Portal</a>
             </div></article>
           </div>
         </div>

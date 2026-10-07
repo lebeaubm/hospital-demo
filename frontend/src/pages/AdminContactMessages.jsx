@@ -97,7 +97,7 @@ export default function AdminContactMessages() {
   return (
     <div className="py-4">
       <div className="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
-        <div><p className="section-kicker mb-1">Admin Inbox</p><h1 className="h2 mb-1">Contact Messages</h1><p className="text-muted mb-0">Review sample messages submitted through the Contact page.</p></div>
+        <div><p className="section-kicker mb-1">Admin Inbox</p><h1 className="h2 mb-1">Contact Messages</h1><p className="text-muted mb-0">Review messages submitted through the public Contact page.</p></div>
         {selected && <button className="btn btn-outline-secondary" onClick={closeMessage} disabled={saving}>Back to messages</button>}
       </div>
 
