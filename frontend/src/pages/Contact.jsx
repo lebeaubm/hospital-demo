@@ -87,7 +87,6 @@ export default function Contact() {
             <h2 id="contact-call-title">Call us.</h2>
             <a className="contact-phone" href="tel:9516213600">(951) 621-3600</a>
             <p>Ask about services, care in your area, or insurance and payment options.</p>
-            <p className="mb-0"><strong>Fax:</strong> (951) 621-3606</p>
           </section>
           <div className="contact-details">
             <div><h3>Care availability</h3><p>24 hours a day, 7 days a week.</p></div>

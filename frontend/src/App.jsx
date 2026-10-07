@@ -423,7 +423,7 @@ function App() {
             </div>
             <div className="col-md-6 text-md-end">
               <p className="mb-1"><strong>Call:</strong> <a href="tel:9516213600">(951) 621-3600</a></p>
-              <p className="mb-1"><strong>Fax:</strong> (951) 621-3606</p>
+              {pathname.replace(/\/+$/, '') !== '/contact' && <p className="mb-1"><strong>Fax:</strong> (951) 621-3606</p>}
               <p className="mb-0"><strong>Address:</strong> 1307 W 6th Street, Suite 220C, Corona, CA 92882</p>
             </div>
           </div>
