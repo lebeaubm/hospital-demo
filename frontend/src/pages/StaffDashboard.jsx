@@ -1,3 +1,4 @@
+import ScrollableTable from '../components/ScrollableTable'
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
@@ -199,7 +200,9 @@ export default function StaffDashboard() {
 
   return (
     <div className="py-4">
-      <h1 className="mb-4">Staff Dashboard - Appointments</h1>
+      <p className="page-eyebrow">Care</p>
+      <h1 className="mb-2">Appointments</h1>
+      <p className="text-muted mb-4">Review requests, organize visits, and open patient records.</p>
 
       {/* Filter Section */}
       <div className="card shadow-sm mb-4">
@@ -299,20 +302,20 @@ export default function StaffDashboard() {
       {!loading && !error && appointments.length > 0 && (
         <div className="card shadow-sm">
           <div className="card-body">
-            <div className="table-responsive">
+            <ScrollableTable className="table-responsive" label="Staff Dashboard table">
               <table className="table table-hover">
                 <thead>
                   <tr>
-                    <th>ID</th>
-                    <th>Patient</th>
-                    <th>Doctor</th>
-                    <th>Status</th>
-                    <th>Requested</th>
-                    <th>Scheduled</th>
-                    <th>Reason</th>
-                    <th>Patient Notes</th>
-                    <th>Staff Notes</th>
-                    <th>Actions</th>
+                    <th scope="col">ID</th>
+                    <th scope="col">Patient</th>
+                    <th scope="col">Doctor</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Requested</th>
+                    <th scope="col">Scheduled</th>
+                    <th scope="col">Reason</th>
+                    <th scope="col">Patient Notes</th>
+                    <th scope="col">Staff Notes</th>
+                    <th scope="col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -463,7 +466,7 @@ export default function StaffDashboard() {
                               onClick={() => handleEmailPatient(appointment)}
                               title="Email Patient"
                             >
-                              
+                              Email Patient
                             </button>
                           </div>
                         )}
@@ -472,7 +475,7 @@ export default function StaffDashboard() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </ScrollableTable>
           </div>
         </div>
       )}

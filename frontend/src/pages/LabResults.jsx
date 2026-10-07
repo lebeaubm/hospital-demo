@@ -1,3 +1,5 @@
+import ScrollableTable from '../components/ScrollableTable'
+import PageHeader from '../components/PageHeader'
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 
@@ -99,7 +101,7 @@ function LabResults() {
 
   return (
     <div className="container mt-4">
-      <h1 className="mb-4">🔬 Lab Results</h1>
+      <PageHeader title="Lab Results" description="View your test results and available reports." eyebrow="Your care" />
 
       {labOrders.length === 0 ? (
         <div className="alert alert-info">No lab orders found</div>
@@ -244,22 +246,22 @@ function LabResults() {
                       )}
 
                       {selectedOrder.result.values && selectedOrder.result.values.length > 0 && (
-                        <div className="table-responsive mt-3">
+                        <ScrollableTable className="table-responsive mt-3" label="Lab Results table">
                           <table className="table table-hover">
                             <thead>
                               <tr>
-                                <th>Parameter</th>
-                                <th>Value</th>
-                                <th>Unit</th>
-                                <th>Reference Range</th>
-                                <th>Flag</th>
+                                <th scope="col">Parameter</th>
+                                <th scope="col">Value</th>
+                                <th scope="col">Unit</th>
+                                <th scope="col">Reference Range</th>
+                                <th scope="col">Flag</th>
                               </tr>
                             </thead>
                             <tbody>
                               {selectedOrder.result.values.map((value) => renderResultValue(value))}
                             </tbody>
                           </table>
-                        </div>
+                        </ScrollableTable>
                       )}
 
                       {selectedOrder.result.pdf_report && (

@@ -1,7 +1,9 @@
+import ScrollableTable from '../components/ScrollableTable'
 import { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import Loading from '../components/Loading'
+import PageHeader from '../components/PageHeader'
 import ErrorAlert from '../components/ErrorAlert'
 
 function StaffPatientRecord() {
@@ -278,13 +280,13 @@ function StaffPatientRecord() {
     })
   }
 
-  if (loading) return <Loading />
-  if (error) return <ErrorAlert message={error} />
+  if (loading) return <div className="py-4"><PageHeader title="Patient Medical Record" description="Review the patient’s care summary, notes, and documents." eyebrow="Care" /><Loading message="Loading the patient’s record…" /></div>
+  if (error) return <div className="py-4"><PageHeader title="Patient Medical Record" description="Review the patient’s care summary, notes, and documents." eyebrow="Care" /><ErrorAlert error={error} /></div>
 
   return (
     <div className="container my-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2>Patient Medical Record</h2>
+        <PageHeader title="Patient Medical Record" description="Review the patient’s care summary, notes, and documents." eyebrow="Care" />
         <button className="btn btn-secondary" onClick={() => navigate('/staff/dashboard')}>
           Back to Dashboard
         </button>
@@ -560,17 +562,17 @@ function StaffPatientRecord() {
           )}
 
           {record.documents && record.documents.length > 0 ? (
-            <div className="table-responsive">
+            <ScrollableTable className="table-responsive" label="Staff Patient Record table">
               <table className="table table-hover">
                 <thead>
                   <tr>
-                    <th>Document Name</th>
-                    <th>Category</th>
-                    <th>Visibility</th>
-                    <th>Size</th>
-                    <th>Uploaded By</th>
-                    <th>Date</th>
-                    <th>Actions</th>
+                    <th scope="col">Document Name</th>
+                    <th scope="col">Category</th>
+                    <th scope="col">Visibility</th>
+                    <th scope="col">Size</th>
+                    <th scope="col">Uploaded By</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -615,7 +617,7 @@ function StaffPatientRecord() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </ScrollableTable>
           ) : (
             <p className="text-muted mb-0">No documents uploaded yet.</p>
           )}
@@ -637,14 +639,14 @@ function StaffPatientRecord() {
           {assignedDoctors.length === 0 ? (
             <p className="text-muted">No doctors specifically assigned yet.</p>
           ) : (
-            <div className="table-responsive mb-3">
+            <ScrollableTable className="table-responsive mb-3" label="Staff Patient Record table">
               <table className="table table-sm align-middle">
                 <thead className="table-light">
                   <tr>
-                    <th>Name</th>
-                    <th>Specialty</th>
-                    <th>Universal</th>
-                    <th></th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Specialty</th>
+                    <th scope="col">Universal</th>
+                    <th scope="col"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -671,7 +673,7 @@ function StaffPatientRecord() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </ScrollableTable>
           )}
 
           {/* Assign a new doctor */}

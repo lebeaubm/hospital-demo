@@ -1,3 +1,4 @@
+import PageHeader from '../components/PageHeader'
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api/client'
 import { useAuth } from '../context/AuthContext'
@@ -106,7 +107,7 @@ export default function Profile() {
   if (loading) {
     return (
       <div className="py-4">
-        <h1 className="mb-3">My Profile</h1>
+        <PageHeader title="My Profile" description="Keep your account details and contact information up to date." eyebrow="Your account" />
         <SkeletonProfile />
       </div>
     )
@@ -115,7 +116,7 @@ export default function Profile() {
   if (error && !profile) {
     return (
       <div className="py-4">
-        <h1 className="mb-3">My Profile</h1>
+        <PageHeader title="My Profile" description="Keep your account details and contact information up to date." eyebrow="Your account" />
         <ErrorAlert error={error} onRetry={fetchProfile} />
       </div>
     )
@@ -123,7 +124,7 @@ export default function Profile() {
 
   return (
     <div className="py-4">
-      <h1 className="mb-3">My Profile</h1>
+      <PageHeader title="My Profile" description="Keep your account details and contact information up to date." eyebrow="Your account" />
       {profile && (
         <div className="mb-3">
           <p className="text-muted">

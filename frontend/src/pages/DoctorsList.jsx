@@ -1,3 +1,4 @@
+import PageHeader from '../components/PageHeader'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
@@ -91,7 +92,7 @@ export default function DoctorsList() {
 
   return (
     <div className="py-4">
-      <h1 className="mb-4">Doctors</h1>
+      <PageHeader title="Find a Doctor" description="Search by name, specialty, or location, then view a doctor’s details." eyebrow="Doctor directory" />
       
       {/* Search and Filter Controls */}
       <div className="card mb-4 shadow-sm">

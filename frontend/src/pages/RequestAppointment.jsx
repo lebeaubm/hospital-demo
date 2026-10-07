@@ -1,3 +1,4 @@
+import PageHeader from '../components/PageHeader'
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
@@ -74,7 +75,7 @@ export default function RequestAppointment() {
 
   return (
     <div className="py-4" style={{ maxWidth: '600px' }}>
-      <h1 className="mb-3">Request Appointment</h1>
+      <PageHeader title="Request an Appointment" description="Complete the form below to request a visit." eyebrow="Your care" />
       <p className="text-muted">
         Fill out the form below to request an appointment. Our staff will review
         and confirm your request.

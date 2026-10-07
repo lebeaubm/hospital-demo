@@ -1,99 +1,41 @@
+import { Link } from 'react-router-dom'
+import PageHero from '../components/PageHero'
+import CareCTA from '../components/CareCTA'
+import ServiceArea from '../components/ServiceArea'
+
+const values = [
+  { title: 'Dignity in every visit', description: 'Respect for each person’s choices, independence, and comfort guides our care.' },
+  { title: 'Families belong in the conversation', description: 'We value strong family relationships and help loved ones stay connected to care.' },
+  { title: 'Compassion with purpose', description: 'Our Christian foundation guides a commitment to kindness, empathy, and professional care.' },
+]
+
 export default function About() {
-  const aboutGalleryImages = [
-    {
-      src: 'https://images.unsplash.com/photo-1666214280557-f1b5022eb634?auto=format&fit=crop&w=1200&q=80',
-      alt: 'Healthcare team standing together in a clinical setting',
-    },
-    {
-      src: 'https://images.unsplash.com/photo-1576765608535-5f04d1e3f289?auto=format&fit=crop&w=1200&q=80',
-      alt: 'Warm interaction between a healthcare worker and patient',
-    },
-    {
-      src: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1200&q=80',
-      alt: 'Family smiling together at home',
-    },
-  ]
-
   return (
-    <div className="pt-2 pb-4">
-      <p className="section-kicker">Who We Are</p>
-      <h1 className="mb-3">About Us</h1>
-      <p className="lead mb-4">
-        Peaceloving Home Health Inc. provides compassionate, professional home health care that improves
-        quality of life while promoting autonomy and dignity.
-      </p>
-
-      <section className="mb-4">
-        <div className="row g-3">
-          {aboutGalleryImages.map((image) => (
-            <div className="col-md-4" key={image.src}>
-              <img
-                src={image.src}
-                alt={image.alt}
-                className="gallery-image"
-                loading="lazy"
-                decoding="async"
-              />
-            </div>
-          ))}
+    <div className="public-page">
+      <PageHero eyebrow="About Peaceloving" title="Care rooted in compassion." description="Professional home health care with a personal purpose: helping people live with comfort, independence, and dignity."
+        image="https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=1000&q=80" imageAlt="A family spending time together outdoors">
+        <Link className="btn btn-primary" to="/services">Explore Our Services</Link>
+        <Link className="page-text-link" to="/team">Meet Our Team <span aria-hidden="true">→</span></Link>
+      </PageHero>
+      <section className="page-section story-layout">
+        <div className="section-heading"><p className="page-eyebrow">Our story</p><h2>Home is where care becomes personal.</h2></div>
+        <div className="story-copy">
+          <p>Peaceloving Home Health Inc. brings nursing, therapy, and daily support into the place patients know best. We serve children, adults, and seniors across Southern California.</p>
+          <p>Our foundation is rooted in Christian principles and a simple promise: treat every patient with dignity, respect, and empathy. We work with patients and families to support care that fits their needs.</p>
         </div>
       </section>
-
-      <div className="row g-3">
-        <div className="col-md-6">
-          <div className="card h-100 marketing-card">
-            <div className="card-body">
-              <h2 className="h5">Mission</h2>
-              <p className="mb-3">
-                To deliver compassionate, professional home health care that enhances patient quality of life
-                while promoting autonomy and dignity.
-              </p>
-              <h2 className="h5">Value</h2>
-              <p className="mb-0">
-                We prioritize strong family relationships in a healing, comfortable environment and provide
-                respectful, empathetic care tailored to each patient, guided by the Christian principles
-                of our foundation.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-6">
-          <div className="card h-100 marketing-card">
-            <div className="card-body">
-              <h2 className="h5">Vision</h2>
-              <p className="mb-3">
-                To set a benchmark for excellence in home health care through innovative,
-                patient-centered solutions grounded in compassionate delivery, committed to ensuring
-                every patient receives the highest quality care utilizing advanced methodologies
-                and best practices in the field.
-              </p>
-              <h2 className="h5">Our Promise</h2>
-              <p className="mb-0">To treat every patient with dignity, respect, and empathy.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <section className="mt-4">
-        <div className="card marketing-card">
-          <div className="card-body">
-            <h2 className="h5 mb-2">Service Area</h2>
-            <p className="mb-0">We serve cities in Ventura, Los Angeles, Orange, San Bernardino, Riverside, and San Diego Counties.</p>
-          </div>
-        </div>
+      <section className="purpose-band page-section">
+        <div><p className="page-eyebrow">Our mission</p><h2>Support a better quality of life.</h2><p>Deliver compassionate, professional home health care while promoting each patient’s independence and dignity.</p></div>
+        <div><p className="page-eyebrow">Our vision</p><h2>Keep moving care forward.</h2><p>Pursue excellence through thoughtful care, professional best practices, and a focus on each patient’s needs.</p></div>
       </section>
-
-      <section className="mt-4">
-        <div className="card marketing-card">
-          <div className="card-body">
-            <h2 className="h5 mb-3">Get in Touch</h2>
-            <p className="mb-1"><strong>Phone:</strong> <a href="tel:9516213600">(951) 621-3600</a></p>
-            <p className="mb-1"><strong>Fax:</strong> (951) 621-3606</p>
-            <p className="mb-1"><strong>Hours:</strong> 24 Hours a Day, 7 Days a Week</p>
-            <p className="mb-0"><strong>Location:</strong> 1307 W 6th Street, Suite 220C, Corona, CA 92882</p>
-          </div>
-        </div>
+      <section className="page-section">
+        <div className="section-heading"><p className="page-eyebrow">What guides us</p><h2>Our values, in everyday care.</h2></div>
+        <div className="value-grid">{values.map((value, index) => <article className="value-card" key={value.title}>
+          <span className="number-mark" aria-hidden="true">0{index + 1}</span><h3>{value.title}</h3><p>{value.description}</p>
+        </article>)}</div>
       </section>
+      <ServiceArea />
+      <CareCTA />
     </div>
   )
 }

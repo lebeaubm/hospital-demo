@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import { SkeletonCard } from '../components/SkeletonLoader'
 import ErrorAlert from '../components/ErrorAlert'
+import PageHeader from '../components/PageHeader'
 
 export default function DoctorDetail() {
   const { id } = useParams()
@@ -34,6 +35,7 @@ export default function DoctorDetail() {
 
   return (
     <div className="py-4">
+      <PageHeader title={doctor?.name || 'Doctor Details'} description={doctor?.specialty || 'Learn more about a doctor’s background and specialty.'} eyebrow="Doctor directory" />
       <Link className="btn btn-link px-0" to="/doctors">
         Back to doctors
       </Link>
@@ -42,8 +44,6 @@ export default function DoctorDetail() {
       {!loading && !error && doctor && (
         <div className="card shadow-sm">
           <div className="card-body">
-            <h1 className="card-title h2">{doctor.name}</h1>
-            <p className="text-muted">{doctor.specialty}</p>
             <p className="mt-3">{doctor.bio}</p>
             <p className="mb-0">
               <strong>Experience:</strong> {doctor.years_experience} years

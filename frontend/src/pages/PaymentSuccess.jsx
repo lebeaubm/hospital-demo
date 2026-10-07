@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { verifyPayment } from '../api/client'
 import { SkeletonCard } from '../components/SkeletonLoader'
+import PageHeader from '../components/PageHeader'
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams()
@@ -13,7 +14,7 @@ export default function PaymentSuccess() {
     const sessionId = searchParams.get('session_id')
     
     if (!sessionId) {
-      setError('No session ID provided')
+      setError('We could not find a payment to check. Return to your appointments, or call our office if you need help.')
       setLoading(false)
       return
     }
@@ -35,9 +36,10 @@ export default function PaymentSuccess() {
 
   if (loading) {
     return (
-      <div className="container py-5">
+      <div className="payment-result-page">
+        <PageHeader title="Checking your payment…" description="Please wait while we confirm the payment details." eyebrow="Payments" />
         <div className="row justify-content-center">
-          <div className="col-md-6">
+          <div className="col-12">
             <SkeletonCard />
           </div>
         </div>
@@ -47,13 +49,13 @@ export default function PaymentSuccess() {
 
   if (error) {
     return (
-      <div className="container py-5">
+      <div className="payment-result-page">
         <div className="row justify-content-center">
-          <div className="col-md-6">
+          <div className="col-12">
             <div className="card">
               <div className="card-body text-center">
                 <div className="display-1 text-danger mb-3"></div>
-                <h2 className="card-title">Payment Verification Failed</h2>
+                <h1 className="card-title h2 mb-3">Payment Verification Failed</h1>
                 <p className="card-text text-muted">{error}</p>
                 <Link to="/portal/appointments" className="btn btn-primary">
                   Back to Appointments
@@ -67,13 +69,13 @@ export default function PaymentSuccess() {
   }
 
   return (
-    <div className="container py-5">
+    <div className="payment-result-page">
       <div className="row justify-content-center">
-        <div className="col-md-6">
+        <div className="col-12">
           <div className="card">
             <div className="card-body text-center">
               <div className="display-1 text-success mb-3"></div>
-              <h2 className="card-title">Payment Successful!</h2>
+              <h1 className="card-title h2 mb-3">Payment Successful!</h1>
               <p className="card-text">
                 Thank you for your payment. Your consultation fee has been processed.
               </p>

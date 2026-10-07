@@ -1,3 +1,4 @@
+import PageHeader from '../components/PageHeader'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api, createCheckoutSession } from '../api/client'
@@ -76,7 +77,7 @@ export default function Appointments() {
   if (loading) {
     return (
       <div className="py-4">
-        <h1 className="mb-3">My Appointments</h1>
+        <PageHeader title="My Appointments" description="Check your appointments or request a new visit." eyebrow="Your care" />
         <div className="row g-3">
           {[1, 2, 3].map((i) => (
             <div className="col-12" key={i}>
@@ -91,7 +92,7 @@ export default function Appointments() {
   if (error) {
     return (
       <div className="py-4">
-        <h1 className="mb-3">My Appointments</h1>
+        <PageHeader title="My Appointments" description="Check your appointments or request a new visit." eyebrow="Your care" />
         <ErrorAlert error={error} onRetry={fetchAppointments} />
       </div>
     )
@@ -100,7 +101,7 @@ export default function Appointments() {
   return (
     <div className="py-4">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h1 className="mb-0">My Appointments</h1>
+        <PageHeader title="My Appointments" description="Check your appointments or request a new visit." eyebrow="Your care" />
         <Link className="btn btn-primary" to="/portal/appointments/request">
           Request Appointment
         </Link>

@@ -1,3 +1,5 @@
+import ScrollableTable from '../components/ScrollableTable'
+import PageHeader from '../components/PageHeader'
 import { useState, useEffect, useCallback } from 'react'
 import { api } from '../api/client'
 
@@ -66,7 +68,7 @@ export default function AdminUserManagement() {
   if (loading) {
     return (
       <div className="py-4">
-        <h1 className="mb-3">User Management</h1>
+        <PageHeader title="User Management" description="Review accounts and manage patient and staff access." eyebrow="Administration" />
         <div className="text-center py-5">
           <div className="spinner-border text-primary" role="status" />
           <p className="mt-2 text-muted">Loading users…</p>
@@ -78,7 +80,7 @@ export default function AdminUserManagement() {
   if (error) {
     return (
       <div className="py-4">
-        <h1 className="mb-3">User Management</h1>
+        <PageHeader title="User Management" description="Review accounts and manage patient and staff access." eyebrow="Administration" />
         <div className="alert alert-danger">{error}</div>
       </div>
     )
@@ -89,7 +91,7 @@ export default function AdminUserManagement() {
 
   return (
     <div className="py-4">
-      <h1 className="mb-1">User Management</h1>
+      <PageHeader title="User Management" description="Review accounts and manage patient and staff access." eyebrow="Administration" />
       <p className="text-muted mb-3">
         Promote patients to staff or demote staff back to patient.
         Admin accounts are not shown here.
@@ -119,14 +121,14 @@ export default function AdminUserManagement() {
       {filtered.length === 0 ? (
         <p className="text-muted">No users match your search.</p>
       ) : (
-        <div className="table-responsive">
+        <ScrollableTable className="table-responsive" label="Admin User Management table">
           <table className="table table-hover align-middle">
             <thead className="table-light">
               <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Current Role</th>
-                <th className="text-end">Action</th>
+                <th scope="col">Name</th>
+                <th scope="col">Email</th>
+                <th scope="col">Current Role</th>
+                <th className="text-end" scope="col">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -168,7 +170,7 @@ export default function AdminUserManagement() {
               })}
             </tbody>
           </table>
-        </div>
+        </ScrollableTable>
       )}
     </div>
   )

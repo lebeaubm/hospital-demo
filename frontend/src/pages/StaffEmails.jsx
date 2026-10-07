@@ -1,3 +1,5 @@
+import ScrollableTable from '../components/ScrollableTable'
+import PageHeader from '../components/PageHeader'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
@@ -169,7 +171,7 @@ export default function StaffEmails() {
   return (
     <div className="staff-emails-page py-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>Email Notification Logs</h1>
+        <PageHeader title="Email" description="Send patient emails and review email logs." eyebrow="Office" />
         <button 
           className="btn btn-primary"
           onClick={() => setShowComposeModal(true)}
@@ -243,18 +245,18 @@ export default function StaffEmails() {
       {/* Email Logs Table */}
       <div className="card">
         <div className="card-body">
-          <div className="table-responsive">
+          <ScrollableTable className="table-responsive" label="Staff Emails table">
             <table className="table table-hover">
               <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Type</th>
-                  <th>To</th>
-                  <th>Subject</th>
-                  <th>Status</th>
-                  <th>Sent By</th>
-                  <th>Created</th>
-                  <th>Actions</th>
+                  <th scope="col">ID</th>
+                  <th scope="col">Type</th>
+                  <th scope="col">To</th>
+                  <th scope="col">Subject</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Sent By</th>
+                  <th scope="col">Created</th>
+                  <th scope="col">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -308,7 +310,7 @@ export default function StaffEmails() {
                 )}
               </tbody>
             </table>
-          </div>
+          </ScrollableTable>
         </div>
       </div>
 

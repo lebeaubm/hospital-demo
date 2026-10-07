@@ -1,3 +1,4 @@
+import PageHeader from '../components/PageHeader'
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 
@@ -142,7 +143,7 @@ function FamilyMembers() {
   return (
     <div className="container mt-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1>👨‍👩‍👧‍👦 Family Members</h1>
+        <PageHeader title="Family Members" description="Manage your family contacts and relationships." eyebrow="Your account" />
         <button
           className="btn btn-primary"
           onClick={() => {

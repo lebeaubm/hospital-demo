@@ -1,3 +1,6 @@
+import ScrollableTable from '../components/ScrollableTable'
+import PageHeader from '../components/PageHeader'
+import Loading from '../components/Loading'
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 
@@ -168,12 +171,12 @@ export default function StaffLabResults() {
     } finally { setSaving(false); }
   };
 
-  if (loading) return <div className="container mt-4 text-center"><div className="spinner-border" /></div>;
+  if (loading) return <div className="py-4"><PageHeader title="Lab Results" description="Manage lab orders and record patient results." eyebrow="Care" /><Loading message="Loading lab results…" /></div>;
 
   return (
     <div className="container-fluid mt-4">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h2> Staff Lab Results</h2>
+        <PageHeader title="Lab Results" description="Manage lab orders and record patient results." eyebrow="Care" />
         <button className="btn btn-primary" onClick={() => setShowNewOrder(true)}>+ New Lab Order</button>
       </div>
 
@@ -335,15 +338,15 @@ export default function StaffLabResults() {
                       )}
 
                       {selectedOrder.result.values?.length > 0 ? (
-                        <div className="table-responsive">
+                        <ScrollableTable className="table-responsive" label="Staff Lab Results table">
                           <table className="table table-hover table-sm align-middle">
                             <thead className="table-light">
                               <tr>
-                                <th>Parameter</th>
-                                <th>Value</th>
-                                <th>Unit</th>
-                                <th>Reference Range</th>
-                                <th>Flag</th>
+                                <th scope="col">Parameter</th>
+                                <th scope="col">Value</th>
+                                <th scope="col">Unit</th>
+                                <th scope="col">Reference Range</th>
+                                <th scope="col">Flag</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -367,7 +370,7 @@ export default function StaffLabResults() {
                               ))}
                             </tbody>
                           </table>
-                        </div>
+                        </ScrollableTable>
                       ) : (
                         <p className="text-muted small mb-0">No values recorded yet.</p>
                       )}
@@ -410,17 +413,17 @@ export default function StaffLabResults() {
                       </div>
 
                       {/* ── Inline value table ───────────────────────────────── */}
-                      <div className="table-responsive mb-2">
+                      <ScrollableTable className="table-responsive mb-2" label="Staff Lab Results table">
                         <table className="table table-bordered table-sm align-middle mb-0">
                           <thead className="table-light">
                             <tr>
-                              <th style={{ minWidth: 140 }}>Parameter</th>
-                              <th style={{ minWidth: 90 }}>Value</th>
-                              <th style={{ minWidth: 80 }}>Unit</th>
-                              <th style={{ minWidth: 140 }}>Reference Range</th>
-                              <th style={{ minWidth: 150 }}>Flag</th>
-                              <th style={{ minWidth: 90 }}>Abnormal</th>
-                              <th style={{ width: 40 }}></th>
+                              <th style={{ minWidth: 140 }} scope="col">Parameter</th>
+                              <th style={{ minWidth: 90 }} scope="col">Value</th>
+                              <th style={{ minWidth: 80 }} scope="col">Unit</th>
+                              <th style={{ minWidth: 140 }} scope="col">Reference Range</th>
+                              <th style={{ minWidth: 150 }} scope="col">Flag</th>
+                              <th style={{ minWidth: 90 }} scope="col">Abnormal</th>
+                              <th style={{ width: 40 }} scope="col"></th>
                             </tr>
                           </thead>
                           <tbody>
@@ -474,7 +477,7 @@ export default function StaffLabResults() {
                             ))}
                           </tbody>
                         </table>
-                      </div>
+                      </ScrollableTable>
                       <button type="button" className="btn btn-sm btn-outline-secondary mb-4" onClick={addRow}>
                         + Add Row
                       </button>

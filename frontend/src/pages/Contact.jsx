@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../api/client'
+import PageHero from '../components/PageHero'
+import ServiceArea from '../components/ServiceArea'
 
 const fieldLabels = {
   full_name: 'Full Name',
@@ -76,77 +78,48 @@ export default function Contact() {
   }
 
   return (
-    <div className="py-4">
-      <p className="section-kicker">Contact</p>
-      <h1 className="mb-2">Get in Touch</h1>
-      <p className="lead mb-4">We care for your loved ones and are available 24 hours a day, 7 days a week.</p>
-
-      <div className="row g-4">
-        <div className="col-lg-5">
-          <div className="card marketing-card h-100">
-            <div className="card-body">
-              <h2 className="h5 mb-3">Contact Information</h2>
-              <p className="mb-2"><strong>Phone:</strong> <a href="tel:9516213600">(951) 621-3600</a></p>
-              <p className="mb-2"><strong>Fax:</strong> (951) 621-3606</p>
-              <p className="mb-3"><strong>Address:</strong> 1307 W 6th Street, Suite 220C, Corona, CA 92882</p>
-              <hr />
-              <h3 className="h6 mb-2">Office Hours</h3>
-              <p className="mb-1">24 Hours a Day</p>
-              <p className="mb-0">7 Days a Week</p>
-              <hr />
-              <h3 className="h6 mb-2">Counties Served</h3>
-              <p className="mb-0">Ventura, Los Angeles, Orange, San Bernardino, Riverside, and San Diego.</p>
-            </div>
+    <div className="public-page">
+      <PageHero eyebrow="Contact Us" title="Let’s talk about care." description="Whether you are exploring home health or have a question for our team, we are here to help.">
+        <a className="btn btn-primary" href="tel:9516213600">Call Our Team</a>
+        <a className="page-text-link" href="#send-message">Send a Message <span aria-hidden="true">↓</span></a>
+      </PageHero>
+      <div className="contact-layout page-section">
+        <div>
+          <section className="contact-call-card" aria-labelledby="contact-call-title">
+            <p className="page-eyebrow">A conversation is a good place to start</p>
+            <h2 id="contact-call-title">Call us.</h2>
+            <a className="contact-phone" href="tel:9516213600">(951) 621-3600</a>
+            <p>Ask about services, care in your area, or insurance and payment options.</p>
+            <p className="mb-0"><strong>Fax:</strong> (951) 621-3606</p>
+          </section>
+          <div className="contact-details">
+            <div><h3>Care availability</h3><p>24 hours a day, 7 days a week.</p></div>
+            <div><h3>Visit our office</h3><p>1307 W 6th Street, Suite 220C<br />Corona, CA 92882</p><p>Call to confirm office hours before visiting.</p><a className="page-text-link" href="https://www.google.com/maps/search/?api=1&query=1307+W+6th+Street+Suite+220C+Corona+CA+92882" target="_blank" rel="noreferrer">Get Directions <span aria-hidden="true">↗</span></a></div>
           </div>
         </div>
-
-        <div className="col-lg-7">
-          <div className="card marketing-card">
-            <div className="card-body">
-              <h2 className="h5 mb-3">Leave a Message</h2>
-              <p className="small text-muted" id="contact-demo-notice">Demo test</p>
-              {success && <div className="alert alert-success" role="status">{success}</div>}
-              {error && <div className="alert alert-danger" role="alert">{error}</div>}
-              <form onSubmit={handleSubmit} aria-describedby="contact-demo-notice" aria-busy={submitting}>
-                <fieldset disabled={submitting}>
-                  <legend className="visually-hidden">Sample contact message</legend>
-                  <div className="row g-3">
-                    <div className="col-md-6">
-                      <label className="form-label" htmlFor="name">Full Name</label>
-                      <input id="name" name="full_name" className="form-control" maxLength={255} required />
-                    </div>
-                    <div className="col-md-6">
-                      <label className="form-label" htmlFor="email">Email</label>
-                      <input id="email" name="email" type="email" className="form-control" maxLength={254} required />
-                    </div>
-                    <div className="col-12">
-                      <label className="form-label" htmlFor="subject">Subject</label>
-                      <input id="subject" name="subject" className="form-control" maxLength={200} required />
-                    </div>
-                    <div className="col-12">
-                      <label className="form-label" htmlFor="message">Message</label>
-                      <textarea id="message" name="message" className="form-control" rows="4" maxLength={5000} required></textarea>
-                    </div>
-                    <div className="col-12">
-                      <div className="form-check">
-                        <input className="form-check-input" type="checkbox" id="consent" required />
-                        <label className="form-check-label" htmlFor="consent">
-                          I consent to the collection and processing of the information submitted through this form.
-                        </label>
-                      </div>
-                    </div>
-                    <div className="col-12">
-                      <button type="submit" className="btn btn-primary" disabled={submitting}>
-                        {submitting ? 'Submitting…' : 'Submit Message'}
-                      </button>
-                    </div>
-                  </div>
-                </fieldset>
-              </form>
-            </div>
-          </div>
-        </div>
+        <section className="contact-message-panel" id="send-message" aria-labelledby="send-message-title">
+          <p className="page-eyebrow">Tell us how we can help</p>
+          <h2 id="send-message-title">Send us a message.</h2>
+          <p>Leave your details and question for our team to review.</p>
+          <p className="small text-muted" id="contact-demo-notice">Demo test</p>
+          {success && <div className="alert alert-success" role="status">{success}</div>}
+          {error && <div className="alert alert-danger" role="alert">{error}</div>}
+          <form onSubmit={handleSubmit} aria-describedby="contact-demo-notice" aria-busy={submitting}>
+            <fieldset disabled={submitting}>
+              <legend className="visually-hidden">Contact message — all fields required</legend>
+              <div className="row g-3">
+                <div className="col-md-6"><label className="form-label" htmlFor="name">Full Name</label><input id="name" name="full_name" className="form-control" autoComplete="name" maxLength={255} required /></div>
+                <div className="col-md-6"><label className="form-label" htmlFor="email">Email</label><input id="email" name="email" type="email" className="form-control" autoComplete="email" maxLength={254} required /></div>
+                <div className="col-12"><label className="form-label" htmlFor="subject">Subject</label><input id="subject" name="subject" className="form-control" maxLength={200} required /></div>
+                <div className="col-12"><label className="form-label" htmlFor="message">Message</label><textarea id="message" name="message" className="form-control" rows="5" maxLength={5000} required /></div>
+                <div className="col-12"><div className="form-check"><input className="form-check-input" type="checkbox" id="consent" required /><label className="form-check-label" htmlFor="consent">I consent to the collection and processing of the information submitted through this form.</label></div></div>
+                <div className="col-12"><button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Submitting…' : 'Send Message'}</button></div>
+              </div>
+            </fieldset>
+          </form>
+        </section>
       </div>
+      <ServiceArea />
     </div>
   )
 }

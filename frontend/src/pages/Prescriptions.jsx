@@ -1,3 +1,5 @@
+import ScrollableTable from '../components/ScrollableTable'
+import PageHeader from '../components/PageHeader'
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 
@@ -118,7 +120,7 @@ function Prescriptions() {
 
   return (
     <div className="container mt-4">
-      <h1 className="mb-4">💊 My Prescriptions</h1>
+      <PageHeader title="My Prescriptions" description="Review your medicines and request prescription refills." eyebrow="Your care" />
 
       {/* Tabs */}
       <ul className="nav nav-tabs mb-4">
@@ -251,16 +253,16 @@ function Prescriptions() {
           {refills.length === 0 ? (
             <div className="alert alert-info">No refill requests</div>
           ) : (
-            <div className="table-responsive">
+            <ScrollableTable className="table-responsive" label="Prescriptions table">
               <table className="table table-hover">
                 <thead>
                   <tr>
-                    <th>Medication</th>
-                    <th>Dosage</th>
-                    <th>Pharmacy</th>
-                    <th>Requested</th>
-                    <th>Status</th>
-                    <th>Processed</th>
+                    <th scope="col">Medication</th>
+                    <th scope="col">Dosage</th>
+                    <th scope="col">Pharmacy</th>
+                    <th scope="col">Requested</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Processed</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -291,7 +293,7 @@ function Prescriptions() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </ScrollableTable>
           )}
         </div>
       )}
@@ -302,16 +304,16 @@ function Prescriptions() {
           {prescriptions.length === 0 ? (
             <div className="alert alert-info">No prescriptions</div>
           ) : (
-            <div className="table-responsive">
+            <ScrollableTable className="table-responsive" label="Prescriptions table">
               <table className="table table-hover">
                 <thead>
                   <tr>
-                    <th>Medication</th>
-                    <th>Dosage</th>
-                    <th>Quantity</th>
-                    <th>Refills</th>
-                    <th>Status</th>
-                    <th>Prescribed</th>
+                    <th scope="col">Medication</th>
+                    <th scope="col">Dosage</th>
+                    <th scope="col">Quantity</th>
+                    <th scope="col">Refills</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Prescribed</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -333,7 +335,7 @@ function Prescriptions() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </ScrollableTable>
           )}
         </div>
       )}

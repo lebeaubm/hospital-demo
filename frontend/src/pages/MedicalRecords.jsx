@@ -1,3 +1,5 @@
+import ScrollableTable from '../components/ScrollableTable'
+import PageHeader from '../components/PageHeader'
 import { useEffect, useState } from 'react'
 import { api } from '../api/client'
 import { SkeletonList } from '../components/SkeletonLoader'
@@ -129,15 +131,15 @@ function MedicalRecords() {
 
   if (loading) return (
     <div className="container my-4">
-      <h2 className="mb-4">My Medical Records</h2>
+      <PageHeader title="My Medical Records" description="View the health information and documents shared with you." eyebrow="Your care" />
       <SkeletonList />
     </div>
   )
-  if (error) return <ErrorAlert message={error} />
+  if (error) return <div className="py-4"><PageHeader title="My Medical Records" description="View the health information and documents shared with you." eyebrow="Your care" /><ErrorAlert error={error} /></div>
 
   return (
     <div className="container my-4">
-      <h2 className="mb-4">My Medical Records</h2>
+      <PageHeader title="My Medical Records" description="View the health information and documents shared with you." eyebrow="Your care" />
 
       {/* Record Summary */}
       <div className="card mb-4">
@@ -233,16 +235,16 @@ function MedicalRecords() {
         </div>
         <div className="card-body">
           {record.documents && record.documents.length > 0 ? (
-            <div className="table-responsive">
+            <ScrollableTable className="table-responsive" label="Medical Records table">
               <table className="table table-hover">
                 <thead>
                   <tr>
-                    <th>Document Name</th>
-                    <th>Category</th>
-                    <th>Size</th>
-                    <th>Uploaded By</th>
-                    <th>Date</th>
-                    <th>Action</th>
+                    <th scope="col">Document Name</th>
+                    <th scope="col">Category</th>
+                    <th scope="col">Size</th>
+                    <th scope="col">Uploaded By</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -274,7 +276,7 @@ function MedicalRecords() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </ScrollableTable>
           ) : (
             <p className="text-muted mb-0">No documents uploaded yet.</p>
           )}

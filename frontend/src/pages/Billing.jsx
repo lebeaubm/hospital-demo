@@ -1,7 +1,11 @@
+import ScrollableTable from '../components/ScrollableTable'
+import PageHeader from '../components/PageHeader'
 import { useEffect, useState } from 'react';
 import { api } from '../api/client';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { useReading } from '../context/readingState';
+import { useTheme } from '../context/themeState';
 
 const stripeKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY || '';
 const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
@@ -10,6 +14,8 @@ const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 function PaymentModal({ selectedBill, onClose, onSuccess }) {
   const stripe = useStripe();
   const elements = useElements();
+  const { textSize } = useReading();
+  const { theme } = useTheme();
 
   const [paymentAmount, setPaymentAmount] = useState(selectedBill.balance_due);
   const [paymentMethod, setPaymentMethod] = useState('CREDIT_CARD');
@@ -160,15 +166,15 @@ function PaymentModal({ selectedBill, onClose, onSuccess }) {
 
                   <div
                     className="form-control"
-                    style={{ padding: '10px 12px', minHeight: '42px' }}
+                    style={{ padding: '12px', minHeight: textSize === 'larger' ? '64px' : '56px' }}
                   >
                     <CardElement
                       options={{
                         style: {
                           base: {
-                            fontSize: '16px',
-                            color: 'var(--bs-body-color, #212529)',
-                            '::placeholder': { color: '#aab7c4' },
+                            fontSize: textSize === 'larger' ? '21px' : '18px',
+                            color: theme === 'dark' ? '#f0e5f5' : '#302737',
+                            '::placeholder': { color: theme === 'dark' ? '#c9bdce' : '#665b6c' },
                           },
                           invalid: { color: '#dc3545' },
                         },
@@ -301,7 +307,7 @@ function BillingContent() {
 
   return (
     <div className="container mt-4">
-      <h1 className="mb-4">💰 Billing & Payments</h1>
+      <PageHeader title="Billing & Payments" description="Review your bills, balances, and payment options." eyebrow="Your account" />
       {successMsg && (
         <div className="alert alert-success alert-dismissible">
           {successMsg}
@@ -406,15 +412,15 @@ function BillingContent() {
                   {/* Line Items */}
                   <div className="mb-3">
                     <h6>Services & Charges</h6>
-                    <div className="table-responsive">
+                    <ScrollableTable className="table-responsive" label="Billing table">
                       <table className="table table-sm">
                         <thead>
                           <tr>
-                            <th>Service</th>
-                            <th>Date</th>
-                            <th>Qty</th>
-                            <th>Price</th>
-                            <th>Total</th>
+                            <th scope="col">Service</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Qty</th>
+                            <th scope="col">Price</th>
+                            <th scope="col">Total</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -445,7 +451,7 @@ function BillingContent() {
                           )}
                         </tbody>
                       </table>
-                    </div>
+                    </ScrollableTable>
                   </div>
 
                   {/* Bill Totals */}
@@ -490,14 +496,14 @@ function BillingContent() {
                   {selectedBill.payments && selectedBill.payments.length > 0 && (
                     <div className="border-top pt-3 mt-3">
                       <h6>Payment History</h6>
-                      <div className="table-responsive">
+                      <ScrollableTable className="table-responsive" label="Billing table">
                         <table className="table table-sm">
                           <thead>
                             <tr>
-                              <th>Date</th>
-                              <th>Amount</th>
-                              <th>Method</th>
-                              <th>Transaction ID</th>
+                              <th scope="col">Date</th>
+                              <th scope="col">Amount</th>
+                              <th scope="col">Method</th>
+                              <th scope="col">Transaction ID</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -511,7 +517,7 @@ function BillingContent() {
                             ))}
                           </tbody>
                         </table>
-                      </div>
+                      </ScrollableTable>
                     </div>
                   )}
 

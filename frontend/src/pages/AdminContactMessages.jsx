@@ -1,3 +1,4 @@
+import ScrollableTable from '../components/ScrollableTable'
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../api/client'
 
@@ -123,7 +124,7 @@ export default function AdminContactMessages() {
           <button className="btn btn-outline-secondary" onClick={() => setRefresh((current) => current + 1)} disabled={loading}>Refresh inbox</button>
         </div>
         {listError && <div className="alert alert-danger" role="alert">{listError}</div>}
-        {loading ? <div className="text-center py-5" role="status"><div className="spinner-border text-primary" aria-hidden="true" /><p className="mt-2 text-muted">Loading contact messages…</p></div> : messages.length === 0 ? !listError && <div className="alert alert-info">No messages match this filter.</div> : <div className="table-responsive">
+        {loading ? <div className="text-center py-5" role="status"><div className="spinner-border text-primary" aria-hidden="true" /><p className="mt-2 text-muted">Loading contact messages…</p></div> : messages.length === 0 ? !listError && <div className="alert alert-info">No messages match this filter.</div> : <ScrollableTable className="table-responsive" label="Admin Contact Messages table">
           <table className="table table-hover align-middle">
             <thead><tr><th scope="col">From</th><th scope="col">Subject</th><th scope="col">Received</th><th scope="col">Status</th><th scope="col"><span className="visually-hidden">Actions</span></th></tr></thead>
             <tbody>{messages.map((message) => <tr key={message.id}>
@@ -134,7 +135,7 @@ export default function AdminContactMessages() {
               <td><button className="btn btn-sm btn-outline-primary" id={`contact-message-${message.id}`} onClick={() => openMessage(message)}>View message</button></td>
             </tr>)}</tbody>
           </table>
-        </div>}
+        </ScrollableTable>}
         <nav className="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-3" aria-label="Contact message pages">
           <p className="mb-0 text-muted small" aria-live="polite">{total} message{total === 1 ? '' : 's'} · Page {page} of {pageCount}</p>
           <div className="d-flex gap-2"><button className="btn btn-outline-secondary" onClick={() => setPage((current) => current - 1)} disabled={loading || page <= 1}>Previous page</button><button className="btn btn-outline-secondary" onClick={() => setPage((current) => current + 1)} disabled={loading || page >= pageCount}>Next page</button></div>

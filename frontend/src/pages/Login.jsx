@@ -4,6 +4,7 @@ import { api, setTokens } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { getUserInfo } from '../utils/auth'
 import ErrorAlert from '../components/ErrorAlert'
+import AccountLayout from '../components/AccountLayout'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -16,6 +17,7 @@ export default function Login() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    if (submitting) return
     setError(null)
     setSuccess('')
     setSubmitting(true)
@@ -35,9 +37,9 @@ export default function Login() {
       
       // Redirect based on role
       if (userInfo?.role === 'STAFF' || userInfo?.role === 'ADMIN') {
-        navigate('/staff/dashboard')
+        navigate('/staff')
       } else {
-        navigate('/')
+        navigate('/portal')
       }
     } catch (err) {
       setError(err)
@@ -47,18 +49,20 @@ export default function Login() {
   }
 
   return (
-    <div className="py-4" style={{ maxWidth: '480px' }}>
-      <h1 className="mb-3">Sign In</h1>
-      <p className="text-muted">Use your patient, staff, or administrator account to open your workspace.</p>
-      <form onSubmit={handleSubmit} className="card shadow-sm p-4">
+    <AccountLayout title="Welcome back." description="Sign in with your patient, staff, or administrator account to open your workspace.">
+      <form onSubmit={handleSubmit} className="auth-panel" aria-busy={submitting}>
+        <fieldset disabled={submitting}>
+        <legend className="visually-hidden">Sign In</legend>
         <div className="mb-3">
           <label className="form-label" htmlFor="email">Email</label>
           <input
             className="form-control"
             id="email"
+            name="email"
             type="email"
             autoComplete="username"
             autoCapitalize="none"
+            maxLength={254}
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             required
@@ -69,6 +73,7 @@ export default function Login() {
           <input
             className="form-control"
             id="password"
+            name="password"
             type="password"
             autoComplete="current-password"
             value={password}
@@ -78,15 +83,12 @@ export default function Login() {
         </div>
         {error && <ErrorAlert error={error} />}
         {success && <div className="alert alert-success">{success}</div>}
-        <button className="btn btn-primary mb-3" type="submit" disabled={submitting}>
-          {submitting ? 'Signing in...' : 'Sign in'}
+        <button className="btn btn-primary" type="submit" disabled={submitting}>
+          {submitting ? 'Signing in…' : 'Sign In'}
         </button>
-        <div className="text-center">
-          <small>
-            Don't have an account? <Link to="/register">Register here</Link>
-          </small>
-        </div>
+        </fieldset>
+        <p className="auth-panel__switch">New here? <Link to="/register">Sign Up for a patient account</Link></p>
       </form>
-    </div>
+    </AccountLayout>
   )
 }

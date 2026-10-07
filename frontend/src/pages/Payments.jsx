@@ -1,3 +1,4 @@
+import PageHeader from '../components/PageHeader'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getPaymentHistory, downloadInvoice } from '../api/client'
@@ -78,7 +79,7 @@ export default function Payments() {
   if (loading) {
     return (
       <div className="py-4">
-        <h1 className="mb-3">Payment History</h1>
+        <PageHeader title="Payment History" description="Review the payments recorded on your account." eyebrow="Your account" />
         <SkeletonList />
       </div>
     )
@@ -87,7 +88,7 @@ export default function Payments() {
   if (error) {
     return (
       <div className="py-4">
-        <h1 className="mb-3">Payment History</h1>
+        <PageHeader title="Payment History" description="Review the payments recorded on your account." eyebrow="Your account" />
         <ErrorAlert error={error} onRetry={fetchPayments} />
       </div>
     )
@@ -96,7 +97,7 @@ export default function Payments() {
   return (
     <div className="py-4">
       <div className="d-flex justify-content-between align-items-center mb-3">
-        <h1 className="mb-0">Payment History</h1>
+        <PageHeader title="Payment History" description="Review the payments recorded on your account." eyebrow="Your account" />
         <Link className="btn btn-primary" to="/portal/appointments">
           Back to Appointments
         </Link>

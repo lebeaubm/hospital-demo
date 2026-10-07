@@ -2,15 +2,15 @@ import { Link } from 'react-router-dom'
 
 export default function PaymentCancel() {
   return (
-    <div className="container py-5">
+    <div className="payment-result-page">
       <div className="row justify-content-center">
-        <div className="col-md-6">
+        <div className="col-12">
           <div className="card">
             <div className="card-body text-center">
               <div className="display-1 text-warning mb-3"></div>
-              <h2 className="card-title">Payment Canceled</h2>
+              <h1 className="card-title h2 mb-3">Payment Canceled</h1>
               <p className="card-text">
-                Your payment was canceled. No charges have been made to your account.
+                The payment process was canceled. You can return to your appointments or contact our office for help.
               </p>
               <p className="text-muted">
                 If you experienced any issues during the payment process, please try again

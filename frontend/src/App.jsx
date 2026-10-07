@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import './App.css'
+import './styles/site-pages.css'
+import './styles/readability.css'
 import Contact from './pages/Contact'
 import About from './pages/About'
 import Team from './pages/Team'
@@ -19,11 +21,13 @@ import NotFound from './pages/NotFound'
 import AdminProtectedRoute from './components/AdminProtectedRoute'
 import ProtectedRoute from './components/ProtectedRoute'
 import StaffProtectedRoute from './components/StaffProtectedRoute'
-import ThemeToggle from './components/ThemeToggle'
+import ReadingTools from './components/ReadingTools'
+import PortalLayout from './components/PortalLayout'
 import { useAuth } from './context/AuthContext'
 import { clearTokens } from './api/client'
 
 const Profile = lazy(() => import('./pages/Profile'))
+const PatientPortal = lazy(() => import('./pages/PatientPortal'))
 const Appointments = lazy(() => import('./pages/Appointments'))
 const RequestAppointment = lazy(() => import('./pages/RequestAppointment'))
 const MedicalRecords = lazy(() => import('./pages/MedicalRecords'))
@@ -31,6 +35,7 @@ const Payments = lazy(() => import('./pages/Payments'))
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'))
 const PaymentCancel = lazy(() => import('./pages/PaymentCancel'))
 const StaffDashboard = lazy(() => import('./pages/StaffDashboard'))
+const StaffPortal = lazy(() => import('./pages/StaffPortal'))
 const StaffBilling = lazy(() => import('./pages/StaffBilling'))
 const StaffEmails = lazy(() => import('./pages/StaffEmails'))
 const StaffLabResults = lazy(() => import('./pages/StaffLabResults'))
@@ -49,13 +54,13 @@ const pageTitles = {
   '/services/primary-care': 'Primary Care', '/services/cardiology': 'Cardiology',
   '/services/orthopedics': 'Orthopedics', '/services/pediatrics': 'Pediatrics',
   '/careers': 'Careers', '/contact': 'Contact Us', '/doctors': 'Doctors',
-  '/login': 'Staff Login', '/register': 'Create an Account', '/portal/profile': 'My Profile',
+  '/login': 'Sign In', '/register': 'Sign Up', '/portal': 'Patient Portal', '/portal/profile': 'My Profile',
   '/portal/appointments': 'My Appointments', '/portal/appointments/request': 'Request Appointment',
   '/portal/records': 'Medical Records', '/portal/prescriptions': 'Prescriptions',
   '/portal/messages': 'My Profile', '/portal/lab-results': 'Lab Results',
   '/portal/billing': 'Billing', '/portal/family': 'Family Members', '/portal/payments': 'Payments',
   '/payment/success': 'Payment Confirmation', '/payment/cancel': 'Payment Cancelled',
-  '/staff/dashboard': 'Staff Dashboard', '/staff/billing': 'Staff Billing',
+  '/staff': 'Staff Portal', '/staff/dashboard': 'Appointments', '/staff/billing': 'Staff Billing',
   '/staff/demo-emr': 'Demo EMR',
   '/staff/lab-results': 'Staff Lab Results', '/staff/messages': 'Staff Dashboard',
   '/staff/emails': 'Email Logs', '/admin/users': 'User Management',
@@ -72,49 +77,20 @@ function pageTitle(pathname) {
 }
 
 function App() {
-  const { isAuthenticated, isStaff, isGuest, user, logout } = useAuth()
+  const { isAuthenticated, isStaff, logout } = useAuth()
   const navigate = useNavigate()
   const { pathname, hash } = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
-  const [moreOpen, setMoreOpen] = useState(false)
   const navigation = useRef(null)
   const mainContent = useRef(null)
   const menuToggle = useRef(null)
-  const moreToggle = useRef(null)
   const previousRoute = useRef(null)
+  const isStaffWorkspace = isStaff && (/^\/(staff|admin|doctors)(\/|$)/.test(pathname) || pathname === '/portal/profile')
+  const isPatientWorkspace = isAuthenticated && !isStaff && /^\/(portal|payment)(\/|$)/.test(pathname)
+  const isWorkspace = isStaffWorkspace || isPatientWorkspace
 
   const closeNavigation = () => {
     setMenuOpen(false)
-    setMoreOpen(false)
-  }
-
-  const handleMoreKeys = (event) => {
-    if (event.key === 'Escape' && moreOpen) {
-      event.preventDefault()
-      event.stopPropagation()
-      setMoreOpen(false)
-      moreToggle.current?.focus()
-      return
-    }
-    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
-    if (!moreOpen && (event.key === 'Home' || event.key === 'End')) return
-    event.preventDefault()
-    event.stopPropagation()
-    const focusLink = () => {
-      const links = Array.from(navigation.current?.querySelectorAll('#moreNav a') || [])
-      if (!links.length) return
-      const index = links.indexOf(document.activeElement)
-      let nextIndex = event.key === 'ArrowUp' ? links.length - 1 : 0
-      if (event.key === 'End') nextIndex = links.length - 1
-      if (index >= 0 && event.key === 'ArrowDown') nextIndex = (index + 1) % links.length
-      if (index >= 0 && event.key === 'ArrowUp') nextIndex = (index - 1 + links.length) % links.length
-      links[nextIndex].focus()
-    }
-    if (moreOpen) focusLink()
-    else {
-      setMoreOpen(true)
-      window.requestAnimationFrame(focusLink)
-    }
   }
 
   useEffect(() => {
@@ -146,7 +122,6 @@ function App() {
     }
     const frame = window.requestAnimationFrame(() => {
       setMenuOpen(false)
-      setMoreOpen(false)
       if (!hash) window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
       if (!focusDestination() && moved) {
         main.focus({ preventScroll: true })
@@ -164,19 +139,14 @@ function App() {
   }, [pathname, hash])
 
   useEffect(() => {
-    if (!menuOpen && !moreOpen) return
+    if (!menuOpen) return
     const dismissOutside = (event) => {
       if (!navigation.current?.contains(event.target)) closeNavigation()
     }
     const handleEscape = (event) => {
       if (event.key !== 'Escape') return
-      if (moreOpen) {
-        setMoreOpen(false)
-        moreToggle.current?.focus()
-      } else {
-        setMenuOpen(false)
-        menuToggle.current?.focus()
-      }
+      setMenuOpen(false)
+      menuToggle.current?.focus()
     }
     document.addEventListener('pointerdown', dismissOutside)
     document.addEventListener('focusin', dismissOutside)
@@ -186,7 +156,7 @@ function App() {
       document.removeEventListener('focusin', dismissOutside)
       document.removeEventListener('keydown', handleEscape)
     }
-  }, [menuOpen, moreOpen])
+  }, [menuOpen])
 
   const handleLogout = () => {
     closeNavigation()
@@ -198,9 +168,9 @@ function App() {
   return (
     <div className="app-shell">
       <a className="skip-link" href="#main-content" onClick={(event) => { event.preventDefault(); closeNavigation(); mainContent.current?.focus(); mainContent.current?.scrollIntoView({ block: 'start' }) }}>Skip to main content</a>
-      <nav ref={navigation} className="navbar navbar-expand-lg navbar-dark bg-primary" aria-label="Main navigation" onClick={(event) => { if (event.target.closest('a')) closeNavigation() }}>
+      <nav ref={navigation} className="navbar navbar-expand-xl navbar-dark bg-primary site-header" aria-label="Main navigation" onClick={(event) => { if (event.target.closest('a')) closeNavigation() }}>
         <div className="container">
-          <NavLink className="navbar-brand" to="/">
+          <NavLink className="navbar-brand" to="/" aria-label="Peaceloving Home Health, home">
             <img src="/favicon.svg" className="navbar-brand-icon" width="36" height="36" alt="" />
             <span>Peaceloving{' '}<span className="navbar-brand-subtitle">Home Health Inc.</span></span>
           </NavLink>
@@ -211,17 +181,12 @@ function App() {
             aria-controls="mainNav"
             aria-expanded={menuOpen}
             aria-label={menuOpen ? 'Close navigation' : 'Open navigation'}
-            onClick={() => { setMenuOpen((current) => !current); setMoreOpen(false) }}
+            onClick={() => setMenuOpen((current) => !current)}
           >
             <span className="navbar-toggler-icon"></span>
           </button>
           <div className={`collapse navbar-collapse${menuOpen ? ' show' : ''}`} id="mainNav">
             <ul className="navbar-nav ms-auto">
-              <li className="nav-item">
-                <NavLink className="nav-link" to="/">
-                  Home
-                </NavLink>
-              </li>
               <li className="nav-item">
                 <NavLink className="nav-link" to="/about">
                   About Us
@@ -233,121 +198,39 @@ function App() {
                 </NavLink>
               </li>
               <li className="nav-item">
-                <NavLink className="nav-link" to="/careers">
-                  Career
+                <NavLink className="nav-link" to="/team">
+                  Our Team
                 </NavLink>
               </li>
               <li className="nav-item">
-                <NavLink className="nav-link" to="/contact">
+                <NavLink className="nav-link" to="/careers">
+                  Careers
+                </NavLink>
+              </li>
+              <li className="nav-item">
+                <NavLink className="nav-link nav-contact-link" to="/contact">
                   Contact Us
                 </NavLink>
               </li>
-              {isStaff && <li className="nav-item"><NavLink className="nav-link" to="/staff/demo-emr">Demo EMR</NavLink></li>}
-              {isGuest ? (
-                <>
-                  <li className="nav-item">
-                    <NavLink className="nav-link" to="/team">
-                      Our Team
-                    </NavLink>
-                  </li>
-                  <li className="nav-item">
-                    <NavLink className="nav-link nav-login-link" to="/login">
-                      Staff Login
-                    </NavLink>
-                  </li>
-                </>
-              ) : isStaff ? (
-                <li className="nav-item dropdown" onKeyDown={handleMoreKeys}>
-                  <button
-                    type="button"
-                    ref={moreToggle}
-                    className="nav-link dropdown-toggle"
-                    id="moreDropdown"
-                    aria-controls="moreNav"
-                    aria-expanded={moreOpen}
-                    onClick={() => setMoreOpen((current) => !current)}
-                  >
-                      More
-                  </button>
-                  <ul id="moreNav" className={`site-more-menu${moreOpen ? ' show' : ''}`} aria-labelledby="moreDropdown">
-                    <li>
-                      <NavLink className="dropdown-item" to="/doctors">
-                        Doctors
-                      </NavLink>
-                    </li>
-
-                    <>
-                      <li>
-                        <NavLink className="dropdown-item" to="/staff/dashboard">
-                          Staff Dashboard
-                        </NavLink>
-                      </li>
-                      <li>
-                        <NavLink className="dropdown-item" to="/staff/lab-results">
-                          Lab Results
-                        </NavLink>
-                      </li>
-                      <li>
-                        <NavLink className="dropdown-item" to="/staff/billing">
-                          Billing
-                        </NavLink>
-                      </li>
-                      <li>
-                        <NavLink className="dropdown-item" to="/staff/emails">
-                          Email Logs
-                        </NavLink>
-                      </li>
-                      {user?.role === 'ADMIN' && (
-                        <>
-                          <li>
-                            <NavLink className="dropdown-item" to="/admin/users">
-                              User Management
-                            </NavLink>
-                          </li>
-                          <li>
-                            <NavLink className="dropdown-item" to="/admin/applications">
-                              Career Applications
-                            </NavLink>
-                          </li>
-                          <li>
-                            <NavLink className="dropdown-item" to="/admin/contact-messages">
-                              Contact Messages
-                            </NavLink>
-                          </li>
-                        </>
-                      )}
-                      <li>
-                        <NavLink className="dropdown-item" to="/portal/profile">
-                          My Profile
-                        </NavLink>
-                      </li>
-                    </>
-                  </ul>
-                </li>
-              ) : (
+              {isStaff ? (
                 <li className="nav-item">
-                  <NavLink className="nav-link" to="/portal/profile">
-                    My Profile
+                  <NavLink className="nav-link nav-portal-link" to="/staff">Staff Portal</NavLink>
+                </li>
+              ) : isAuthenticated ? (
+                <li className="nav-item">
+                  <NavLink className="nav-link nav-portal-link" to="/portal">
+                    Patient Portal
                   </NavLink>
                 </li>
-              )}
-              {isAuthenticated && (
-                <li className="nav-item">
-                  <button
-                    className="nav-link btn btn-link"
-                    onClick={handleLogout}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    Logout
-                  </button>
-                </li>
-              )}
+              ) : null}
             </ul>
           </div>
         </div>
       </nav>
 
-      <main className="container" id="main-content" ref={mainContent} tabIndex="-1">
+      <ReadingTools />
+      <main className={`container reader-main${isWorkspace ? ' container-workspace' : ''}`} id="main-content" ref={mainContent} tabIndex="-1">
+        <PortalLayout enabled={isWorkspace} onLogout={handleLogout}>
         <Suspense fallback={<div className="py-5 text-center" role="status"><div className="spinner-border text-primary" aria-hidden="true" /><p className="mt-2 mb-0">Loading page…</p></div>}>
         <Routes>
           <Route path="/" element={<Home />} />
@@ -364,6 +247,7 @@ function App() {
           <Route path="/doctors/:id" element={<DoctorDetail />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/portal" element={<ProtectedRoute>{isStaff ? <Navigate to="/staff" replace /> : <PatientPortal />}</ProtectedRoute>} />
           <Route
             path="/portal/profile"
             element={
@@ -454,6 +338,7 @@ function App() {
           />
           <Route path="/payment/success" element={<PaymentSuccess />} />
           <Route path="/payment/cancel" element={<PaymentCancel />} />
+          <Route path="/staff" element={<StaffProtectedRoute><StaffPortal /></StaffProtectedRoute>} />
           <Route
             path="/staff/demo-emr"
             element={<StaffProtectedRoute><DemoEMR /></StaffProtectedRoute>}
@@ -533,6 +418,7 @@ function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
         </Suspense>
+        </PortalLayout>
       </main>
 
       <footer className="app-footer border-top bg-light mt-auto py-4">
@@ -547,7 +433,6 @@ function App() {
                 <NavLink to="/team">Our Team</NavLink>
                 <NavLink to="/careers">Careers</NavLink>
                 <NavLink to="/contact">Contact</NavLink>
-                {!isAuthenticated && <NavLink to="/login">Staff Login</NavLink>}
               </nav>
               <p className="small text-muted mt-3 mb-0">Peaceloving Home Health Inc. · Demo test</p>
             </div>
@@ -560,7 +445,6 @@ function App() {
         </div>
       </footer>
 
-      <ThemeToggle />
     </div>
   )
 }

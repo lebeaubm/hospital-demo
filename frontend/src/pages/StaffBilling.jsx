@@ -1,3 +1,5 @@
+import ScrollableTable from '../components/ScrollableTable'
+import PageHeader from '../components/PageHeader'
 import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api/client'
 import ErrorAlert from '../components/ErrorAlert'
@@ -175,7 +177,7 @@ export default function StaffBilling() {
   return (
     <div className="py-4">
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 className="mb-0">Staff — Billing</h1>
+        <PageHeader title="Billing" description="Manage bills, payments, and itemized charges." eyebrow="Office" />
         <button className="btn btn-primary" onClick={() => setShowCreate(true)}>
           + Create New Bill
         </button>
@@ -222,19 +224,19 @@ export default function StaffBilling() {
         <div className="alert alert-info">No bills found.</div>
       ) : (
         <div className="card shadow-sm">
-          <div className="table-responsive">
+          <ScrollableTable className="table-responsive" label="Staff Billing table">
             <table className="table table-hover mb-0">
               <thead className="table-light">
                 <tr>
-                  <th>Bill #</th>
-                  <th>Patient</th>
-                  <th>Status</th>
-                  <th>Total</th>
-                  <th>Paid</th>
-                  <th>Balance</th>
-                  <th>Due Date</th>
-                  <th>Created</th>
-                  <th></th>
+                  <th scope="col">Bill #</th>
+                  <th scope="col">Patient</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Total</th>
+                  <th scope="col">Paid</th>
+                  <th scope="col">Balance</th>
+                  <th scope="col">Due Date</th>
+                  <th scope="col">Created</th>
+                  <th scope="col"></th>
                 </tr>
               </thead>
               <tbody>
@@ -271,7 +273,7 @@ export default function StaffBilling() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </ScrollableTable>
         </div>
       )}
 
@@ -457,11 +459,11 @@ export default function StaffBilling() {
                       <table className="table table-sm mb-3">
                         <thead>
                           <tr>
-                            <th>Service</th>
-                            <th>Description</th>
-                            <th>Qty</th>
-                            <th>Unit Price</th>
-                            <th>Total</th>
+                            <th scope="col">Service</th>
+                            <th scope="col">Description</th>
+                            <th scope="col">Qty</th>
+                            <th scope="col">Unit Price</th>
+                            <th scope="col">Total</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -557,7 +559,7 @@ export default function StaffBilling() {
                         <h6>Payment History</h6>
                         <table className="table table-sm">
                           <thead>
-                            <tr><th>Date</th><th>Method</th><th>Amount</th><th>Notes</th></tr>
+                            <tr><th scope="col">Date</th><th scope="col">Method</th><th scope="col">Amount</th><th scope="col">Notes</th></tr>
                           </thead>
                           <tbody>
                             {selectedBill.payments.map((p) => (

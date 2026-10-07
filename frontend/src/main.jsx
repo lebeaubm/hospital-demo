@@ -8,13 +8,14 @@ import './theme.css'
 import App from './App.jsx'
 import { AuthProvider } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext.jsx'
+import { ReadingProvider } from './context/ReadingContext.jsx'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <App />
+          <ReadingProvider><App /></ReadingProvider>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

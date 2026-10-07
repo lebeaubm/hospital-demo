@@ -1,75 +1,36 @@
 import { Link } from 'react-router-dom'
+import PageHero from '../components/PageHero'
+import { teamRoles } from '../data/siteContent'
+
+const careConnections = [
+  { title: 'Listen to your needs', description: 'Your goals, routines, and family’s questions help shape the conversation about care.' },
+  { title: 'Bring the right skills', description: 'Nursing, therapy, and daily support work together around the care plan directed by your physician.' },
+  { title: 'Keep people connected', description: 'Care coordination helps patients, families, and professionals stay informed throughout care.' },
+]
 
 export default function Team() {
   return (
-    <div className="pt-2 pb-4">
-      <p className="section-kicker">The People Behind Your Care</p>
-      <h1 className="mb-3">A caring team, right there at home</h1>
-      <p className="lead mb-4">
-        Home health is personal. Our dedicated team brings skill, patience, and a little extra
-        kindness to every visit, helping people feel supported in the place they know best.
-      </p>
-
-      <section className="mb-4">
-        <img
-          src="https://images.unsplash.com/photo-1666214280557-f1b5022eb634?auto=format&fit=crop&w=1800&q=85"
-          alt="Home health professionals working together to support patient care"
-          className="gallery-image w-100"
-          decoding="async"
-        />
+    <div className="public-page">
+      <PageHero eyebrow="Our Team" title="People who care. Skills you can count on." description="Home health is personal. Our team brings professional care, patience, and kindness to support patients and families."
+        image="https://images.unsplash.com/photo-1666214280557-f1b5022eb634?auto=format&fit=crop&w=1000&q=85" imageAlt="Healthcare professionals working together in a clinical setting">
+        <Link className="btn btn-primary" to="/contact">Talk with Our Team</Link>
+      </PageHero>
+      <section className="page-section">
+        <div className="section-heading"><p className="page-eyebrow">Different skills. Shared purpose.</p><h2>The people behind your care.</h2><p>Each role brings a different kind of support, with your needs at the center.</p></div>
+        <div className="team-role-grid">{teamRoles.map((role) => <article className="team-role-card" key={role.title}>
+          <p className="page-eyebrow">{role.label}</p><h3>{role.title}</h3><p>{role.description}</p>
+        </article>)}</div>
       </section>
-
-      <div className="row g-3 mb-4">
-        <div className="col-md-4">
-          <section className="card h-100 marketing-card">
-            <div className="card-body">
-              <h2 className="h5">Skilled nursing</h2>
-              <p className="mb-0">
-                Nurses support each person's care plan and keep patients and families informed
-                throughout their home health visits.
-              </p>
-            </div>
-          </section>
-        </div>
-        <div className="col-md-4">
-          <section className="card h-100 marketing-card">
-            <div className="card-body">
-              <h2 className="h5">Therapy and daily support</h2>
-              <p className="mb-0">
-                Therapists and home health aides bring practical support to daily routines,
-                with attention to each person's goals and needs.
-              </p>
-            </div>
-          </section>
-        </div>
-        <div className="col-md-4">
-          <section className="card h-100 marketing-card">
-            <div className="card-body">
-              <h2 className="h5">Care coordination</h2>
-              <p className="mb-0">
-                Our coordinators help organize visits and keep the care team, patients,
-                and families connected.
-              </p>
-            </div>
-          </section>
-        </div>
-      </div>
-
-      <section className="card marketing-card">
-        <div className="card-body d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-          <div>
-            <h2 className="h5 mb-1">Part of the care team?</h2>
-            <p className="mb-0">Sign in to continue to your team workspace.</p>
-          </div>
-          <Link className="btn btn-primary flex-shrink-0" to="/login">
-            Team Login
-          </Link>
-        </div>
-        <div className="card-body pt-0">
-          <Link className="btn btn-outline-primary" to="/register">
-            Sign Up
-          </Link>
-        </div>
+      <section className="page-section team-approach">
+        <div className="section-heading"><p className="page-eyebrow">Working together</p><h2>One care plan. A connected team.</h2></div>
+        <ol className="care-steps">{careConnections.map((step, index) => <li key={step.title}>
+          <span className="number-mark" aria-hidden="true">0{index + 1}</span><div><h3>{step.title}</h3><p>{step.description}</p></div>
+        </li>)}</ol>
+        <p className="team-careers-link">Interested in joining us? <Link to="/careers">Explore Careers <span aria-hidden="true">→</span></Link></p>
+      </section>
+      <section className="team-access" aria-labelledby="team-access-title">
+        <div><p className="page-eyebrow">Account access</p><h2 id="team-access-title">Already part of our care community?</h2><p>Patients, staff, and administrators can sign in to their workspace. Sign up creates a patient account; contact our office about staff access.</p></div>
+        <div className="page-actions"><Link className="btn btn-primary" to="/login">Sign In</Link><Link className="btn btn-outline-primary" to="/register">Sign Up</Link></div>
       </section>
     </div>
   )

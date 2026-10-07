@@ -1,3 +1,4 @@
+import ScrollableTable from '../components/ScrollableTable'
 import { useEffect, useRef, useState } from 'react'
 import { api } from '../api/client'
 import './AdminApplications.css'
@@ -258,14 +259,14 @@ export default function AdminApplications() {
 
       {!selected && !detailLoading && <>
         <div className="row g-2 mb-3">
-          <div className="col-lg-5"><label className="visually-hidden" htmlFor="application-search">Search applicants</label><input id="application-search" className="form-control" placeholder="Search name or email" value={search} onChange={(event) => updateFilter(setSearch, event.target.value)} /></div>
-          <div className="col-md-4 col-lg-3"><label className="visually-hidden" htmlFor="application-position-filter">Filter by position</label><input id="application-position-filter" className="form-control" placeholder="Filter by position" value={position} onChange={(event) => updateFilter(setPosition, event.target.value)} /></div>
-          <div className="col-md-4 col-lg-2"><label className="visually-hidden" htmlFor="application-status-filter">Filter by status</label><select id="application-status-filter" className="form-select" value={statusFilter} onChange={(event) => updateFilter(setStatusFilter, event.target.value)}><option value="">All statuses</option>{statuses.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></div>
-          <div className="col-md-4 col-lg-2"><label className="visually-hidden" htmlFor="application-sort">Sort by date</label><select id="application-sort" className="form-select" value={ordering} onChange={(event) => updateFilter(setOrdering, event.target.value)}><option value="-created_at">Newest first</option><option value="created_at">Oldest first</option></select></div>
+          <div className="col-lg-5"><label className="form-label" htmlFor="application-search">Search applicants</label><input id="application-search" className="form-control" placeholder="Search name or email" value={search} onChange={(event) => updateFilter(setSearch, event.target.value)} /></div>
+          <div className="col-md-4 col-lg-3"><label className="form-label" htmlFor="application-position-filter">Filter by position</label><input id="application-position-filter" className="form-control" placeholder="Filter by position" value={position} onChange={(event) => updateFilter(setPosition, event.target.value)} /></div>
+          <div className="col-md-4 col-lg-2"><label className="form-label" htmlFor="application-status-filter">Filter by status</label><select id="application-status-filter" className="form-select" value={statusFilter} onChange={(event) => updateFilter(setStatusFilter, event.target.value)}><option value="">All statuses</option>{statuses.map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></div>
+          <div className="col-md-4 col-lg-2"><label className="form-label" htmlFor="application-sort">Sort by date</label><select id="application-sort" className="form-select" value={ordering} onChange={(event) => updateFilter(setOrdering, event.target.value)}><option value="-created_at">Newest first</option><option value="created_at">Oldest first</option></select></div>
         </div>
         {listError && <div className="alert alert-danger" role="alert">{listError}</div>}
         {loading ? <div className="text-center py-5" role="status"><div className="spinner-border text-primary" aria-hidden="true" /><p className="mt-2 text-muted">Loading applications…</p></div> : applications.length === 0 ? !listError && <div className="alert alert-info">No applications match these filters.</div> : (
-          <div className="table-responsive">
+          <ScrollableTable className="table-responsive" label="Admin Applications table">
             <table className="table table-hover align-middle">
               <thead><tr><th scope="col">Applicant</th><th scope="col">Position</th><th scope="col">Contact</th><th scope="col">Date Applied</th><th scope="col">Status</th><th scope="col">Resume</th><th scope="col"><span className="visually-hidden">Actions</span></th></tr></thead>
               <tbody>{applications.map((application) => <tr key={application.id}>
@@ -277,7 +278,7 @@ export default function AdminApplications() {
                 <td><div className="d-flex flex-wrap gap-2"><button className="btn btn-sm btn-outline-primary" onClick={() => openApplication(application.id)}>View Application</button><button className="btn btn-sm btn-outline-danger" onClick={() => handleDelete(application.id)} disabled={deletingId !== null}>{deletingId === application.id ? 'Deleting…' : 'Delete Application'}</button></div></td>
               </tr>)}</tbody>
             </table>
-          </div>
+          </ScrollableTable>
         )}
         <nav className="career-application-pagination" aria-label="Application pages">
           <p className="mb-0 text-muted small" aria-live="polite">{total === 0 ? '0 applications' : `${total} application${total === 1 ? '' : 's'} · Page ${page} of ${pageCount}`}</p>
