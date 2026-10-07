@@ -74,7 +74,7 @@ class DemoEMRAssessmentInputSerializer(serializers.Serializer):
 
 class DemoEMRAssignmentInputSerializer(serializers.Serializer):
     assigned_to = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.filter(role__in=(User.Role.STAFF, User.Role.ADMIN), is_active=True),
+        queryset=User.objects.filter(role__in=(User.Role.STAFF, User.Role.OWNER, User.Role.ADMIN), is_active=True),
         required=False, allow_null=True, default=None,
     )
 

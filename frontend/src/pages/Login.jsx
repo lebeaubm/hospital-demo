@@ -36,7 +36,7 @@ export default function Login() {
       setSuccess('Logged in successfully.')
       
       // Redirect based on role
-      if (userInfo?.role === 'STAFF' || userInfo?.role === 'ADMIN') {
+      if (userInfo?.role === 'STAFF' || userInfo?.role === 'OWNER' || userInfo?.role === 'ADMIN') {
         navigate('/staff')
       } else {
         navigate('/portal')
@@ -49,7 +49,7 @@ export default function Login() {
   }
 
   return (
-    <AccountLayout title="Welcome back." description="Sign in with your patient, staff, or administrator account to open your workspace.">
+    <AccountLayout title="Welcome back." description="Sign in with your patient, staff, owner, or administrator account to open your workspace.">
       <form onSubmit={handleSubmit} className="auth-panel" aria-busy={submitting}>
         <fieldset disabled={submitting}>
         <legend className="visually-hidden">Sign In</legend>

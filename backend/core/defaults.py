@@ -19,7 +19,7 @@ from .models import (
 
 
 def _get_default_staff_user():
-    return User.objects.filter(role__in=[User.Role.STAFF, User.Role.ADMIN]).order_by("id").first()
+    return User.objects.filter(role__in=[User.Role.STAFF, User.Role.OWNER, User.Role.ADMIN]).order_by("id").first()
 
 
 @transaction.atomic

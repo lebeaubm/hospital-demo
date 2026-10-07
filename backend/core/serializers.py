@@ -165,7 +165,7 @@ class AdminUserListItemSerializer(serializers.Serializer):
 
 
 class AdminUserRoleUpdateRequestSerializer(serializers.Serializer):
-    role = serializers.ChoiceField(choices=[User.Role.PATIENT, User.Role.STAFF])
+    role = serializers.ChoiceField(choices=[User.Role.PATIENT, User.Role.STAFF, User.Role.OWNER])
 
 
 class JobApplicationCreateSerializer(serializers.ModelSerializer):
@@ -790,7 +790,7 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
             return []
 
         # Staff/Admin see all notes
-        if user.role in (User.Role.STAFF, User.Role.ADMIN):
+        if user.role in (User.Role.STAFF, User.Role.OWNER, User.Role.ADMIN):
             notes = obj.notes.all()
         else:
             # Patients see only shared notes
@@ -807,7 +807,7 @@ class MedicalRecordSerializer(serializers.ModelSerializer):
             return []
 
         # Staff/Admin see all documents
-        if user.role in (User.Role.STAFF, User.Role.ADMIN):
+        if user.role in (User.Role.STAFF, User.Role.OWNER, User.Role.ADMIN):
             documents = obj.documents.all()
         else:
             # Patients see only PATIENT_AND_STAFF documents

@@ -61,14 +61,26 @@ export default function AdminUserManagement() {
 
   const roleBadge = (role) => {
     if (role === 'STAFF') return <span className="badge bg-success">Staff</span>
+    if (role === 'OWNER') return <span className="badge bg-info text-dark">Owner</span>
     if (role === 'PATIENT') return <span className="badge bg-primary">Patient</span>
     return <span className="badge bg-secondary">{role}</span>
   }
 
+  const roleButton = (user, role, label, variant) => (
+    <button
+      className={`btn btn-sm btn-outline-${variant}`}
+      onClick={() => handleRoleChange(user.id, role)}
+      disabled={updating === user.id}
+    >
+      {updating === user.id ? <span className="spinner-border spinner-border-sm me-1" /> : null}
+      {label}
+    </button>
+  )
+
   if (loading) {
     return (
       <div className="py-4">
-        <PageHeader title="User Management" description="Review accounts and manage patient and staff access." eyebrow="Administration" />
+        <PageHeader title="User Management" description="Review accounts and manage patient, staff, and owner access." eyebrow="Administration" />
         <div className="text-center py-5">
           <div className="spinner-border text-primary" role="status" />
           <p className="mt-2 text-muted">Loading users…</p>
@@ -80,20 +92,21 @@ export default function AdminUserManagement() {
   if (error) {
     return (
       <div className="py-4">
-        <PageHeader title="User Management" description="Review accounts and manage patient and staff access." eyebrow="Administration" />
+        <PageHeader title="User Management" description="Review accounts and manage patient, staff, and owner access." eyebrow="Administration" />
         <div className="alert alert-danger">{error}</div>
       </div>
     )
   }
 
   const staffCount = users.filter((u) => u.role === 'STAFF').length
+  const ownerCount = users.filter((u) => u.role === 'OWNER').length
   const patientCount = users.filter((u) => u.role === 'PATIENT').length
 
   return (
     <div className="py-4">
-      <PageHeader title="User Management" description="Review accounts and manage patient and staff access." eyebrow="Administration" />
+      <PageHeader title="User Management" description="Review accounts and manage patient, staff, and owner access." eyebrow="Administration" />
       <p className="text-muted mb-3">
-        Promote patients to staff or demote staff back to patient.
+        Assign patient, staff, or owner access.
         Admin accounts are not shown here.
       </p>
 
@@ -104,6 +117,9 @@ export default function AdminUserManagement() {
         </span>
         <span className="badge bg-success fs-6 px-3 py-2">
           {staffCount} Staff member{staffCount !== 1 ? 's' : ''}
+        </span>
+        <span className="badge bg-info text-dark fs-6 px-3 py-2">
+          {ownerCount} Owner{ownerCount !== 1 ? 's' : ''}
         </span>
       </div>
 
@@ -133,7 +149,6 @@ export default function AdminUserManagement() {
             </thead>
             <tbody>
               {filtered.map((user) => {
-                const isUpdating = updating === user.id
                 const name = [user.first_name, user.last_name].filter(Boolean).join(' ') || '—'
                 return (
                   <tr key={user.id}>
@@ -141,29 +156,26 @@ export default function AdminUserManagement() {
                     <td className="text-muted small">{user.email}</td>
                     <td>{roleBadge(user.role)}</td>
                     <td className="text-end">
-                      {user.role === 'PATIENT' ? (
-                        <button
-                          className="btn btn-sm btn-outline-success"
-                          onClick={() => handleRoleChange(user.id, 'STAFF')}
-                          disabled={isUpdating}
-                        >
-                          {isUpdating ? (
-                            <span className="spinner-border spinner-border-sm me-1" />
-                          ) : null}
-                          Promote to Staff
-                        </button>
-                      ) : (
-                        <button
-                          className="btn btn-sm btn-outline-warning"
-                          onClick={() => handleRoleChange(user.id, 'PATIENT')}
-                          disabled={isUpdating}
-                        >
-                          {isUpdating ? (
-                            <span className="spinner-border spinner-border-sm me-1" />
-                          ) : null}
-                          Demote to Patient
-                        </button>
-                      )}
+                      <div className="d-flex flex-wrap justify-content-end gap-2">
+                        {user.role === 'PATIENT' && (
+                          <>
+                            {roleButton(user, 'STAFF', 'Promote to Staff', 'success')}
+                            {roleButton(user, 'OWNER', 'Promote to Owner', 'info')}
+                          </>
+                        )}
+                        {user.role === 'STAFF' && (
+                          <>
+                            {roleButton(user, 'OWNER', 'Promote to Owner', 'info')}
+                            {roleButton(user, 'PATIENT', 'Demote to Patient', 'warning')}
+                          </>
+                        )}
+                        {user.role === 'OWNER' && (
+                          <>
+                            {roleButton(user, 'STAFF', 'Demote to Staff', 'success')}
+                            {roleButton(user, 'PATIENT', 'Demote to Patient', 'warning')}
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )

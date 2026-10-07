@@ -70,7 +70,7 @@ class DemoEMRAssessmentCreateView(DemoEMRView):
 
 class DemoEMRDashboardView(DemoEMRView):
     def get(self, request):
-        staff = User.objects.filter(role__in=(User.Role.STAFF, User.Role.ADMIN), is_active=True).order_by("first_name", "last_name", "id")
+        staff = User.objects.filter(role__in=(User.Role.STAFF, User.Role.OWNER, User.Role.ADMIN), is_active=True).order_by("first_name", "last_name", "id")
         return Response({
             "staff": [{"id": person.id, "name": staff_name(person)} for person in staff],
             "visits": DemoEMRVisitSerializer(DemoEMRVisit.objects.filter(patient__is_active=True).select_related("patient"), many=True).data,

@@ -63,9 +63,18 @@ test('expiry is strict and requires a numeric finite future timestamp', () => {
 })
 
 test('missing user claims and unknown roles cannot restore authentication', () => {
-  for (const changes of [{ user_id: null }, { user_id: 0 }, { user_id: '' }, { email: null }, { email: '' }, { role: undefined }, { role: 'OWNER' }]) {
+  for (const changes of [{ user_id: null }, { user_id: 0 }, { user_id: '' }, { email: null }, { email: '' }, { role: undefined }, { role: 'SUPERUSER' }]) {
     assert.equal(getUserFromToken(token({ ...claims, ...changes }), now), null)
   }
+})
+
+test('Owner token restores an Owner user and can be stored at sign in', () => {
+  const ownerClaims = { ...claims, role: 'OWNER' }
+  const ownerAccess = token(ownerClaims)
+  const ownerRefresh = token({ ...ownerClaims, token_type: 'refresh' })
+  assert.deepEqual(getUserFromToken(ownerAccess, now), { userId: 7, email: 'demo@example.com', role: 'OWNER' })
+  setTokens({ access: ownerAccess, refresh: ownerRefresh })
+  assert.equal(storage.getItem('accessToken'), ownerAccess)
 })
 
 test('getUserInfo ignores stale stored user data when access claims are missing', async () => {

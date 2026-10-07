@@ -11,6 +11,7 @@ class DemoEMRTests(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.staff = User.objects.create_user(email="emr.staff@example.test", role="STAFF", first_name="Nurse", last_name="Example")
+        cls.owner = User.objects.create_user(email="emr.owner@example.test", role="OWNER", first_name="Owner", last_name="Example")
         cls.other = User.objects.create_user(email="emr.other@example.test", role="STAFF", first_name="Other")
         cls.admin = User.objects.create_user(email="emr.admin@example.test", role="ADMIN", first_name="Admin")
         cls.patient_user = User.objects.create_user(email="emr.patient@example.test", role="PATIENT")
@@ -36,7 +37,7 @@ class DemoEMRTests(TestCase):
             response = self.client.get("/api/staff/demo-emr/patients/")
             self.assertIn(response.status_code, (401, 403))
             self.assertIn(self.client.post(self.url, self.payload(), format="json").status_code, (401, 403))
-        for account in (self.staff, self.admin):
+        for account in (self.staff, self.owner, self.admin):
             self.client.force_authenticate(account)
             self.assertEqual(self.client.get("/api/staff/demo-emr/patients/").status_code, 200)
 

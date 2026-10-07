@@ -18,7 +18,7 @@ export default function StaffProtectedRoute({ children }) {
       <div className="py-4">
         <div className="alert alert-danger">
           <h4>Access Denied</h4>
-          <p>You do not have permission to access this page. Staff or admin access required.</p>
+          <p>You do not have permission to access this page. Staff, owner, or admin access required.</p>
         </div>
       </div>
     )

@@ -35,7 +35,7 @@ export function getUserFromToken(token, now = Date.now()) {
   const validId = (typeof payload.user_id === 'number' && Number.isInteger(payload.user_id) && payload.user_id > 0) ||
     (typeof payload.user_id === 'string' && payload.user_id.trim().length > 0)
   if (!validId || typeof payload.email !== 'string' || !payload.email.trim() ||
-    !['PATIENT', 'STAFF', 'ADMIN'].includes(payload.role)) return null
+    !['PATIENT', 'STAFF', 'OWNER', 'ADMIN'].includes(payload.role)) return null
   return { userId: payload.user_id, email: payload.email, role: payload.role }
 }
 

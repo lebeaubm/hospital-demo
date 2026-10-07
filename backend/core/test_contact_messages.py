@@ -70,7 +70,7 @@ class ContactMessageTests(TestCase):
         self.assertEqual(self.client.post("/api/contact/messages/", self.payload, format="json").status_code, 429)
         self.assertEqual(ContactMessage.objects.count(), 10)
 
-    def test_only_admin_can_list_read_or_update_messages(self):
+    def test_owner_and_admin_can_review_messages_while_staff_cannot(self):
         message = ContactMessage.objects.create(**self.payload)
         detail_url = f"/api/admin/contact-messages/{message.pk}/"
         for role in (None, "PATIENT", "STAFF"):
@@ -84,8 +84,24 @@ class ContactMessageTests(TestCase):
                     response = getattr(self.client, method)(url, payload, format="json")
                     self.assertEqual(response.status_code, 401 if role is None else 403)
                     self.assertEqual(response["Cache-Control"], "private, no-store")
+        owner = self.user("OWNER")
+        self.client.force_authenticate(user=owner)
+        self.assertEqual(self.client.get("/api/admin/contact-messages/").status_code, 200)
+        self.assertEqual(self.client.get(detail_url).status_code, 200)
+        self.assertEqual(self.client.patch(detail_url, {"status": "REVIEWED"}, format="json").status_code, 200)
+        self.assertEqual(self.client.get("/api/admin/users/").status_code, 403)
         message.refresh_from_db()
-        self.assertEqual(message.status, ContactMessage.Status.NEW)
+        self.assertEqual(message.status, ContactMessage.Status.REVIEWED)
+
+    def test_admin_can_promote_patient_to_owner(self):
+        admin = self.user("ADMIN")
+        patient = self.user("PATIENT")
+        self.client.force_authenticate(user=admin)
+        response = self.client.patch(f"/api/admin/users/{patient.id}/role/", {"role": "OWNER"}, format="json")
+        self.assertEqual(response.status_code, 200)
+        patient.refresh_from_db()
+        self.assertEqual(patient.role, "OWNER")
+        self.assertTrue(patient.is_staff)
 
     def test_admin_status_updates_only_leave_message_and_demo_flag_unchanged(self):
         message = ContactMessage.objects.create(**self.payload)

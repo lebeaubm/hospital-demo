@@ -31,19 +31,16 @@ const PatientPortal = lazy(() => import('./pages/PatientPortal'))
 const Appointments = lazy(() => import('./pages/Appointments'))
 const RequestAppointment = lazy(() => import('./pages/RequestAppointment'))
 const MedicalRecords = lazy(() => import('./pages/MedicalRecords'))
-const Payments = lazy(() => import('./pages/Payments'))
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'))
 const PaymentCancel = lazy(() => import('./pages/PaymentCancel'))
 const StaffDashboard = lazy(() => import('./pages/StaffDashboard'))
 const StaffPortal = lazy(() => import('./pages/StaffPortal'))
-const StaffBilling = lazy(() => import('./pages/StaffBilling'))
 const StaffEmails = lazy(() => import('./pages/StaffEmails'))
 const StaffLabResults = lazy(() => import('./pages/StaffLabResults'))
 const StaffPatientRecord = lazy(() => import('./pages/StaffPatientRecord'))
 const DemoEMR = lazy(() => import('./pages/DemoEMR'))
 const Prescriptions = lazy(() => import('./pages/Prescriptions'))
 const LabResults = lazy(() => import('./pages/LabResults'))
-const Billing = lazy(() => import('./pages/Billing'))
 const FamilyMembers = lazy(() => import('./pages/FamilyMembers'))
 const AdminApplications = lazy(() => import('./pages/AdminApplications'))
 const AdminContactMessages = lazy(() => import('./pages/AdminContactMessages'))
@@ -58,9 +55,9 @@ const pageTitles = {
   '/portal/appointments': 'My Appointments', '/portal/appointments/request': 'Request Appointment',
   '/portal/records': 'Medical Records', '/portal/prescriptions': 'Prescriptions',
   '/portal/messages': 'My Profile', '/portal/lab-results': 'Lab Results',
-  '/portal/billing': 'Billing', '/portal/family': 'Family Members', '/portal/payments': 'Payments',
+  '/portal/family': 'Family Members',
   '/payment/success': 'Payment Confirmation', '/payment/cancel': 'Payment Cancelled',
-  '/staff': 'Staff Portal', '/staff/dashboard': 'Appointments', '/staff/billing': 'Staff Billing',
+  '/staff': 'Staff Portal', '/staff/dashboard': 'Appointments',
   '/staff/demo-emr': 'Demo EMR',
   '/staff/lab-results': 'Staff Lab Results', '/staff/messages': 'Staff Dashboard',
   '/staff/emails': 'Email Logs', '/admin/users': 'User Management',
@@ -77,7 +74,7 @@ function pageTitle(pathname) {
 }
 
 function App() {
-  const { isAuthenticated, isStaff, logout } = useAuth()
+  const { isAuthenticated, isStaff, user, logout } = useAuth()
   const navigate = useNavigate()
   const { pathname, hash } = useLocation()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -97,7 +94,7 @@ function App() {
     const route = pathname + hash
     const moved = previousRoute.current !== null && previousRoute.current !== route
     previousRoute.current = route
-    const title = pageTitle(pathname)
+    const title = pathname === '/staff' && user?.role === 'OWNER' ? 'Owners portal' : pageTitle(pathname)
     document.title = title === 'Home' ? 'Peaceloving Home Health Inc.' : `${title} | Peaceloving Home Health Inc.`
     const main = mainContent.current
     if (!main) return
@@ -136,7 +133,7 @@ function App() {
       }
     })
     return () => { window.cancelAnimationFrame(frame); observer?.disconnect() }
-  }, [pathname, hash])
+  }, [pathname, hash, user?.role])
 
   useEffect(() => {
     if (!menuOpen) return
@@ -214,7 +211,7 @@ function App() {
               </li>
               {isStaff ? (
                 <li className="nav-item">
-                  <NavLink className="nav-link nav-portal-link" to="/staff">Staff Portal</NavLink>
+                  <NavLink className="nav-link nav-portal-link" to="/staff">{user?.role === 'OWNER' ? 'Owners portal' : 'Staff Portal'}</NavLink>
                 </li>
               ) : isAuthenticated ? (
                 <li className="nav-item">
@@ -314,11 +311,7 @@ function App() {
           />
           <Route
             path="/portal/billing"
-            element={
-              <ProtectedRoute>
-                <Billing />
-              </ProtectedRoute>
-            }
+            element={<Navigate to="/portal" replace />}
           />
           <Route
             path="/portal/family"
@@ -330,11 +323,7 @@ function App() {
           />
           <Route
             path="/portal/payments"
-            element={
-              <ProtectedRoute>
-                <Payments />
-              </ProtectedRoute>
-            }
+            element={<Navigate to="/portal" replace />}
           />
           <Route path="/payment/success" element={<PaymentSuccess />} />
           <Route path="/payment/cancel" element={<PaymentCancel />} />
@@ -353,11 +342,7 @@ function App() {
           />
           <Route
             path="/staff/billing"
-            element={
-              <StaffProtectedRoute>
-                <StaffBilling />
-              </StaffProtectedRoute>
-            }
+            element={<Navigate to="/staff" replace />}
           />
           <Route
             path="/staff/lab-results"
@@ -402,7 +387,7 @@ function App() {
           <Route
             path="/admin/applications"
             element={
-              <AdminProtectedRoute>
+              <AdminProtectedRoute allowedRoles={['ADMIN', 'OWNER']}>
                 <AdminApplications />
               </AdminProtectedRoute>
             }
@@ -410,7 +395,7 @@ function App() {
           <Route
             path="/admin/contact-messages"
             element={
-              <AdminProtectedRoute>
+              <AdminProtectedRoute allowedRoles={['ADMIN', 'OWNER']}>
                 <AdminContactMessages />
               </AdminProtectedRoute>
             }

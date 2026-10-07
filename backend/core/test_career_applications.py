@@ -379,6 +379,10 @@ class CareerApplicationTests(TestCase):
                     self.assertEqual(response.status_code, 403)
                     self.assertIn("no-store", response["Cache-Control"])
                 self.assertEqual(self.client.patch(f"/api/admin/applications/{application.id}/", {"status": "HIRED"}, format="json").status_code, 403)
+        owner = User.objects.create_user(email="career-owner-access@example.com", password="TestPass123!", role=User.Role.OWNER)
+        self.client.force_authenticate(user=owner)
+        self.assertEqual(self.client.get("/api/admin/applications/").status_code, 200)
+        self.assertEqual(self.client.get(f"/api/admin/applications/{application.id}/").status_code, 200)
         application.refresh_from_db()
         self.assertEqual(application.status, "NEW")
 

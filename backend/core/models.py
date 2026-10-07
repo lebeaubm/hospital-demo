@@ -27,6 +27,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     class Role(models.TextChoices):
         PATIENT = "PATIENT", "Patient"
         STAFF = "STAFF", "Staff"
+        OWNER = "OWNER", "Owner"
         ADMIN = "ADMIN", "Admin"
 
     email = models.EmailField(unique=True)
@@ -621,7 +622,7 @@ class Prescription(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name="prescribed_medications",
-        limit_choices_to={"role__in": [User.Role.STAFF, User.Role.ADMIN]}
+        limit_choices_to={"role__in": [User.Role.STAFF, User.Role.OWNER, User.Role.ADMIN]}
     )
     medication_name = models.CharField(max_length=255)
     dosage = models.CharField(max_length=100)
@@ -723,7 +724,7 @@ class MessageThread(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name="staff_threads",
-        limit_choices_to={"role__in": [User.Role.STAFF, User.Role.ADMIN]}
+        limit_choices_to={"role__in": [User.Role.STAFF, User.Role.OWNER, User.Role.ADMIN]}
     )
     subject = models.CharField(max_length=255)
     status = models.CharField(
@@ -838,7 +839,7 @@ class LabOrder(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name="ordered_labs",
-        limit_choices_to={"role__in": [User.Role.STAFF, User.Role.ADMIN]}
+        limit_choices_to={"role__in": [User.Role.STAFF, User.Role.OWNER, User.Role.ADMIN]}
     )
     test = models.ForeignKey(
         LabTest,
@@ -892,7 +893,7 @@ class LabResult(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         related_name="reviewed_results",
-        limit_choices_to={"role__in": [User.Role.STAFF, User.Role.ADMIN]}
+        limit_choices_to={"role__in": [User.Role.STAFF, User.Role.OWNER, User.Role.ADMIN]}
     )
     interpretation = models.TextField(blank=True, help_text="Doctor's interpretation")
     is_critical = models.BooleanField(default=False)

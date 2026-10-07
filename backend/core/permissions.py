@@ -19,7 +19,7 @@ class IsPatientUser(permissions.BasePermission):
 
 class IsStaffUser(permissions.BasePermission):
     """
-    Allows access to staff or admin users.
+    Allows access to staff, owner, or admin users.
     """
 
     def has_permission(self, request, view):
@@ -27,9 +27,22 @@ class IsStaffUser(permissions.BasePermission):
             request.user
             and request.user.is_authenticated
             and (
-                request.user.role in (User.Role.STAFF, User.Role.ADMIN)
+                request.user.role in (User.Role.STAFF, User.Role.OWNER, User.Role.ADMIN)
                 or request.user.is_staff
             )
+        )
+
+
+class IsOwnerOrAdminUser(permissions.BasePermission):
+    """
+    Allows access to owner or admin users.
+    """
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role in (User.Role.OWNER, User.Role.ADMIN)
         )
 
 

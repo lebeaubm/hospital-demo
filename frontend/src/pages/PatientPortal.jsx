@@ -6,7 +6,6 @@ const careTasks = [
   { title: 'Medical Records', description: 'View the health information and documents shared with you.', to: '/portal/records' },
   { title: 'Prescriptions', description: 'Review your medicines and request prescription refills.', to: '/portal/prescriptions' },
   { title: 'Lab Results', description: 'See your test results and available reports.', to: '/portal/lab-results' },
-  { title: 'Billing & Payments', description: 'Review your bills, balances, and payment options.', to: '/portal/billing' },
   { title: 'Family Members', description: 'Manage your family contacts and relationships.', to: '/portal/family' },
 ]
 

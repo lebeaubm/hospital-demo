@@ -50,7 +50,7 @@ from .notifications import (
     send_welcome_email,
 )
 from .defaults import ensure_patient_default_data
-from .permissions import IsAdminUser, IsAppointmentOwner, IsPatientUser, IsStaffUser
+from .permissions import IsAdminUser, IsAppointmentOwner, IsOwnerOrAdminUser, IsPatientUser, IsStaffUser
 from .serializers import (
     AppointmentSerializer,
     AdminUserListItemSerializer,
@@ -242,7 +242,7 @@ class StaffUserListView(generics.ListAPIView):
 
     def list(self, request, *args, **kwargs):
         staff_users = User.objects.filter(
-            role__in=[User.Role.STAFF, User.Role.ADMIN]
+            role__in=[User.Role.STAFF, User.Role.OWNER, User.Role.ADMIN]
         ).values('id', 'first_name', 'last_name', 'role')
         data = [
             {
@@ -764,7 +764,7 @@ class DocumentDownloadView(APIView):
         user = request.user
 
         # Staff/Admin can download any document
-        if user.role in (User.Role.STAFF, User.Role.ADMIN):
+        if user.role in (User.Role.STAFF, User.Role.OWNER, User.Role.ADMIN):
             pass  # Allow access
         # Patient can only download documents from their own record
         elif user.role == User.Role.PATIENT:
@@ -829,7 +829,7 @@ class PatientPrescriptionDetailView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in (User.Role.STAFF, User.Role.ADMIN):
+        if user.role in (User.Role.STAFF, User.Role.OWNER, User.Role.ADMIN):
             return Prescription.objects.all()
         return Prescription.objects.filter(patient=user)
 
@@ -990,7 +990,7 @@ class PatientMessageThreadCreateView(generics.CreateAPIView):
             staff_user = get_object_or_404(
                 User,
                 id=staff_id,
-                role__in=[User.Role.STAFF, User.Role.ADMIN]
+                role__in=[User.Role.STAFF, User.Role.OWNER, User.Role.ADMIN]
             )
         serializer.save(
             patient=self.request.user,
@@ -1009,7 +1009,7 @@ class MessageThreadDetailView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in (User.Role.STAFF, User.Role.ADMIN):
+        if user.role in (User.Role.STAFF, User.Role.OWNER, User.Role.ADMIN):
             return MessageThread.objects.all()
         return MessageThread.objects.filter(patient=user)
 
@@ -1115,7 +1115,7 @@ class PatientLabOrderDetailView(generics.RetrieveAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        if user.role in (User.Role.STAFF, User.Role.ADMIN):
+        if user.role in (User.Role.STAFF, User.Role.OWNER, User.Role.ADMIN):
             return LabOrder.objects.all()
         return LabOrder.objects.filter(patient=user)
 
@@ -1555,7 +1555,7 @@ class PrivateApplicationResponseMixin:
 
 class AdminContactMessageListView(PrivateApplicationResponseMixin, generics.ListAPIView):
     serializer_class = ContactMessageAdminSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrAdminUser]
     pagination_class = AdminApplicationPagination
 
     def get_queryset(self):
@@ -1568,7 +1568,7 @@ class AdminContactMessageListView(PrivateApplicationResponseMixin, generics.List
 
 class AdminContactMessageDetailView(PrivateApplicationResponseMixin, generics.RetrieveUpdateAPIView):
     serializer_class = ContactMessageAdminSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrAdminUser]
     queryset = ContactMessage.objects.all()
     http_method_names = ["get", "patch", "head", "options"]
 
@@ -1579,7 +1579,7 @@ class AdminJobApplicationListView(PrivateApplicationResponseMixin, generics.List
     List all job applications (admin only).
     """
     serializer_class = JobApplicationAdminSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrAdminUser]
     pagination_class = AdminApplicationPagination
 
     def get_queryset(self):
@@ -1610,7 +1610,7 @@ class AdminJobApplicationDetailView(PrivateApplicationResponseMixin, APIView):
     GET/PATCH/DELETE /api/admin/applications/<application_id>/
     Retrieve, update status, or delete a job application (admin only).
     """
-    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrAdminUser]
 
     def get(self, request, application_id):
         application = get_object_or_404(admin_application_queryset(), id=application_id)
@@ -1634,7 +1634,7 @@ class AdminJobApplicationResumeDownloadView(PrivateApplicationResponseMixin, API
     GET /api/admin/applications/<application_id>/resume/
     Download applicant resume file (admin only).
     """
-    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated, IsOwnerOrAdminUser]
 
     def get(self, request, application_id):
         application = get_object_or_404(JobApplication, id=application_id)
@@ -1703,11 +1703,11 @@ class AdminUserRoleUpdateView(APIView):
             return Response({"error": "Cannot change the role of an admin account."}, status=status.HTTP_400_BAD_REQUEST)
 
         new_role = request.data.get("role")
-        if new_role not in (User.Role.PATIENT, User.Role.STAFF):
-            return Response({"error": "Invalid role. Must be PATIENT or STAFF."}, status=status.HTTP_400_BAD_REQUEST)
+        if new_role not in (User.Role.PATIENT, User.Role.STAFF, User.Role.OWNER):
+            return Response({"error": "Invalid role. Must be PATIENT, STAFF, or OWNER."}, status=status.HTTP_400_BAD_REQUEST)
 
         user.role = new_role
-        if new_role == User.Role.STAFF:
+        if new_role in (User.Role.STAFF, User.Role.OWNER):
             user.is_staff = True
             StaffProfile.objects.get_or_create(user=user)
         else:

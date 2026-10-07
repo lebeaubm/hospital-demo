@@ -62,6 +62,7 @@ const faqs = [
 
 export default function Home() {
   const { user, isGuest, isStaff } = useAuth()
+  const isOwner = user?.role === 'OWNER'
   const isPatient = user?.role === 'PATIENT'
   const heroCareBanner = 'https://images.unsplash.com/photo-1584515933487-779824d29309?auto=format&fit=crop&w=1600&q=80'
 
@@ -218,7 +219,7 @@ export default function Home() {
             <a className="btn home-button home-button--gold" href="tel:9516213600">Call (951) 621-3600</a>
             <Link className="btn home-button home-button--light" to="/contact">Contact Us</Link>
             {isPatient && <Link className="home-final-cta__portal-link" to="/portal">Open Patient Portal</Link>}
-            {isStaff && <Link className="home-final-cta__portal-link" to="/staff">Open Staff Portal</Link>}
+            {isStaff && <Link className="home-final-cta__portal-link" to="/staff">{isOwner ? 'Open Owners portal' : 'Open Staff Portal'}</Link>}
             {isGuest && <Link className="home-final-cta__portal-link" to="/team">Meet our team</Link>}
           </div>
         </div>

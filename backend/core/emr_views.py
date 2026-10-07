@@ -12,7 +12,7 @@ from .models import DemoEMRNote, DemoEMRPatient, User
 
 class DemoEMRPermission(permissions.BasePermission):
     def has_permission(self, request, view):
-        return request.user.is_authenticated and request.user.role in (User.Role.STAFF, User.Role.ADMIN)
+        return request.user.is_authenticated and request.user.role in (User.Role.STAFF, User.Role.OWNER, User.Role.ADMIN)
 
 
 class DemoEMRView(APIView):
@@ -95,7 +95,7 @@ class DemoEMRNoteUpdateView(DemoEMRView):
             return Response({"detail": "Restore this patient before updating chart entries."}, status=409)
         if note.status == DemoEMRNote.Status.FINAL:
             return Response({"detail": "This note is finalized. Add an amendment to record a correction."}, status=409)
-        if note.author_id != request.user.id and request.user.role != User.Role.ADMIN:
+        if note.author_id != request.user.id and request.user.role not in (User.Role.OWNER, User.Role.ADMIN):
             return Response({"detail": "Only the author or an administrator can update this draft."}, status=403)
         serializer = DemoEMRNoteInputSerializer(data=request.data, context={"patient": note.patient})
         serializer.is_valid(raise_exception=True)
