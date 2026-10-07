@@ -1,0 +1,82 @@
+# Import this file as a separate Render Blueprint using branch-1.
+# Existing shared secrets stay inside Render through service references.
+services:
+  - type: web
+    name: peaceloving-branch-1-api
+    repo: https://github.com/lebeaubm/hospital-demo.git
+    branch: branch-1
+    runtime: python
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: bash build.sh
+    startCommand: gunicorn backend.wsgi:application
+    healthCheckPath: /api/
+    autoDeployTrigger: commit
+    envVars:
+      - key: SECRET_KEY
+        fromService:
+          type: web
+          name: hospital-demo-api
+          envVarKey: SECRET_KEY
+      - key: APPLICATION_ENCRYPTION_KEY
+        fromService:
+          type: web
+          name: hospital-demo-api
+          envVarKey: APPLICATION_ENCRYPTION_KEY
+      - key: DATABASE_URL
+        fromService:
+          type: web
+          name: hospital-demo-api
+          envVarKey: DATABASE_URL
+      - key: DEBUG
+        value: "false"
+      - key: ALLOWED_HOSTS
+        fromService:
+          type: web
+          name: peaceloving-branch-1-api
+          envVarKey: RENDER_EXTERNAL_HOSTNAME
+      - key: CSRF_TRUSTED_ORIGINS
+        fromService:
+          type: web
+          name: peaceloving-branch-1-api
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: CORS_ALLOWED_ORIGINS
+        value: https://peacelovinghomehealth.onrender.com
+      - key: SEED_DEMO_DATA
+        value: "false"
+      - key: PAYMENT_DEMO_MODE
+        fromService:
+          type: web
+          name: hospital-demo-api
+          envVarKey: PAYMENT_DEMO_MODE
+      - key: STRIPE_SECRET_KEY
+        fromService:
+          type: web
+          name: hospital-demo-api
+          envVarKey: STRIPE_SECRET_KEY
+      - key: STRIPE_PUBLISHABLE_KEY
+        fromService:
+          type: web
+          name: hospital-demo-api
+          envVarKey: STRIPE_PUBLISHABLE_KEY
+
+  - type: web
+    name: peacelovinghomehealth
+    repo: https://github.com/lebeaubm/hospital-demo.git
+    branch: branch-1
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    autoDeployTrigger: commit
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: peaceloving-branch-1-api
+          envVarKey: RENDER_EXTERNAL_URL
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
