@@ -23,7 +23,7 @@ export default function ScrollableTable({ children, label = 'Information table',
 
   return (
     <div className={`scroll-table-shell ${className.replace(/\btable-responsive\b/g, '')}`} {...props}>
-      {overflows && <p className="table-scroll-hint" id={hintId}><span aria-hidden="true">↔</span> Scroll sideways to see all columns. You can also use the arrow keys when the table is selected.</p>}
+      {overflows && <p className="table-scroll-hint" id={hintId}><span aria-hidden="true">↔</span> Scroll to see more columns.<span className="visually-hidden"> Use the arrow keys when the table is focused.</span></p>}
       <div ref={container} className="table-responsive readable-table" role="region" aria-label={label} aria-describedby={overflows ? hintId : undefined} tabIndex={overflows ? 0 : undefined}>
         {children}
       </div>

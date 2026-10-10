@@ -60,12 +60,12 @@ export default function Register() {
   }
 
   return (
-    <AccountLayout title="Create your account." description="Sign up for a patient account to get started with your personal workspace.">
+    <AccountLayout title="Create a patient account" description="Access your appointments and care information.">
       <form onSubmit={handleSubmit} className="auth-panel" aria-busy={submitting} aria-describedby="signup-account-notice">
-        <p className="auth-panel__hint" id="signup-account-notice">New accounts are patient accounts. For staff access, <Link to="/contact">contact our office</Link>.</p>
-        <p className="small text-muted">Demo test</p>
+        <p className="auth-panel__hint" id="signup-account-notice">For staff access, <Link to="/contact">contact our office</Link>.</p>
+        <p className="small text-muted">Demo account</p>
         <fieldset disabled={submitting || accountCreated}>
-        <legend className="visually-hidden">Sign Up</legend>
+        <legend className="visually-hidden">Create a patient account</legend>
         <div className="mb-3">
           <label className="form-label" htmlFor="email">
             Email *
@@ -100,7 +100,7 @@ export default function Register() {
         </div>
         <div className="mb-3">
           <label className="form-label" htmlFor="first_name">
-            First Name
+            First name
           </label>
           <input
             className="form-control"
@@ -114,7 +114,7 @@ export default function Register() {
         </div>
         <div className="mb-3">
           <label className="form-label" htmlFor="last_name">
-            Last Name
+            Last name
           </label>
           <input
             className="form-control"
@@ -129,10 +129,10 @@ export default function Register() {
         {error && <ErrorAlert error={error} />}
         {success && <div className="alert alert-success" role="status">{success}{accountCreated && !submitting && <> <Link to="/login">Sign in</Link>.</>}</div>}
         <button className="btn btn-primary" type="submit" disabled={submitting || accountCreated}>
-          {submitting ? 'Creating account…' : 'Sign Up'}
+          {submitting ? 'Creating account…' : 'Create account'}
         </button>
         </fieldset>
-        <p className="auth-panel__switch">Already have an account? <Link to="/login">Sign In</Link></p>
+        <p className="auth-panel__switch">Already have an account? <Link to="/login">Sign in</Link></p>
       </form>
     </AccountLayout>
   )

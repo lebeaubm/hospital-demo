@@ -155,5 +155,5 @@ body {
 }
 
 [data-theme="dark"] body {
-  background: radial-gradient(circle at top, #1a1a1a 0%, #1e1b4b 50%, #312e81 100%);
+  background: #211d25;
 }

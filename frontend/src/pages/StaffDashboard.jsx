@@ -5,6 +5,13 @@ import { api } from '../api/client'
 import { SkeletonTable } from '../components/SkeletonLoader'
 import ErrorAlert from '../components/ErrorAlert'
 
+const appointmentStatusLabels = {
+  REQUESTED: 'Requested',
+  CONFIRMED: 'Confirmed',
+  COMPLETED: 'Completed',
+  CANCELED: 'Canceled',
+}
+
 export default function StaffDashboard() {
   const navigate = useNavigate()
   const [appointments, setAppointments] = useState([])
@@ -116,7 +123,7 @@ export default function StaffDashboard() {
     setSuccessMessage('')
     try {
       await api.patch(`/api/staff/appointments/${appointment.id}/`, { status: 'CONFIRMED' })
-      setSuccessMessage(`Appointment #${appointment.id} confirmed!`)
+      setSuccessMessage(`Appointment #${appointment.id} confirmed.`)
       fetchAppointments()
     } catch (err) {
       setError(err)
@@ -162,7 +169,7 @@ export default function StaffDashboard() {
       }
 
       await api.patch(`/api/staff/appointments/${id}/`, updateData)
-      setSuccessMessage(`Appointment #${id} updated successfully!`)
+      setSuccessMessage(`Appointment #${id} updated.`)
       setEditingId(null)
       setEditData({})
       // Refresh the list
@@ -186,15 +193,15 @@ export default function StaffDashboard() {
   const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'REQUESTED':
-        return 'bg-warning'
+        return 'text-bg-warning'
       case 'CONFIRMED':
-        return 'bg-success'
+        return 'text-bg-success'
       case 'COMPLETED':
-        return 'bg-secondary'
+        return 'text-bg-secondary'
       case 'CANCELED':
-        return 'bg-danger'
+        return 'text-bg-danger'
       default:
-        return 'bg-secondary'
+        return 'text-bg-secondary'
     }
   }
 
@@ -207,7 +214,7 @@ export default function StaffDashboard() {
       {/* Filter Section */}
       <div className="card shadow-sm mb-4">
         <div className="card-body">
-          <h5 className="card-title">Filters</h5>
+          <h2 className="card-title h5">Filters</h2>
           <div className="row g-3">
             <div className="col-md-3">
               <label className="form-label" htmlFor="statusFilter">
@@ -222,7 +229,7 @@ export default function StaffDashboard() {
                   setCurrentPage(1)
                 }}
               >
-                <option value="">All Statuses</option>
+                <option value="">All statuses</option>
                 <option value="REQUESTED">Requested</option>
                 <option value="CONFIRMED">Confirmed</option>
                 <option value="COMPLETED">Completed</option>
@@ -242,7 +249,7 @@ export default function StaffDashboard() {
                   setCurrentPage(1)
                 }}
               >
-                <option value="">All Doctors</option>
+                <option value="">All doctors</option>
                 {doctors.map((doctor) => (
                   <option key={doctor.id} value={doctor.id}>
                     Dr. {doctor.first_name} {doctor.last_name} - {doctor.specialty}
@@ -252,7 +259,7 @@ export default function StaffDashboard() {
             </div>
             <div className="col-md-3">
               <label className="form-label" htmlFor="dateFrom">
-                Date From
+                From date
               </label>
               <input
                 id="dateFrom"
@@ -267,7 +274,7 @@ export default function StaffDashboard() {
             </div>
             <div className="col-md-3">
               <label className="form-label" htmlFor="dateTo">
-                Date To
+                To date
               </label>
               <input
                 id="dateTo"
@@ -285,9 +292,8 @@ export default function StaffDashboard() {
       </div>
 
       {/* Messages */}
-      {/* Messages */}
       {error && <ErrorAlert error={error} onRetry={fetchAppointments} />}
-      {successMessage && <div className="alert alert-success">{successMessage}</div>}
+      {successMessage && <div className="alert alert-success" role="status">{successMessage}</div>}
 
       {/* Loading State */}
       {loading && <SkeletonTable />}
@@ -302,19 +308,19 @@ export default function StaffDashboard() {
       {!loading && !error && appointments.length > 0 && (
         <div className="card shadow-sm">
           <div className="card-body">
-            <ScrollableTable className="table-responsive" label="Staff Dashboard table">
+            <ScrollableTable className="table-responsive" label="Appointments">
               <table className="table table-hover">
                 <thead>
                   <tr>
-                    <th scope="col">ID</th>
+                    <th scope="col">Appointment</th>
                     <th scope="col">Patient</th>
                     <th scope="col">Doctor</th>
                     <th scope="col">Status</th>
                     <th scope="col">Requested</th>
                     <th scope="col">Scheduled</th>
                     <th scope="col">Reason</th>
-                    <th scope="col">Patient Notes</th>
-                    <th scope="col">Staff Notes</th>
+                    <th scope="col">Patient notes</th>
+                    <th scope="col">Staff notes</th>
                     <th scope="col">Actions</th>
                   </tr>
                 </thead>
@@ -332,6 +338,7 @@ export default function StaffDashboard() {
                         {editingId === appointment.id ? (
                           <select
                             className="form-select form-select-sm"
+                            aria-label={`Doctor for appointment #${appointment.id}`}
                             value={editData.doctor}
                             onChange={(e) =>
                               setEditData({ ...editData, doctor: e.target.value })
@@ -357,6 +364,7 @@ export default function StaffDashboard() {
                         {editingId === appointment.id ? (
                           <select
                             className="form-select form-select-sm"
+                            aria-label={`Status for appointment #${appointment.id}`}
                             value={editData.status}
                             onChange={(e) =>
                               setEditData({ ...editData, status: e.target.value })
@@ -369,7 +377,7 @@ export default function StaffDashboard() {
                           </select>
                         ) : (
                           <span className={`badge ${getStatusBadgeClass(appointment.status)}`}>
-                            {appointment.status}
+                            {appointmentStatusLabels[appointment.status] || appointment.status}
                           </span>
                         )}
                       </td>
@@ -381,6 +389,7 @@ export default function StaffDashboard() {
                           <input
                             type="datetime-local"
                             className="form-control form-control-sm"
+                            aria-label={`Scheduled date and time for appointment #${appointment.id}`}
                             value={editData.scheduled_start}
                             onChange={(e) =>
                               setEditData({ ...editData, scheduled_start: e.target.value })
@@ -398,6 +407,7 @@ export default function StaffDashboard() {
                         {editingId === appointment.id ? (
                           <textarea
                             className="form-control form-control-sm"
+                            aria-label={`Staff notes for appointment #${appointment.id}`}
                             rows="2"
                             value={editData.staff_notes}
                             onChange={(e) =>
@@ -416,7 +426,7 @@ export default function StaffDashboard() {
                               onClick={() => handleSave(appointment.id)}
                               disabled={saving}
                             >
-                              {saving ? '...' : 'Save'}
+                              {saving ? 'Saving…' : 'Save'}
                             </button>
                             <button
                               className="btn btn-sm btn-secondary"
@@ -436,7 +446,7 @@ export default function StaffDashboard() {
                                   disabled={saving}
                                   title="Confirm appointment"
                                 >
-                                  ✓ Confirm
+                                  Confirm
                                 </button>
                                 <button
                                   className="btn btn-sm btn-danger"
@@ -444,7 +454,7 @@ export default function StaffDashboard() {
                                   disabled={saving}
                                   title="Cancel appointment"
                                 >
-                                  ✗ Cancel
+                                  Cancel
                                 </button>
                               </>
                             )}
@@ -457,16 +467,16 @@ export default function StaffDashboard() {
                             <button
                               className="btn btn-sm btn-info"
                               onClick={() => handleViewRecord(appointment)}
-                              title="View Medical Record"
+                              title="View medical record"
                             >
                                Record
                             </button>
                             <button
                               className="btn btn-sm btn-outline-secondary"
                               onClick={() => handleEmailPatient(appointment)}
-                              title="Email Patient"
+                              title="Email patient"
                             >
-                              Email Patient
+                              Email patient
                             </button>
                           </div>
                         )}
@@ -488,7 +498,7 @@ export default function StaffDashboard() {
               Showing {appointments.length} of {totalCount} appointment{totalCount !== 1 ? 's' : ''}
             </small>
           </div>
-          <div className="btn-group" role="group">
+          <div className="btn-group" role="group" aria-label="Appointment pages">
             <button
               className="btn btn-outline-primary"
               onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}

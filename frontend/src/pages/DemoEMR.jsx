@@ -13,8 +13,8 @@ import { noteEditor, notePayload, vitalFields } from '../utils/emr'
 import { emrUserId, workspaceForm, workspacePayload } from '../utils/emrWorkspace'
 import './DemoEMR.css'
 
-const sections = [['assessment', 'Assessment'], ['interventions', 'Interventions'], ['response', 'Patient Response'], ['plan', 'Follow-up Plan']]
-const tabs = ['Overview', 'Nursing Notes', 'Assessments', 'Vital History']
+const sections = [['assessment', 'Assessment'], ['interventions', 'Interventions'], ['response', 'Patient response'], ['plan', 'Follow-up plan']]
+const tabs = ['Overview', 'Nursing notes', 'Assessments', 'Vital history']
 const displayDate = value => new Date(value).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })
 
 function Vitals({ values }) {
@@ -141,7 +141,7 @@ export default function DemoEMR() {
       if (destination.origin === window.location.origin && destination.pathname !== window.location.pathname) {
         event.preventDefault()
         event.stopPropagation()
-        requestConfirmation('Leave this page without saving your changes?', 'Leave Page').then(accepted => {
+        requestConfirmation('Leave this page without saving your changes?', 'Leave page').then(accepted => {
           if (accepted) navigate(destination.pathname + destination.search + destination.hash)
         })
       }
@@ -151,7 +151,7 @@ export default function DemoEMR() {
     return () => { window.removeEventListener('beforeunload', beforeUnload); document.removeEventListener('click', leavePage, true) }
   }, [dirty, navigate])
 
-  const canLeaveEditor = async () => !dirty || await requestConfirmation('Discard your unsaved changes?', 'Discard Changes')
+  const canLeaveEditor = async () => !dirty || await requestConfirmation('Discard your unsaved changes?', 'Discard changes')
   const selectPatient = async id => {
     if ((String(id) === patientId && !dashboardView) || saving || !await canLeaveEditor()) return
     setEditor(null)
@@ -171,7 +171,7 @@ export default function DemoEMR() {
     setBaseline(JSON.stringify(form))
     setSaveError(null)
     setSuccess('')
-    setTab('Nursing Notes')
+    setTab('Nursing notes')
     window.requestAnimationFrame(() => { editorHeading.current?.focus(); editorHeading.current?.scrollIntoView({ block: 'start' }) })
   }
   const updateEditor = (key, value) => setEditor(current => ({ ...current, [key]: value }))
@@ -242,7 +242,7 @@ export default function DemoEMR() {
   const changePatientStatus = async () => {
     if (saving || !chart || !await canLeaveEditor()) return
     const removing = chart.patient.is_active
-    if (!await requestConfirmation(removing ? `Remove ${chart.patient.full_name} from the active list? Their chart, visits, and tasks will be retained and can be restored.` : `Restore ${chart.patient.full_name} to the active list?`, removing ? 'Remove Patient' : 'Restore Patient')) return
+    if (!await requestConfirmation(removing ? `Remove ${chart.patient.full_name} from the active list? Their chart, visits, and tasks will be retained and can be restored.` : `Restore ${chart.patient.full_name} to the active list?`, removing ? 'Remove patient' : 'Restore patient')) return
     setWorkflowError(null)
     try {
       const patient = await mutate(config => api.patch(`/api/staff/demo-emr/patients/${chart.patient.id}/status/`, { is_active: !removing, revision: chart.patient.revision }, config))
@@ -258,7 +258,7 @@ export default function DemoEMR() {
   }
   const updateWorkStatus = async (kind, record, status) => {
     if (saving) return
-    if (status === 'CANCELLED' && !await requestConfirmation('Cancel this visit? You can reopen it later.', 'Cancel Visit')) return
+    if (status === 'CANCELLED' && !await requestConfirmation('Cancel this visit? You can reopen it later.', 'Cancel visit')) return
     setWorkflowError(null)
     setSuccess('')
     try {
@@ -276,7 +276,7 @@ export default function DemoEMR() {
     const status = event.nativeEvent.submitter?.value === 'FINAL' ? 'FINAL' : 'DRAFT'
     let payload
     try { payload = notePayload(editor, status) } catch (error) { setSaveError(error); return }
-    if (status === 'FINAL' && !await requestConfirmation('Finalize this note? Later corrections will be recorded as amendments.', 'Finalize Note')) return
+    if (status === 'FINAL' && !await requestConfirmation('Finalize this note? Later corrections will be recorded as amendments.', 'Finalize note')) return
     const controller = new AbortController()
     pendingSave.current = controller
     setSaving(true)
@@ -305,15 +305,15 @@ export default function DemoEMR() {
   return (
     <><div className="emr-workspace py-4" inert={confirmation || activeForm ? true : undefined}>
       <header className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
-        <div><p className="section-kicker mb-1">Nursing Workspace</p><h1 className="h2 mb-0">Demo EMR</h1></div>
-        <div className="d-flex align-items-center gap-2"><span className="emr-demo-label">Demo test</span><button type="button" className="btn btn-primary btn-sm" disabled={saving} onClick={() => openEntry('patient')}>Add Patient</button></div>
+        <div><p className="section-kicker mb-1">Clinical workspace</p><h1 className="h2 mb-0">Demo EMR</h1></div>
+        <div className="d-flex align-items-center gap-2"><span className="emr-demo-label">Demo workspace</span><button type="button" className="btn btn-primary btn-sm" disabled={saving} onClick={() => openEntry('patient')}>Add patient</button></div>
       </header>
-      <div className="emr-view-switch d-flex gap-2 mb-4" role="group" aria-label="EMR workspace view"><button className={`btn btn-sm ${dashboardView ? 'btn-outline-primary' : 'btn-primary'}`} type="button" aria-pressed={!dashboardView} disabled={saving} onClick={() => switchView(false)}>Patient Charts</button><button className={`btn btn-sm ${dashboardView ? 'btn-primary' : 'btn-outline-primary'}`} type="button" aria-pressed={dashboardView} disabled={saving} onClick={() => switchView(true)}>Visits & Tasks</button></div>
+      <div className="emr-view-switch d-flex gap-2 mb-4" role="group" aria-label="EMR workspace view"><button className={`btn btn-sm ${dashboardView ? 'btn-outline-primary' : 'btn-primary'}`} type="button" aria-pressed={!dashboardView} disabled={saving} onClick={() => switchView(false)}>Patient charts</button><button className={`btn btn-sm ${dashboardView ? 'btn-primary' : 'btn-outline-primary'}`} type="button" aria-pressed={dashboardView} disabled={saving} onClick={() => switchView(true)}>Visits & tasks</button></div>
       {workflowError && <ErrorAlert error={workflowError} />}
       {success && <div className="alert alert-success py-2" role="status">{success}</div>}
       {dashboardView ? dashboardLoading ? <Loading message="Loading visits and tasks…" /> : dashboardError ? <ErrorAlert error={dashboardError} onRetry={() => setDashboardReload(current => current + 1)} /> : dashboard && <EMRDashboard data={{ ...dashboard, patients: activePatients }} userId={userId} saving={saving} onAdd={openEntry} onUpdate={updateWorkStatus} onPatient={selectPatient} onRefresh={() => setDashboardReload(current => current + 1)} /> : <div className="emr-layout">
         <aside className="card emr-patient-panel" aria-label="Patient list">
-          <div className="card-body pb-2"><h2 className="h5">Patients <span className="text-muted small">({listMode === 'ACTIVE' ? activePatients.length : patients.length - activePatients.length})</span></h2><label className="form-label" htmlFor="emr-patient-mode">Patient List</label><select className="form-select form-select-sm mb-2" id="emr-patient-mode" value={listMode} onChange={event => setListMode(event.target.value)}><option value="ACTIVE">Active patients</option><option value="REMOVED">Removed patients</option></select><label className="form-label" htmlFor="emr-patient-search">Search patients</label><input className="form-control" id="emr-patient-search" placeholder="Search name or chart number" value={search} onChange={event => setSearch(event.target.value)} /></div>
+          <div className="card-body pb-2"><h2 className="h5">Patients <span className="text-muted small">({listMode === 'ACTIVE' ? activePatients.length : patients.length - activePatients.length})</span></h2><label className="form-label" htmlFor="emr-patient-mode">Patient list</label><select className="form-select form-select-sm mb-2" id="emr-patient-mode" value={listMode} onChange={event => setListMode(event.target.value)}><option value="ACTIVE">Active patients</option><option value="REMOVED">Removed patients</option></select><label className="form-label" htmlFor="emr-patient-search">Search patients</label><input className="form-control" id="emr-patient-search" placeholder="Search name or chart number" value={search} onChange={event => setSearch(event.target.value)} /></div>
           {patientsLoading ? <Loading message="Loading patients…" /> : patientsError ? <div className="p-3"><ErrorAlert error={patientsError} onRetry={() => setListReload(current => current + 1)} /></div> : <div className="emr-patient-list list-group list-group-flush">
             {filteredPatients.map(patient => <button type="button" key={patient.id} className={`list-group-item list-group-item-action emr-patient-button${String(patient.id) === patientId ? ' active' : ''}`} aria-pressed={String(patient.id) === patientId} onClick={() => selectPatient(patient.id)} disabled={saving}><span className="emr-avatar" aria-hidden="true">{patient.full_name.split(' ').map(name => name[0]).join('').slice(0, 2)}</span><span><strong>{patient.full_name}</strong><small>{patient.chart_number}</small></span></button>)}
             {!filteredPatients.length && <p className="p-3 text-muted mb-0">{patients.length ? 'No matching patients.' : 'No patient charts available.'}</p>}
@@ -321,7 +321,7 @@ export default function DemoEMR() {
         </aside>
         <section className="emr-chart" aria-label="Patient chart" aria-busy={chartLoading}>
           {chartLoading ? <Loading message="Opening chart…" /> : chartError ? <ErrorAlert error={chartError} onRetry={reloadChart} /> : !chart ? <div className="card p-4 text-muted">Select a patient to open their chart.</div> : <>
-            <div className="card emr-chart-header mb-3"><div className="card-body d-flex flex-wrap justify-content-between gap-3"><div><p className="small text-muted mb-1">{chart.patient.chart_number}</p><h2 className="h3 mb-1">{chart.patient.full_name}</h2><p className="text-muted small mb-0">DOB: {new Date(`${chart.patient.date_of_birth}T00:00:00`).toLocaleDateString()} · {chart.patient.primary_condition}</p></div><div className="d-flex flex-wrap gap-2 align-items-start"><button type="button" className="btn btn-outline-secondary btn-sm" onClick={reloadChart} disabled={saving}>Refresh Chart</button><button type="button" className="btn btn-primary btn-sm" onClick={() => openEditor()} disabled={saving || !chart.patient.is_active}>New Visit Note</button><button type="button" className={`btn btn-sm ${chart.patient.is_active ? 'btn-outline-danger' : 'btn-outline-primary'}`} onClick={changePatientStatus} disabled={saving}>{chart.patient.is_active ? 'Remove Patient' : 'Restore Patient'}</button></div></div></div>
+            <div className="card emr-chart-header mb-3"><div className="card-body d-flex flex-wrap justify-content-between gap-3"><div><p className="small text-muted mb-1">{chart.patient.chart_number}</p><h2 className="h3 mb-1">{chart.patient.full_name}</h2><p className="text-muted small mb-0">Date of birth: {new Date(`${chart.patient.date_of_birth}T00:00:00`).toLocaleDateString()} · {chart.patient.primary_condition}</p></div><div className="d-flex flex-wrap gap-2 align-items-start"><button type="button" className="btn btn-outline-secondary btn-sm" onClick={reloadChart} disabled={saving}>Refresh chart</button><button type="button" className="btn btn-primary btn-sm" onClick={() => openEditor()} disabled={saving || !chart.patient.is_active}>New visit note</button><button type="button" className={`btn btn-sm ${chart.patient.is_active ? 'btn-outline-danger' : 'btn-outline-primary'}`} onClick={changePatientStatus} disabled={saving}>{chart.patient.is_active ? 'Remove patient' : 'Restore patient'}</button></div></div></div>
             {!chart.patient.is_active && <div className="alert alert-secondary py-2">Removed patient · Chart retained for review. Restore the patient to add entries.</div>}
             <div className="emr-tabs mb-3" role="tablist" aria-label="Chart sections">{tabs.map((name, index) => <button type="button" role="tab" id={`emr-tab-${index}`} aria-controls={`emr-panel-${index}`} aria-selected={tab === name} tabIndex={tab === name ? 0 : -1} className={tab === name ? 'active' : ''} key={name} onClick={() => setTab(name)} onKeyDown={event => {
               const next = event.key === 'ArrowRight' ? (index + 1) % tabs.length : event.key === 'ArrowLeft' ? (index + tabs.length - 1) % tabs.length : event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : null
@@ -329,23 +329,23 @@ export default function DemoEMR() {
             }}>{name}</button>)}</div>
             <div role="tabpanel" id={`emr-panel-${tabs.indexOf(tab)}`} aria-labelledby={`emr-tab-${tabs.indexOf(tab)}`}>
               {tab === 'Overview' && <div className="row g-3">
-                <div className="col-lg-7"><div className="card h-100"><div className="card-body"><h3 className="h5">Patient Summary</h3><p>{chart.patient.history}</p><h4 className="h6">Medications</h4><ul className="emr-summary-list">{chart.patient.medications.map(item => <li key={item}>{item}</li>)}</ul><h4 className="h6">Allergies</h4><ul className="emr-summary-list mb-0">{chart.patient.allergies.map(item => <li key={item}>{item}</li>)}</ul></div></div></div>
-                <div className="col-lg-5"><div className="card h-100"><div className="card-body"><h3 className="h5">Care Plan</h3><ul className="emr-summary-list">{chart.patient.care_plan.map(task => <li key={task}>{task}</li>)}</ul><p className="small text-muted mb-0">{chart.notes.filter(note => note.status === 'DRAFT').length} drafts · {finalizedNotes.length} finalized notes</p></div></div></div>
-                <div className="col-12"><div className="card"><div className="card-body"><h3 className="h5">Latest Recorded Vitals</h3>{latestVitals ? <Vitals values={latestVitals} /> : <p className="text-muted mb-0">No vital signs recorded yet.</p>}</div></div></div>
+                <div className="col-lg-7"><div className="card h-100"><div className="card-body"><h3 className="h5">Patient summary</h3><p>{chart.patient.history}</p><h4 className="h6">Medications</h4><ul className="emr-summary-list">{chart.patient.medications.map(item => <li key={item}>{item}</li>)}</ul><h4 className="h6">Allergies</h4><ul className="emr-summary-list mb-0">{chart.patient.allergies.map(item => <li key={item}>{item}</li>)}</ul></div></div></div>
+                <div className="col-lg-5"><div className="card h-100"><div className="card-body"><h3 className="h5">Care plan</h3><ul className="emr-summary-list">{chart.patient.care_plan.map(task => <li key={task}>{task}</li>)}</ul><p className="small text-muted mb-0">{chart.notes.filter(note => note.status === 'DRAFT').length} drafts · {finalizedNotes.length} finalized notes</p></div></div></div>
+                <div className="col-12"><div className="card"><div className="card-body"><h3 className="h5">Latest finalized vital signs</h3>{latestVitals ? <Vitals values={latestVitals} /> : <p className="text-muted mb-0">No vital signs in finalized notes yet.</p>}</div></div></div>
               </div>}
-              {tab === 'Nursing Notes' && <>
+              {tab === 'Nursing notes' && <>
                 {editor && <form className="card emr-note-editor mb-4" onSubmit={saveNote} aria-busy={saving}>
-                  <div className="card-body"><h3 ref={editorHeading} tabIndex="-1" className="h5">{editor.amendment_of ? `Amendment to note #${editor.amendment_of}` : editor.id ? 'Edit Draft' : 'New Visit Note'}</h3><fieldset disabled={saving}>
-                    <label className="form-label" htmlFor="emr-visit-date">Visit Date & Time</label><input className="form-control mb-3" id="emr-visit-date" type="datetime-local" value={editor.visit_at} required onChange={event => updateEditor('visit_at', event.target.value)} />
-                    <h4 className="h6">Vital Signs</h4><div className="row g-3 mb-4">{vitalFields.map(([key, label, unit, low, high]) => <div className="col-6 col-md-3" key={key}><label className="form-label small" htmlFor={`emr-vital-${key}`}>{label} <span className="text-muted">({unit})</span></label><input className="form-control" type="number" step="any" min={low} max={high} id={`emr-vital-${key}`} value={editor.vitals[key]} onChange={event => updateEditor('vitals', { ...editor.vitals, [key]: event.target.value })} /></div>)}</div>
+                  <div className="card-body"><h3 ref={editorHeading} tabIndex="-1" className="h5">{editor.amendment_of ? `Amendment to note #${editor.amendment_of}` : editor.id ? 'Edit draft' : 'New visit note'}</h3><fieldset disabled={saving}>
+                    <label className="form-label" htmlFor="emr-visit-date">Visit date and time</label><input className="form-control mb-3" id="emr-visit-date" type="datetime-local" value={editor.visit_at} required onChange={event => updateEditor('visit_at', event.target.value)} />
+                    <h4 className="h6">Vital signs</h4><div className="row g-3 mb-4">{vitalFields.map(([key, label, unit, low, high]) => <div className="col-6 col-md-3" key={key}><label className="form-label small" htmlFor={`emr-vital-${key}`}>{label} <span className="text-muted">({unit})</span></label><input className="form-control" type="number" step="any" min={low} max={high} id={`emr-vital-${key}`} value={editor.vitals[key]} onChange={event => updateEditor('vitals', { ...editor.vitals, [key]: event.target.value })} /></div>)}</div>
                     <div className="row g-3">{sections.map(([key, label]) => <div key={key} className="col-md-6"><label className="form-label" htmlFor={`emr-note-${key}`}>{label}</label><textarea id={`emr-note-${key}`} className="form-control" rows="4" maxLength={5000} value={editor[key]} onChange={event => updateEditor(key, event.target.value)} /></div>)}</div>
-                    <fieldset className="mt-4"><legend className="h6">Care Plan Tasks Completed</legend>{chart.patient.care_plan.map((task, index) => <div className="form-check mb-2" key={task}><input className="form-check-input" type="checkbox" id={`emr-task-${index}`} checked={editor.completed_tasks.includes(task)} onChange={event => updateEditor('completed_tasks', event.target.checked ? [...editor.completed_tasks, task] : editor.completed_tasks.filter(item => item !== task))} /><label className="form-check-label" htmlFor={`emr-task-${index}`}>{task}</label></div>)}</fieldset>
+                    <fieldset className="mt-4"><legend className="h6">Completed care plan tasks</legend>{chart.patient.care_plan.map((task, index) => <div className="form-check mb-2" key={task}><input className="form-check-input" type="checkbox" id={`emr-task-${index}`} checked={editor.completed_tasks.includes(task)} onChange={event => updateEditor('completed_tasks', event.target.checked ? [...editor.completed_tasks, task] : editor.completed_tasks.filter(item => item !== task))} /><label className="form-check-label" htmlFor={`emr-task-${index}`}>{task}</label></div>)}</fieldset>
                     {saveError && <div className="mt-3"><ErrorAlert error={saveError} /></div>}
-                    <div className="d-flex flex-wrap gap-2 mt-4"><button type="submit" value="DRAFT" className="btn btn-outline-primary">{saving ? 'Saving…' : 'Save Draft'}</button><button type="submit" value="FINAL" className="btn btn-primary">Finalize Note</button><button type="button" className="btn btn-outline-secondary" onClick={async () => { if (await canLeaveEditor()) setEditor(null) }}>Close</button>{dirty && <span className="small text-muted align-self-center">Unsaved changes</span>}</div>
+                    <div className="d-flex flex-wrap gap-2 mt-4"><button type="submit" value="DRAFT" className="btn btn-outline-primary">{saving ? 'Saving…' : 'Save draft'}</button><button type="submit" value="FINAL" className="btn btn-primary">Finalize note</button><button type="button" className="btn btn-outline-secondary" onClick={async () => { if (await canLeaveEditor()) setEditor(null) }}>Close</button>{dirty && <span className="small text-muted align-self-center">Unsaved changes</span>}</div>
                   </fieldset></div>
                 </form>}
                 {!chart.notes.length && <div className="card p-4 text-muted">No nursing notes yet. Start a new visit note.</div>}
-                {chart.notes.map(note => <article key={note.id} className="card mb-3"><div className="card-body"><div className="d-flex flex-wrap justify-content-between gap-2 mb-3"><div><h3 className="h6 mb-1">{note.amendment_of ? `Amendment to note #${note.amendment_of}` : 'Nursing Visit'} <span className={`badge ms-2 ${note.status === 'FINAL' ? 'text-bg-success' : 'text-bg-secondary'}`}>{note.status === 'FINAL' ? 'Finalized' : 'Draft'}</span></h3><p className="small text-muted mb-0">{displayDate(note.visit_at)} · {note.author_name} · Note #{note.id}</p></div>{note.status === 'DRAFT' ? (note.author === userId || user?.role === 'ADMIN') && <button type="button" className="btn btn-outline-primary btn-sm" disabled={saving || !chart.patient.is_active} onClick={() => openEditor(note)}>Edit Draft</button> : <button type="button" className="btn btn-outline-secondary btn-sm" disabled={saving || !chart.patient.is_active} onClick={() => openEditor(null, note.id)}>Add Amendment</button>}</div>
+                {chart.notes.map(note => <article key={note.id} className="card mb-3"><div className="card-body"><div className="d-flex flex-wrap justify-content-between gap-2 mb-3"><div><h3 className="h6 mb-1">{note.amendment_of ? `Amendment to note #${note.amendment_of}` : 'Nursing visit'} <span className={`badge ms-2 ${note.status === 'FINAL' ? 'text-bg-success' : 'text-bg-secondary'}`}>{note.status === 'FINAL' ? 'Finalized' : 'Draft'}</span></h3><p className="small text-muted mb-0">{displayDate(note.visit_at)} · {note.author_name} · Note #{note.id}</p></div>{note.status === 'DRAFT' ? (note.author === userId || user?.role === 'ADMIN') && <button type="button" className="btn btn-outline-primary btn-sm" disabled={saving || !chart.patient.is_active} onClick={() => openEditor(note)}>Edit draft</button> : <button type="button" className="btn btn-outline-secondary btn-sm" disabled={saving || !chart.patient.is_active} onClick={() => openEditor(null, note.id)}>Add amendment</button>}</div>
                   {sections.map(([key, label]) => note[key] && <div className="mb-3" key={key}><h4 className="h6 mb-1">{label}</h4><p className="emr-note-text mb-0">{note[key]}</p></div>)}
                   {Object.keys(note.vitals).length > 0 && <div className="emr-note-vitals mb-3"><Vitals values={note.vitals} /></div>}
                   {note.completed_tasks.length > 0 && <p className="small mb-2"><strong>Completed:</strong> {note.completed_tasks.join(' · ')}</p>}
@@ -353,7 +353,7 @@ export default function DemoEMR() {
                 </div></article>)}
               </>}
               {tab === 'Assessments' && <EMRAssessments records={chart.assessments || []} onAdd={() => openEntry('assessment')} removed={!chart.patient.is_active} saving={saving} />}
-              {tab === 'Vital History' && <div className="card"><div className="card-body"><h3 className="h5">Vital History</h3>{finalizedNotes.some(note => Object.keys(note.vitals).length) ? <ScrollableTable className="table-responsive" label="Demo EMR table"><table className="table table-hover table-sm emr-history-table"><caption className="small">Vitals from finalized visit notes.</caption><thead><tr><th scope="col">Visit</th>{vitalFields.map(([key, label, unit]) => <th scope="col" key={key}>{label}<small className="d-block text-muted">{unit}</small></th>)}</tr></thead><tbody>{finalizedNotes.filter(note => Object.keys(note.vitals).length).map(note => <tr key={note.id}><th scope="row">{displayDate(note.visit_at)}{note.amendment_of && <small className="d-block text-muted">Amendment #{note.amendment_of}</small>}</th>{vitalFields.map(([key]) => <td key={key}>{note.vitals[key] ?? '—'}</td>)}</tr>)}</tbody></table></ScrollableTable> : <p className="text-muted mb-0">No finalized vital signs recorded yet.</p>}</div></div>}
+              {tab === 'Vital history' && <div className="card"><div className="card-body"><h3 className="h5">Vital history</h3>{finalizedNotes.some(note => Object.keys(note.vitals).length) ? <ScrollableTable className="table-responsive" label="Vital signs history"><table className="table table-hover table-sm emr-history-table"><caption className="small">Vitals from finalized visit notes.</caption><thead><tr><th scope="col">Visit</th>{vitalFields.map(([key, label, unit]) => <th scope="col" key={key}>{label}<small className="d-block text-muted">{unit}</small></th>)}</tr></thead><tbody>{finalizedNotes.filter(note => Object.keys(note.vitals).length).map(note => <tr key={note.id}><th scope="row">{displayDate(note.visit_at)}{note.amendment_of && <small className="d-block text-muted">Amendment #{note.amendment_of}</small>}</th>{vitalFields.map(([key]) => <td key={key}>{note.vitals[key] ?? '—'}</td>)}</tr>)}</tbody></table></ScrollableTable> : <p className="text-muted mb-0">No finalized vital signs recorded yet.</p>}</div></div>}
             </div>
           </>}
         </section>

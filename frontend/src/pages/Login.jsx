@@ -49,10 +49,10 @@ export default function Login() {
   }
 
   return (
-    <AccountLayout title="Welcome back." description="Sign in with your patient, staff, owner, or administrator account to open your workspace.">
+    <AccountLayout title="Welcome back" description="Sign in to access your workspace.">
       <form onSubmit={handleSubmit} className="auth-panel" aria-busy={submitting}>
         <fieldset disabled={submitting}>
-        <legend className="visually-hidden">Sign In</legend>
+        <legend className="visually-hidden">Sign in</legend>
         <div className="mb-3">
           <label className="form-label" htmlFor="email">Email</label>
           <input
@@ -84,10 +84,10 @@ export default function Login() {
         {error && <ErrorAlert error={error} />}
         {success && <div className="alert alert-success">{success}</div>}
         <button className="btn btn-primary" type="submit" disabled={submitting}>
-          {submitting ? 'Signing in…' : 'Sign In'}
+          {submitting ? 'Signing in…' : 'Sign in'}
         </button>
         </fieldset>
-        <p className="auth-panel__switch">New here? <Link to="/register">Sign Up for a patient account</Link></p>
+        <p className="auth-panel__switch">New here? <Link to="/register">Create a patient account</Link></p>
       </form>
     </AccountLayout>
   )

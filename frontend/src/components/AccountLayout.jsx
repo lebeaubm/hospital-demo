@@ -10,7 +10,7 @@ export default function AccountLayout({ title, description, children }) {
         <p>{description}</p>
       </header>
       {children}
-      <Link className="page-text-link auth-page__back" to="/team"><span aria-hidden="true">←</span> Back to Our Team</Link>
+      <Link className="page-text-link auth-page__back" to="/team"><span aria-hidden="true">←</span> Back to our team</Link>
     </div>
   )
 }

@@ -80,7 +80,7 @@ export default function RequestAppointment() {
         Fill out the form below to request an appointment. Our staff will review
         and confirm your request.
       </p>
-      <p className="small text-muted">Demo test</p>
+      <p className="small text-muted">Demo appointment</p>
 
       <form onSubmit={handleSubmit} className="card shadow-sm p-4" aria-busy={submitting}>
         <fieldset disabled={submitting}>

@@ -94,7 +94,7 @@ function App() {
     const route = pathname + hash
     const moved = previousRoute.current !== null && previousRoute.current !== route
     previousRoute.current = route
-    const title = pathname === '/staff' && user?.role === 'OWNER' ? 'Owners portal' : pageTitle(pathname)
+    const title = pathname === '/staff' && user?.role === 'OWNER' ? 'Owner portal' : pageTitle(pathname)
     document.title = title === 'Home' ? 'Peaceloving Home Health Inc.' : `${title} | Peaceloving Home Health Inc.`
     const main = mainContent.current
     if (!main) return
@@ -186,7 +186,7 @@ function App() {
             <ul className="navbar-nav ms-auto">
               <li className="nav-item">
                 <NavLink className="nav-link" to="/about">
-                  About Us
+                  About
                 </NavLink>
               </li>
               <li className="nav-item">
@@ -196,7 +196,7 @@ function App() {
               </li>
               <li className="nav-item">
                 <NavLink className="nav-link" to="/team">
-                  Our Team
+                  Team
                 </NavLink>
               </li>
               <li className="nav-item">
@@ -206,17 +206,17 @@ function App() {
               </li>
               <li className="nav-item">
                 <NavLink className="nav-link nav-contact-link" to="/contact">
-                  Contact Us
+                  Contact
                 </NavLink>
               </li>
               {isStaff ? (
                 <li className="nav-item">
-                  <NavLink className="nav-link nav-portal-link" to="/staff">{user?.role === 'OWNER' ? 'Owners portal' : 'Staff Portal'}</NavLink>
+                  <NavLink className="nav-link nav-portal-link" to="/staff">{user?.role === 'OWNER' ? 'Owner portal' : 'Staff portal'}</NavLink>
                 </li>
               ) : isAuthenticated ? (
                 <li className="nav-item">
                   <NavLink className="nav-link nav-portal-link" to="/portal">
-                    Patient Portal
+                    Patient portal
                   </NavLink>
                 </li>
               ) : null}
@@ -410,16 +410,15 @@ function App() {
         <div className="container">
           <div className="row g-3 align-items-center">
             <div className="col-md-6">
-              <h2 className="h6 mb-2">Site Navigation</h2>
               <nav className="footer-navigation d-flex flex-wrap gap-3" aria-label="Footer navigation">
                 <NavLink to="/">Home</NavLink>
-                <NavLink to="/about">About Us</NavLink>
+                <NavLink to="/about">About</NavLink>
                 <NavLink to="/services">Services</NavLink>
-                <NavLink to="/team">Our Team</NavLink>
+                <NavLink to="/team">Team</NavLink>
                 <NavLink to="/careers">Careers</NavLink>
                 <NavLink to="/contact">Contact</NavLink>
               </nav>
-              <p className="small text-muted mt-3 mb-0">Peaceloving Home Health Inc. · Demo test</p>
+              <p className="small text-muted mt-3 mb-0">Peaceloving Home Health Inc. · Demo site</p>
             </div>
             <div className="col-md-6 text-md-end">
               <p className="mb-1"><strong>Call:</strong> <a href="tel:9516213600">(951) 621-3600</a></p>

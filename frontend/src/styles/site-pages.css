@@ -1,6 +1,6 @@
 /* Shared public pages and the staff workspace. */
 .app-shell { background: var(--bg-primary); }
-.site-header { padding-block: 0.9rem; position: sticky; top: 0; z-index: 1020; }
+.site-header { padding-block: 0.65rem; position: sticky; top: 0; z-index: 1020; border-bottom: 1px solid rgb(255 255 255 / 10%); }
 .site-header .navbar-nav { align-items: center; gap: 0.35rem; }
 .site-header .nav-link { padding: 0.65rem 0.85rem !important; font-size: 0.9rem; white-space: nowrap; }
 .site-header .nav-contact-link,
@@ -10,22 +10,22 @@
 .btn-gold { --bs-btn-bg: var(--brand-gold); --bs-btn-border-color: var(--brand-gold); --bs-btn-color: #33213e; --bs-btn-hover-bg: #dfc17a; --bs-btn-hover-border-color: #dfc17a; --bs-btn-hover-color: #33213e; --bs-btn-active-bg: #c29b43; --bs-btn-active-border-color: #c29b43; --bs-btn-active-color: #33213e; font-weight: 700; }
 
 .public-page { max-width: 1120px; margin-inline: auto; }
-.page-hero { padding-block: 3.5rem 2rem; }
-.page-hero--split { display: grid; grid-template-columns: 1.1fr 1fr; gap: 3.5rem; align-items: center; }
+.page-hero { padding-block: 2.5rem 1rem; }
+.page-hero--split { display: grid; grid-template-columns: 1.1fr 1fr; gap: 2.5rem; align-items: center; }
 .page-hero__copy { min-width: 0; }
 .page-eyebrow { color: var(--brand-purple); font-size: 0.74rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.8rem; }
-.page-hero h1 { color: var(--brand-purple-deep); font-size: clamp(2.5rem, 4.4vw, 4rem); font-weight: 700; line-height: 1.1; letter-spacing: -0.045em; max-width: 820px; margin-bottom: 1.5rem; }
-.page-lead { color: var(--text-secondary); font-size: 1.1rem; line-height: 1.8; max-width: 720px; margin-bottom: 1.6rem; }
-.page-hero__image { width: 100%; height: 390px; object-fit: cover; border-radius: 1.6rem 1.6rem 1.6rem 0.3rem; border-bottom: 6px solid var(--brand-gold); }
+.page-hero h1 { color: var(--brand-purple-deep); font-size: clamp(2.15rem, 4vw, 3.2rem); font-weight: 700; line-height: 1.15; letter-spacing: -0.03em; max-width: 20ch; margin-bottom: 1.1rem; }
+.page-lead { color: var(--text-secondary); font-size: 1.1rem; line-height: 1.65; max-width: 60ch; margin-bottom: 1.3rem; }
+.page-hero__image { width: 100%; height: 340px; object-fit: cover; border-radius: 1.25rem; border-bottom: 4px solid var(--brand-gold); }
 .page-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 1.2rem; }
 .public-page .btn, .auth-page .btn { padding: 0.8rem 1.3rem; border-radius: 0.55rem; font-weight: 700; }
 .page-text-link { color: var(--brand-purple); font-weight: 700; text-underline-offset: 0.25rem; }
 .page-text-link:hover { color: var(--brand-purple-deep); }
 .page-text-link span { margin-left: 0.45rem; }
-.page-section { margin-block: 4rem; scroll-margin-top: 7rem; }
-.section-heading { margin-bottom: 1.8rem; max-width: 720px; }
+.page-section { margin-block: 2.75rem; scroll-margin-top: 7rem; }
+.section-heading { margin-bottom: 1.4rem; max-width: 65ch; }
 .section-heading h2, .purpose-band h2, .care-cta h2, .team-access h2, .application-intro h2, .contact-call-card h2, .contact-message-panel h2 { color: var(--brand-purple-deep); font-size: clamp(1.6rem, 2.8vw, 2.35rem); font-weight: 700; line-height: 1.2; letter-spacing: -0.025em; margin-bottom: 1rem; }
-.section-heading p:not(.page-eyebrow), .story-copy, .public-page article > p:not(.page-eyebrow) { color: var(--text-secondary); line-height: 1.8; }
+.section-heading p:not(.page-eyebrow), .story-copy, .public-page article > p:not(.page-eyebrow) { color: var(--text-secondary); line-height: 1.65; }
 .story-layout { display: grid; grid-template-columns: 1fr 1.2fr; gap: 4rem; }
 .story-copy p:last-child { margin-bottom: 0; }
 .purpose-band { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; background: var(--brand-purple); color: #fff; border-radius: 1.3rem; padding: 2.5rem; }
@@ -48,9 +48,8 @@
 .care-cta__phone:hover { color: #f2ddad; }
 
 .service-category-grid { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 1.5rem; }
-.service-category-card { padding: 2rem; border: 1px solid #e5dce9; border-radius: 1rem; background: var(--bg-primary); }
+.service-category-card { padding: 1.6rem; border: 1px solid var(--border-color); border-radius: 1rem; background: var(--bg-primary); scroll-margin-top: 7rem; }
 .service-category-card h3 { font-size: 1.6rem; }
-.service-category-card > p:not(.page-eyebrow) { min-height: 5.4rem; }
 .service-details { margin-top: 1.5rem; border-top: 1px solid #e5dce9; padding-top: 1rem; }
 .service-details summary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; color: var(--brand-purple); font-weight: 700; cursor: pointer; min-height: 2.75rem; list-style: none; }
 .service-details summary::-webkit-details-marker { display: none; }
@@ -64,7 +63,7 @@
 .coverage-section { border-left: 4px solid var(--brand-gold); padding-left: 2rem; }
 
 .team-role-grid, .career-role-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
-.team-role-card, .career-role-card { padding: 2rem; border: 1px solid #e5dce9; border-radius: 1rem; }
+.team-role-card, .career-role-card { padding: 1.6rem; border: 1px solid var(--border-color); border-radius: 1rem; }
 .team-role-card { border-top: 4px solid var(--brand-gold); }
 .team-approach { padding-block: 2rem; border-top: 1px solid #e5dce9; }
 .care-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; padding: 0; margin: 2rem 0; list-style: none; }
@@ -92,7 +91,7 @@
 .contact-details h3 { font-size: 1rem; margin-bottom: 0.6rem; }
 .contact-details p { color: var(--text-secondary); line-height: 1.8; margin-bottom: 0.5rem; }
 .contact-details > div + div { border-top: 1px solid #e5dce9; padding-top: 1.5rem; margin-top: 1.5rem; }
-.contact-message-panel { border: 1px solid #e5dce9; border-radius: 1rem; padding: 2rem; background: var(--bg-primary); scroll-margin-top: 7rem; }
+.contact-message-panel { border: 1px solid var(--border-color); border-radius: 1rem; padding: 1.6rem; background: var(--bg-primary); scroll-margin-top: 7rem; }
 .contact-message-panel h2 { font-size: 1.75rem; }
 .contact-message-panel > p { color: var(--text-secondary); line-height: 1.7; }
 .contact-message-panel .form-control, .auth-panel .form-control { min-height: 3rem; }
@@ -121,7 +120,7 @@ main.container-workspace { max-width: 1480px; padding-top: 1.5rem; }
 .workspace-sidebar__heading .page-eyebrow { font-size: 0.65rem; margin-bottom: 0.35rem; }
 .workspace-sidebar__heading h2 { color: var(--brand-purple-deep); font-weight: 700; font-size: 1.3rem; margin: 0; }
 .workspace-menu-toggle { display: none; }
-.workspace-nav-group { margin-top: 1.5rem; }
+.workspace-nav-group { margin-top: 1.15rem; }
 .workspace-nav-group h3 { color: var(--text-secondary); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding-left: 0.7rem; margin-bottom: 0.4rem; }
 .workspace-link { display: block; width: 100%; border: 0; background: transparent; color: var(--brand-purple-deep); text-align: left; font-size: 0.9rem; padding: 0.65rem 0.7rem; margin-bottom: 0.2rem; border-radius: 0.45rem; min-height: 44px; }
 .workspace-link:hover { background: #e8ddec; color: var(--brand-purple-deep); text-decoration: none; }
@@ -191,7 +190,7 @@ main.container-workspace { max-width: 1480px; padding-top: 1.5rem; }
 [data-theme="dark"] .home-section h2,
 [data-theme="dark"] .home-service-card h3,
 [data-theme="dark"] .home-coverage-card h3,
-[data-theme="dark"] .home-area-list span,
+[data-theme="dark"] .home-area-list li,
 [data-theme="dark"] .home-faq__item summary { color: #f0e5f5; }
 [data-theme="dark"] .home-eyebrow,
 [data-theme="dark"] .home-text-link,
@@ -221,9 +220,9 @@ main.container-workspace { max-width: 1480px; padding-top: 1.5rem; }
   .page-hero--split, .story-layout, .purpose-band, .service-category-grid, .contact-layout { grid-template-columns: 1fr; }
   .page-hero--split { gap: 2rem; }
   .page-hero__image { height: 280px; }
-  .page-hero h1 { font-size: 2.65rem; }
+  .page-hero h1 { font-size: clamp(2rem, 7.5vw, 2.65rem); }
   .page-lead { font-size: 1rem; }
-  .page-section { margin-block: 2.75rem; }
+  .page-section { margin-block: 2.25rem; }
   .story-layout { gap: 0; }
   .value-grid, .care-steps { grid-template-columns: 1fr; gap: 1.25rem; }
   .care-steps li { display: flex; align-items: flex-start; gap: 1rem; }

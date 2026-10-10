@@ -4,7 +4,7 @@ import PageHero from '../components/PageHero'
 import ServiceArea from '../components/ServiceArea'
 
 const fieldLabels = {
-  full_name: 'Full Name',
+  full_name: 'Full name',
   email: 'Email',
   subject: 'Subject',
   message: 'Message',
@@ -79,37 +79,34 @@ export default function Contact() {
 
   return (
     <div className="public-page">
-      <PageHero eyebrow="Contact Us" title="Let’s talk about care." />
+      <PageHero eyebrow="Contact us" title="Let’s talk about care" />
       <div className="contact-layout page-section">
         <div>
           <section className="contact-call-card" aria-labelledby="contact-call-title">
-            <p className="page-eyebrow">A conversation is a good place to start</p>
-            <h2 id="contact-call-title">Call us.</h2>
+            <h2 id="contact-call-title">Speak with our team</h2>
             <a className="contact-phone" href="tel:9516213600">(951) 621-3600</a>
-            <p>Ask about services, care in your area, or insurance and payment options.</p>
+            <p>Ask about services, coverage, or care in your area.</p>
           </section>
           <div className="contact-details">
             <div><h3>Care availability</h3><p>24 hours a day, 7 days a week.</p></div>
-            <div><h3>Visit our office</h3><p>1307 W 6th Street, Suite 220C<br />Corona, CA 92882</p><p>Call to confirm office hours before visiting.</p><a className="page-text-link" href="https://www.google.com/maps/search/?api=1&query=1307+W+6th+Street+Suite+220C+Corona+CA+92882" target="_blank" rel="noreferrer">Get Directions <span aria-hidden="true">↗</span></a></div>
+            <div><h3>Visit our office</h3><p>1307 W 6th Street, Suite 220C<br />Corona, CA 92882</p><p>Call to confirm office hours before visiting.</p><a className="page-text-link" href="https://www.google.com/maps/search/?api=1&query=1307+W+6th+Street+Suite+220C+Corona+CA+92882" target="_blank" rel="noreferrer">Get directions <span aria-hidden="true">↗</span></a></div>
           </div>
         </div>
         <section className="contact-message-panel" id="send-message" aria-labelledby="send-message-title">
-          <p className="page-eyebrow">Tell us how we can help</p>
-          <h2 id="send-message-title">Send us a message.</h2>
-          <p>Leave your details and question for our team to review.</p>
-          <p className="small text-muted" id="contact-demo-notice">Demo test</p>
+          <h2 id="send-message-title">Send a message</h2>
+          <p className="small text-muted" id="contact-demo-notice">Demo form · Use sample information.</p>
           {success && <div className="alert alert-success" role="status">{success}</div>}
           {error && <div className="alert alert-danger" role="alert">{error}</div>}
           <form onSubmit={handleSubmit} aria-describedby="contact-demo-notice" aria-busy={submitting}>
             <fieldset disabled={submitting}>
               <legend className="visually-hidden">Contact message — all fields required</legend>
               <div className="row g-3">
-                <div className="col-md-6"><label className="form-label" htmlFor="name">Full Name</label><input id="name" name="full_name" className="form-control" autoComplete="name" maxLength={255} required /></div>
+                <div className="col-md-6"><label className="form-label" htmlFor="name">Full name</label><input id="name" name="full_name" className="form-control" autoComplete="name" maxLength={255} required /></div>
                 <div className="col-md-6"><label className="form-label" htmlFor="email">Email</label><input id="email" name="email" type="email" className="form-control" autoComplete="email" maxLength={254} required /></div>
                 <div className="col-12"><label className="form-label" htmlFor="subject">Subject</label><input id="subject" name="subject" className="form-control" maxLength={200} required /></div>
                 <div className="col-12"><label className="form-label" htmlFor="message">Message</label><textarea id="message" name="message" className="form-control" rows="5" maxLength={5000} required /></div>
                 <div className="col-12"><div className="form-check"><input className="form-check-input" type="checkbox" id="consent" required /><label className="form-check-label" htmlFor="consent">I consent to the collection and processing of the information submitted through this form.</label></div></div>
-                <div className="col-12"><button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Submitting…' : 'Send Message'}</button></div>
+                <div className="col-12"><button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Sending…' : 'Send message'}</button></div>
               </div>
             </fieldset>
           </form>
