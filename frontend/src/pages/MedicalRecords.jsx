@@ -78,7 +78,7 @@ function MedicalRecords() {
       link.click()
       link.remove()
       window.URL.revokeObjectURL(url)
-    } catch (err) {
+    } catch {
       alert('Failed to download document')
     }
   }
@@ -95,7 +95,7 @@ function MedicalRecords() {
         ...doc,
         url,
       })
-    } catch (err) {
+    } catch {
       alert('Failed to preview document')
     } finally {
       setPreviewLoading(false)
@@ -261,13 +261,13 @@ function MedicalRecords() {
                           onClick={() => handlePreview(doc)}
                           disabled={previewLoading}
                         >
-                          👁️ View
+                           View
                         </button>
                         <button
                           className="btn btn-sm btn-primary"
                           onClick={() => handleDownload(doc.id, doc.original_name)}
                         >
-                          ⬇️ Download
+                           Download
                         </button>
                       </td>
                     </tr>
@@ -392,7 +392,7 @@ function MedicalRecords() {
                   className="btn btn-primary"
                   onClick={() => handleDownload(previewDocument.id, previewDocument.original_name)}
                 >
-                  ⬇️ Download
+                   Download
                 </button>
                 <button className="btn btn-secondary" onClick={closePreview}>
                   Close

@@ -14,6 +14,7 @@ export default function Register() {
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [accountCreated, setAccountCreated] = useState(false)
   const navigate = useNavigate()
   const { login } = useAuth()
 
@@ -26,15 +27,21 @@ export default function Register() {
 
   const handleSubmit = async (event) => {
     event.preventDefault()
+    if (submitting || accountCreated) return
     setError(null)
     setSuccess('')
     setSubmitting(true)
 
     try {
-      // Register the user
       await api.post('/api/auth/register/', formData)
-      
-      // Auto-login after successful registration
+      setAccountCreated(true)
+    } catch (err) {
+      setError(err)
+      setSubmitting(false)
+      return
+    }
+
+    try {
       const { data } = await api.post('/api/auth/login/', {
         email: formData.email,
         password: formData.password,
@@ -43,12 +50,9 @@ export default function Register() {
       setTokens({ access: data.access, refresh: data.refresh })
       login()
       setSuccess('Registration successful!')
-      
-      setTimeout(() => {
-        navigate('/portal/profile')
-      }, 500)
-    } catch (err) {
-      setError(err)
+      navigate('/portal/profile')
+    } catch {
+      setSuccess('Your account was created. Automatic sign-in could not be completed. Please sign in with your new account.')
     } finally {
       setSubmitting(false)
     }
@@ -58,6 +62,7 @@ export default function Register() {
     <div className="py-4" style={{ maxWidth: '560px' }}>
       <h1 className="mb-3">Register</h1>
       <p className="text-muted">Create a patient account to get started.</p>
+      <p className="small text-muted">Demo test</p>
       <form onSubmit={handleSubmit} className="card shadow-sm p-4">
         <div className="mb-3">
           <label className="form-label" htmlFor="email">
@@ -114,8 +119,8 @@ export default function Register() {
           />
         </div>
         {error && <ErrorAlert error={error} />}
-        {success && <div className="alert alert-success">{success}</div>}
-        <button className="btn btn-primary mb-3" type="submit" disabled={submitting}>
+        {success && <div className="alert alert-success" role="status">{success}{accountCreated && !submitting && <> <Link to="/login">Sign in</Link>.</>}</div>}
+        <button className="btn btn-primary mb-3" type="submit" disabled={submitting || accountCreated}>
           {submitting ? 'Registering...' : 'Register'}
         </button>
         <div className="text-center">

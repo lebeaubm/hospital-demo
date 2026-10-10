@@ -145,7 +145,7 @@ The Medical Records system provides secure document management and clinical note
   - Download and Delete buttons
 
 **StaffDashboard.jsx**
-- Added "📋 Record" button to view patient record
+- Added " Record" button to view patient record
 - Links to /staff/patients/:id/record
 
 ### Routing
@@ -200,7 +200,7 @@ python manage.py test core.tests.MedicalRecordsTests
 1. **Login as Staff**
    - Login with staff credentials
    - Go to Staff Dashboard
-   - Click "📋 Record" button for any patient
+   - Click " Record" button for any patient
 
 2. **View Full Record**
    - See all patient information
@@ -212,7 +212,7 @@ python manage.py test core.tests.MedicalRecordsTests
    - Enter note content
    - Select "Staff Only" visibility
    - Submit note
-   - Click "👁️ Share with Patient" button
+   - Click " Share with Patient" button
    - Verify badge changes to "Shared with Patient"
 
 4. **Upload STAFF_ONLY Document**
@@ -321,14 +321,14 @@ Access at:
 
 ## Security Notes
 
-- ✅ Files stored with randomized names (UUID)
-- ✅ No direct MEDIA_URL access
-- ✅ Permission-checked downloads
-- ✅ Role-based access control
-- ✅ 404 responses for unauthorized access (no info leaking)
-- ✅ File type and size validation
-- ✅ Staff-only deletion capability
-- ✅ Audit trail for note sharing
+-  Files stored with randomized names (UUID)
+-  No direct MEDIA_URL access
+-  Permission-checked downloads
+-  Role-based access control
+-  404 responses for unauthorized access (no info leaking)
+-  File type and size validation
+-  Staff-only deletion capability
+-  Audit trail for note sharing
 
 ## No Secrets Committed
 

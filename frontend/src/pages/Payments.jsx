@@ -180,7 +180,7 @@ export default function Payments() {
                             Downloading...
                           </>
                         ) : (
-                          <>📄 Download Invoice</>
+                          <> Download Invoice</>
                         )}
                       </button>
                     </div>

@@ -14,12 +14,25 @@ import os
 from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables from .env file
 load_dotenv(BASE_DIR / '.env')
+
+
+def get_bool_env(name, default=False):
+    return os.environ.get(name, str(default)).strip().lower() in {'1', 'true', 'yes', 'on'}
+
+
+def get_csv_env(name, default=None):
+    raw = os.environ.get(name, '')
+    values = [item.strip() for item in raw.split(',') if item.strip()]
+    if values:
+        return values
+    return default or []
 
 
 # Quick-start development settings - unsuitable for production
@@ -31,10 +44,21 @@ SECRET_KEY = os.environ.get(
     'django-insecure-4_^ia5rf4cs=!z_!b(91aj6n)z%e^x&notx(-oq)4^)z$q-=e8'
 )
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+APPLICATION_ENCRYPTION_KEY = os.environ.get('APPLICATION_ENCRYPTION_KEY', '')
 
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = get_bool_env('DEBUG', True)
+
+ALLOWED_HOSTS = get_csv_env('ALLOWED_HOSTS', ['localhost', '127.0.0.1'] if DEBUG else [])
+
+if not DEBUG and SECRET_KEY.startswith('django-insecure-'):
+    raise ImproperlyConfigured('SECRET_KEY must be explicitly set in production.')
+
+if DEBUG and not APPLICATION_ENCRYPTION_KEY:
+    APPLICATION_ENCRYPTION_KEY = SECRET_KEY
+
+if not DEBUG and not ALLOWED_HOSTS:
+    raise ImproperlyConfigured('ALLOWED_HOSTS must be set in production.')
 
 
 # Application definition
@@ -148,6 +172,7 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Media files (user-uploaded content)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+DATA_UPLOAD_MAX_MEMORY_SIZE = 12 * 1024 * 1024
 
 # WhiteNoise configuration for production static file serving
 STORAGES = {
@@ -173,34 +198,66 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    'DEFAULT_THROTTLE_RATES': {
+        'career_application': '10/hour',
+        'contact_message': '10/hour',
+    },
+}
+
+# JWT Token Lifetime Configuration
+from datetime import timedelta
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': False,
 }
 
 # API Documentation
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Hospital Demo API',
     'VERSION': '1.0.0',
+    'ENUM_NAME_OVERRIDES': {
+        'AppointmentStatusEnum': 'core.models.Appointment.Status',
+        'NotificationLogStatusEnum': 'core.models.NotificationLog.Status',
+        'PaymentStatusEnum': 'core.models.Payment.Status',
+        'PrescriptionStatusEnum': 'core.models.Prescription.Status',
+        'PrescriptionRefillStatusEnum': 'core.models.PrescriptionRefill.Status',
+        'MessageThreadStatusEnum': 'core.models.MessageThread.Status',
+        'LabOrderStatusEnum': 'core.models.LabOrder.Status',
+        'LabResultStatusEnum': 'core.models.LabResult.Status',
+        'BillStatusEnum': 'core.models.Bill.Status',
+        'MedicalDocumentCategoryEnum': 'core.models.MedicalDocument.Category',
+        'LabTestCategoryEnum': 'core.models.LabTest.Category',
+        'BillableServiceCategoryEnum': 'core.models.BillableService.Category',
+        'MedicalNoteVisibilityEnum': 'core.models.MedicalNote.Visibility',
+        'MedicalDocumentVisibilityEnum': 'core.models.MedicalDocument.Visibility',
+    },
 }
 
 # CORS Configuration
 # In development, default to localhost
 # In production, set CORS_ALLOWED_ORIGINS environment variable
-CORS_ALLOWED_ORIGINS_ENV = os.environ.get('CORS_ALLOWED_ORIGINS', '')
-if CORS_ALLOWED_ORIGINS_ENV:
-    CORS_ALLOWED_ORIGINS = [origin.strip() for origin in CORS_ALLOWED_ORIGINS_ENV.split(',')]
-else:
+CORS_ALLOWED_ORIGINS = get_csv_env('CORS_ALLOWED_ORIGINS')
+if not CORS_ALLOWED_ORIGINS:
     CORS_ALLOWED_ORIGINS = [
         'http://localhost:5173',
         'http://127.0.0.1:5173',
     ]
 
+CSRF_TRUSTED_ORIGINS = get_csv_env('CSRF_TRUSTED_ORIGINS')
+
 # Security settings for production
 if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
     SECURE_BROWSER_XSS_FILTER = True
     SECURE_CONTENT_TYPE_NOSNIFF = True
     X_FRAME_OPTIONS = 'DENY'
+    SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+    SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
@@ -231,3 +288,14 @@ STRIPE_PUBLISHABLE_KEY = os.environ.get('STRIPE_PUBLISHABLE_KEY', '')
 STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
 STRIPE_CONSULTATION_FEE = int(os.environ.get('STRIPE_CONSULTATION_FEE', '5000'))  # in cents (default: $50.00)
 STRIPE_CURRENCY = os.environ.get('STRIPE_CURRENCY', 'usd')
+
+# -------------------------------------------------------------------------
+# PAYMENT DEMO MODE
+# When True (default): payments are recorded in the database for tracking
+# but no real money is charged. The UI shows a "Demo Mode" warning.
+#
+# To enable real Stripe billing, set PAYMENT_DEMO_MODE=false in your .env
+# and ensure STRIPE_SECRET_KEY is configured. Then update BillPaymentCreateView
+# in views.py to create a Stripe PaymentIntent before calling serializer.save().
+# -------------------------------------------------------------------------
+PAYMENT_DEMO_MODE = os.environ.get('PAYMENT_DEMO_MODE', 'true').lower() == 'true'

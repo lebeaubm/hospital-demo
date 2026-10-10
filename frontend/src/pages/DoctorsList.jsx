@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import { SkeletonDoctorCard } from '../components/SkeletonLoader'
@@ -11,6 +11,7 @@ export default function DoctorsList() {
   const [search, setSearch] = useState('')
   const [specialty, setSpecialty] = useState('')
   const [location, setLocation] = useState('')
+  const requestRef = useRef(null)
   const [pagination, setPagination] = useState({
     count: 0,
     next: null,
@@ -28,7 +29,10 @@ export default function DoctorsList() {
     'Family Medicine'
   ]
 
-  const fetchDoctors = async (page = 1) => {
+  const fetchDoctors = useCallback(async (page = 1) => {
+    requestRef.current?.abort()
+    const controller = new AbortController()
+    requestRef.current = controller
     setLoading(true)
     setError(null)
     
@@ -39,7 +43,8 @@ export default function DoctorsList() {
       if (location) params.append('location', location)
       params.append('page', page)
 
-      const { data } = await api.get(`/api/doctors/?${params.toString()}`)
+      const { data } = await api.get(`/api/doctors/?${params.toString()}`, { signal: controller.signal })
+      if (controller.signal.aborted) return
       
       setDoctors(data.results)
       setPagination({
@@ -49,15 +54,16 @@ export default function DoctorsList() {
         currentPage: page
       })
     } catch (err) {
-      setError(err)
+      if (!controller.signal.aborted) setError(err)
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
-  }
+  }, [search, specialty, location])
 
   useEffect(() => {
     fetchDoctors(1)
-  }, [search, specialty, location])
+    return () => requestRef.current?.abort()
+  }, [fetchDoctors])
 
   const handleNextPage = () => {
     if (pagination.next) {
@@ -178,7 +184,7 @@ export default function DoctorsList() {
                 <div className="col-md-4" key={doctor.id}>
                   <div className="card h-100 shadow-sm">
                     <div className="card-body d-flex flex-column">
-                      <h5 className="card-title">{doctor.name}</h5>
+                      <h2 className="card-title h5">{doctor.name}</h2>
                       <p className="card-subtitle text-muted mb-2">
                         {doctor.specialty}
                       </p>

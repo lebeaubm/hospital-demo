@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import Loading from '../components/Loading'
@@ -34,20 +34,71 @@ function StaffPatientRecord() {
   const [previewDocument, setPreviewDocument] = useState(null)
   const [previewLoading, setPreviewLoading] = useState(false)
 
-  useEffect(() => {
-    loadRecord()
-  }, [patientId])
+  // Assigned doctors state
+  const [assignedDoctors, setAssignedDoctors] = useState([])
+  const [allDoctors, setAllDoctors] = useState([])
+  const [selectedNewDoctor, setSelectedNewDoctor] = useState('')
+  const [doctorsSaving, setDoctorsSaving] = useState(false)
 
-  const loadRecord = async () => {
+  const loadRecord = useCallback(async (signal) => {
     try {
       setLoading(true)
-      const response = await api.get(`/api/staff/patients/${patientId}/record/`)
+      const response = await api.get(`/api/staff/patients/${patientId}/record/`, { signal })
+      if (signal?.aborted) return
       setRecord(response.data)
       setError(null)
     } catch (err) {
-      setError(err.response?.data?.error || 'Failed to load patient record')
+      if (!signal?.aborted) setError(err.response?.data?.error || 'Failed to load patient record')
     } finally {
-      setLoading(false)
+      if (!signal?.aborted) setLoading(false)
+    }
+  }, [patientId])
+
+  const loadAssignedDoctors = useCallback(async (signal) => {
+    try {
+      const [assignedRes, allRes] = await Promise.all([
+        api.get(`/api/staff/patients/${patientId}/assigned-doctors/`, { signal }),
+        api.get('/api/staff/all-doctors/', { signal }),
+      ])
+      if (signal?.aborted) return
+      setAssignedDoctors(assignedRes.data)
+      setAllDoctors(allRes.data)
+    } catch (err) {
+      if (!signal?.aborted) console.error('Failed to load doctors', err)
+    }
+  }, [patientId])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    loadRecord(controller.signal)
+    loadAssignedDoctors(controller.signal)
+    return () => controller.abort()
+  }, [loadRecord, loadAssignedDoctors])
+
+  const assignDoctor = async () => {
+    if (!selectedNewDoctor) return
+    setDoctorsSaving(true)
+    try {
+      await api.post(`/api/staff/patients/${patientId}/assigned-doctors/`, { doctor_id: selectedNewDoctor })
+      setSelectedNewDoctor('')
+      await loadAssignedDoctors()
+      setSuccessMsg('Doctor assigned successfully.')
+      setTimeout(() => setSuccessMsg(null), 3000)
+    } catch {
+      alert('Failed to assign doctor')
+    } finally {
+      setDoctorsSaving(false) }
+  }
+
+  const removeDoctor = async (doctorId) => {
+    if (!window.confirm('Remove this doctor from the patient?')) return
+    try {
+      await api.delete(`/api/staff/patients/${patientId}/assigned-doctors/${doctorId}/`)
+      await loadAssignedDoctors()
+      setSuccessMsg('Doctor removed.')
+      setTimeout(() => setSuccessMsg(null), 3000)
+    } catch {
+      alert('Failed to remove doctor')
     }
   }
 
@@ -97,7 +148,7 @@ function StaffPatientRecord() {
       setTimeout(() => setSuccessMsg(null), 3000)
 
       await loadRecord()
-    } catch (err) {
+    } catch {
       alert('Failed to update note visibility')
     }
   }
@@ -139,7 +190,7 @@ function StaffPatientRecord() {
       setTimeout(() => setSuccessMsg(null), 3000)
 
       await loadRecord()
-    } catch (err) {
+    } catch {
       alert('Failed to delete document')
     }
   }
@@ -158,7 +209,7 @@ function StaffPatientRecord() {
       link.click()
       link.remove()
       window.URL.revokeObjectURL(url)
-    } catch (err) {
+    } catch {
       alert('Failed to download document')
     }
   }
@@ -175,7 +226,7 @@ function StaffPatientRecord() {
         ...doc,
         url,
       })
-    } catch (err) {
+    } catch {
       alert('Failed to preview document')
     } finally {
       setPreviewLoading(false)
@@ -204,7 +255,7 @@ function StaffPatientRecord() {
       setTimeout(() => setSuccessMsg(null), 3000)
 
       await loadRecord()
-    } catch (err) {
+    } catch {
       alert('Failed to update record summary')
     }
   }
@@ -430,7 +481,7 @@ function StaffPatientRecord() {
                     className="btn btn-sm btn-outline-secondary"
                     onClick={() => handleToggleNoteVisibility(note.id, note.visibility)}
                   >
-                    {note.visibility === 'STAFF_ONLY' ? '👁️ Share with Patient' : '🚫 Hide from Patient'}
+                    {note.visibility === 'STAFF_ONLY' ? ' Share with Patient' : ' Hide from Patient'}
                   </button>
                 </div>
               ))}
@@ -545,19 +596,19 @@ function StaffPatientRecord() {
                           onClick={() => handlePreview(doc)}
                           disabled={previewLoading}
                         >
-                          👁️ View
+                           View
                         </button>
                         <button
                           className="btn btn-sm btn-primary me-1"
                           onClick={() => handleDownload(doc.id, doc.original_name)}
                         >
-                          ⬇️ Download
+                           Download
                         </button>
                         <button
                           className="btn btn-sm btn-danger"
                           onClick={() => handleDeleteDocument(doc.id, doc.original_name)}
                         >
-                          🗑️ Delete
+                           Delete
                         </button>
                       </td>
                     </tr>
@@ -570,6 +621,85 @@ function StaffPatientRecord() {
           )}
         </div>
       </div>
+
+      {/* Assigned Doctors */}
+      <div className="card mb-4">
+        <div className="card-header">
+          <h5 className="mb-0">Assigned Doctors</h5>
+        </div>
+        <div className="card-body">
+          <p className="text-muted small mb-3">
+            Doctors listed here (plus any doctors marked "accessible to all") will appear in this
+            patient's appointment booking form.
+          </p>
+
+          {/* Current assignments */}
+          {assignedDoctors.length === 0 ? (
+            <p className="text-muted">No doctors specifically assigned yet.</p>
+          ) : (
+            <div className="table-responsive mb-3">
+              <table className="table table-sm align-middle">
+                <thead className="table-light">
+                  <tr>
+                    <th>Name</th>
+                    <th>Specialty</th>
+                    <th>Universal</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {assignedDoctors.map(doc => (
+                    <tr key={doc.id}>
+                      <td>{doc.name}</td>
+                      <td>{doc.specialty}</td>
+                      <td>
+                        {doc.is_accessible_to_all
+                          ? <span className="badge bg-info">All patients</span>
+                          : <span className="badge bg-secondary">Assigned only</span>}
+                      </td>
+                      <td>
+                        {!doc.is_accessible_to_all && (
+                          <button
+                            className="btn btn-sm btn-outline-danger"
+                            onClick={() => removeDoctor(doc.id)}
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* Assign a new doctor */}
+          <div className="d-flex gap-2 align-items-center">
+            <select
+              className="form-select form-select-sm"
+              style={{ maxWidth: 300 }}
+              value={selectedNewDoctor}
+              onChange={e => setSelectedNewDoctor(e.target.value)}
+            >
+              <option value="">-- Add a doctor --</option>
+              {allDoctors
+                .filter(d => !d.is_accessible_to_all && !assignedDoctors.find(a => a.id === d.id))
+                .map(d => (
+                  <option key={d.id} value={d.id}>{d.name} ({d.specialty})</option>
+                ))}
+            </select>
+            <button
+              className="btn btn-sm btn-success"
+              onClick={assignDoctor}
+              disabled={!selectedNewDoctor || doctorsSaving}
+            >
+              {doctorsSaving ? 'Assigning…' : 'Assign'}
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Document Preview Modal */}
       {previewDocument && (
         <div
@@ -615,7 +745,7 @@ function StaffPatientRecord() {
                   className="btn btn-primary me-2"
                   onClick={() => handleDownload(previewDocument.id, previewDocument.original_name)}
                 >
-                  ⬇️ Download
+                   Download
                 </button>
                 <button
                   className="btn btn-danger me-2"
@@ -624,7 +754,7 @@ function StaffPatientRecord() {
                     handleDeleteDocument(previewDocument.id, previewDocument.original_name)
                   }}
                 >
-                  🗑️ Delete
+                   Delete
                 </button>
                 <button className="btn btn-secondary" onClick={closePreview}>
                   Close

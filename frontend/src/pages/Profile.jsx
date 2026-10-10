@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { api } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { SkeletonProfile } from '../components/SkeletonLoader'
@@ -28,11 +28,7 @@ export default function Profile() {
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState('')
 
-  useEffect(() => {
-    fetchProfile()
-  }, [])
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -76,7 +72,11 @@ export default function Profile() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [isStaff])
+
+  useEffect(() => {
+    fetchProfile()
+  }, [fetchProfile])
 
   const handleChange = (e) => {
     setFormData({

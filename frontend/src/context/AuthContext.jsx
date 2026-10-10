@@ -1,61 +1,59 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import { getAccessToken } from '../api/client'
-import { getUserInfo } from '../utils/auth'
-import { api } from '../api/client'
+import { clearTokens, getAccessToken, refreshAccessToken } from '../api/client'
+import { getUserFromToken, restoreAuthSession } from '../utils/auth'
 
 const AuthContext = createContext(null)
 
 export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState(null)
+  const [authLoading, setAuthLoading] = useState(true)
 
   useEffect(() => {
-    // Check if user has a valid token on mount
-    const token = getAccessToken()
-    if (token) {
-      setIsAuthenticated(true)
-      // Try to get user info from the token
-      const loadUser = async () => {
-        try {
-          const userInfo = await getUserInfo(api)
-          if (userInfo) {
-            setUser(userInfo)
-            localStorage.setItem('user', JSON.stringify(userInfo))
-          }
-        } catch (error) {
-          console.error('Failed to load user info:', error)
-          // If token is invalid, clear authentication
-          setIsAuthenticated(false)
-          setUser(null)
-        }
-      }
-      loadUser()
-    }
+    let cancelled = false
+    restoreAuthSession(localStorage, refreshAccessToken).then((userInfo) => {
+      if (cancelled) return
+      setIsAuthenticated(Boolean(userInfo))
+      setUser(userInfo)
+      setAuthLoading(false)
+    })
+    return () => { cancelled = true }
   }, [])
 
-  const login = (userData) => {
-    setIsAuthenticated(true)
-    if (userData) {
-      setUser(userData)
-      localStorage.setItem('user', JSON.stringify(userData))
+  const login = () => {
+    const userInfo = getUserFromToken(getAccessToken())
+    if (!userInfo) {
+      clearTokens()
+      setIsAuthenticated(false)
+      setUser(null)
+      localStorage.removeItem('user')
+      throw new Error('Your sign-in session could not be read. Please sign in again.')
     }
+    setIsAuthenticated(true)
+    setUser(userInfo)
+    localStorage.setItem('user', JSON.stringify(userInfo))
+    return userInfo
   }
 
   const logout = () => {
+    clearTokens()
     setIsAuthenticated(false)
     setUser(null)
     localStorage.removeItem('user')
   }
 
   const isStaff = user?.role === 'STAFF' || user?.role === 'ADMIN'
+  const currentRole = isAuthenticated ? user?.role : 'GUEST'
+  const isGuest = currentRole === 'GUEST'
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, user, isStaff, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, isStaff, isGuest, currentRole, authLoading, login, logout }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- The auth hook shares this existing context module with its provider.
 export const useAuth = () => {
   const context = useContext(AuthContext)
   if (!context) {

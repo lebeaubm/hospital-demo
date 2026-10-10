@@ -52,7 +52,7 @@ export default function PaymentSuccess() {
           <div className="col-md-6">
             <div className="card">
               <div className="card-body text-center">
-                <div className="display-1 text-danger mb-3">❌</div>
+                <div className="display-1 text-danger mb-3"></div>
                 <h2 className="card-title">Payment Verification Failed</h2>
                 <p className="card-text text-muted">{error}</p>
                 <Link to="/portal/appointments" className="btn btn-primary">
@@ -72,7 +72,7 @@ export default function PaymentSuccess() {
         <div className="col-md-6">
           <div className="card">
             <div className="card-body text-center">
-              <div className="display-1 text-success mb-3">✅</div>
+              <div className="display-1 text-success mb-3"></div>
               <h2 className="card-title">Payment Successful!</h2>
               <p className="card-text">
                 Thank you for your payment. Your consultation fee has been processed.

@@ -65,7 +65,7 @@ export default function Appointments() {
       // Check if it's a Stripe configuration error
       if (err.response?.status === 503) {
         setStripeConfigured(false)
-        alert('⚠️ Payment System Not Available\n\n' + errorMessage + '\n\nPayments are currently disabled. Please contact support or try again later.')
+        alert(' Payment System Not Available\n\n' + errorMessage + '\n\nPayments are currently disabled. Please contact support or try again later.')
       } else {
         alert(errorMessage)
       }
@@ -176,7 +176,7 @@ export default function Appointments() {
                             Processing...
                           </>
                         ) : (
-                          <>💳 Pay Consultation Fee</>
+                          <> Pay Consultation Fee</>
                         )}
                       </button>
                     </div>

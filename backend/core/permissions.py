@@ -33,6 +33,19 @@ class IsStaffUser(permissions.BasePermission):
         )
 
 
+class IsAdminUser(permissions.BasePermission):
+    """
+    Allows access only to admin users.
+    """
+
+    def has_permission(self, request, view):
+        return bool(
+            request.user
+            and request.user.is_authenticated
+            and request.user.role == User.Role.ADMIN
+        )
+
+
 class IsAppointmentOwner(permissions.BasePermission):
     """
     Object-level permission to only allow owners of an appointment to access it.

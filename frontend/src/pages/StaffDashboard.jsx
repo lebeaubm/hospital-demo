@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import { SkeletonTable } from '../components/SkeletonLoader'
@@ -45,10 +45,6 @@ export default function StaffDashboard() {
     fetchDoctors()
   }, [])
 
-  useEffect(() => {
-    fetchAppointments()
-  }, [statusFilter, doctorFilter, dateFrom, dateTo, currentPage])
-
   const fetchDoctors = async () => {
     try {
       const { data } = await api.get('/api/doctors/')
@@ -58,7 +54,7 @@ export default function StaffDashboard() {
     }
   }
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async (options = {}) => {
     setLoading(true)
     setError(null)
     try {
@@ -68,24 +64,31 @@ export default function StaffDashboard() {
       if (dateFrom) params.date_from = dateFrom
       if (dateTo) params.date_to = dateTo
 
-      const { data } = await api.get('/api/staff/appointments/', { params })
+      const { data } = await api.get('/api/staff/appointments/', { params, signal: options.signal })
+      if (options.signal?.aborted) return
       
       // Handle paginated response
       if (data.results) {
         setAppointments(data.results)
         setTotalCount(data.count)
-        setTotalPages(Math.ceil(data.count / 20))
+        setTotalPages(Math.max(1, Math.ceil(data.count / 20)))
       } else {
         setAppointments(data)
         setTotalCount(data.length)
         setTotalPages(1)
       }
     } catch (err) {
-      setError(err)
+      if (!options.signal?.aborted) setError(err)
     } finally {
-      setLoading(false)
+      if (!options.signal?.aborted) setLoading(false)
     }
-  }
+  }, [statusFilter, doctorFilter, dateFrom, dateTo, currentPage])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    fetchAppointments({ signal: controller.signal })
+    return () => controller.abort()
+  }, [fetchAppointments])
 
   const handleEdit = (appointment) => {
     setEditingId(appointment.id)
@@ -104,6 +107,37 @@ export default function StaffDashboard() {
     setEditingId(null)
     setEditData({})
     setSuccessMessage('')
+  }
+
+  const handleQuickConfirm = async (appointment) => {
+    setSaving(true)
+    setError('')
+    setSuccessMessage('')
+    try {
+      await api.patch(`/api/staff/appointments/${appointment.id}/`, { status: 'CONFIRMED' })
+      setSuccessMessage(`Appointment #${appointment.id} confirmed!`)
+      fetchAppointments()
+    } catch (err) {
+      setError(err)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleQuickCancel = async (appointment) => {
+    if (!window.confirm(`Cancel appointment #${appointment.id} for ${appointment.patient_name}?`)) return
+    setSaving(true)
+    setError('')
+    setSuccessMessage('')
+    try {
+      await api.patch(`/api/staff/appointments/${appointment.id}/`, { status: 'CANCELED' })
+      setSuccessMessage(`Appointment #${appointment.id} canceled.`)
+      fetchAppointments()
+    } catch (err) {
+      setError(err)
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleSave = async (id) => {
@@ -390,7 +424,27 @@ export default function StaffDashboard() {
                             </button>
                           </div>
                         ) : (
-                          <div className="d-flex gap-1">
+                          <div className="d-flex gap-1 flex-wrap">
+                            {appointment.status === 'REQUESTED' && (
+                              <>
+                                <button
+                                  className="btn btn-sm btn-success"
+                                  onClick={() => handleQuickConfirm(appointment)}
+                                  disabled={saving}
+                                  title="Confirm appointment"
+                                >
+                                  ✓ Confirm
+                                </button>
+                                <button
+                                  className="btn btn-sm btn-danger"
+                                  onClick={() => handleQuickCancel(appointment)}
+                                  disabled={saving}
+                                  title="Cancel appointment"
+                                >
+                                  ✗ Cancel
+                                </button>
+                              </>
+                            )}
                             <button
                               className="btn btn-sm btn-primary"
                               onClick={() => handleEdit(appointment)}
@@ -402,14 +456,14 @@ export default function StaffDashboard() {
                               onClick={() => handleViewRecord(appointment)}
                               title="View Medical Record"
                             >
-                              📋 Record
+                               Record
                             </button>
                             <button
                               className="btn btn-sm btn-outline-secondary"
                               onClick={() => handleEmailPatient(appointment)}
                               title="Email Patient"
                             >
-                              ✉️
+                              
                             </button>
                           </div>
                         )}

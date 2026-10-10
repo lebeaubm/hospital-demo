@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import { SkeletonCard } from '../components/SkeletonLoader'
@@ -9,23 +9,28 @@ export default function DoctorDetail() {
   const [doctor, setDoctor] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const requestRef = useRef(null)
 
-  const fetchDoctor = async () => {
+  const fetchDoctor = useCallback(async () => {
+    requestRef.current?.abort()
+    const controller = new AbortController()
+    requestRef.current = controller
     setLoading(true)
     setError(null)
     try {
-      const { data } = await api.get(`/api/doctors/${id}/`)
-      setDoctor(data)
+      const { data } = await api.get(`/api/doctors/${id}/`, { signal: controller.signal })
+      if (!controller.signal.aborted) setDoctor(data)
     } catch (err) {
-      setError(err)
+      if (!controller.signal.aborted) setError(err)
     } finally {
-      setLoading(false)
+      if (!controller.signal.aborted) setLoading(false)
     }
-  }
+  }, [id])
 
   useEffect(() => {
     fetchDoctor()
-  }, [id])
+    return () => requestRef.current?.abort()
+  }, [fetchDoctor])
 
   return (
     <div className="py-4">
@@ -37,8 +42,8 @@ export default function DoctorDetail() {
       {!loading && !error && doctor && (
         <div className="card shadow-sm">
           <div className="card-body">
-            <h2 className="card-title">{doctor.name}</h2>
-            <h6 className="text-muted">{doctor.specialty}</h6>
+            <h1 className="card-title h2">{doctor.name}</h1>
+            <p className="text-muted">{doctor.specialty}</p>
             <p className="mt-3">{doctor.bio}</p>
             <p className="mb-0">
               <strong>Experience:</strong> {doctor.years_experience} years

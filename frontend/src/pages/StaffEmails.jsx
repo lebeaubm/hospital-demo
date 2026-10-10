@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react'
-import { useLocation } from 'react-router-dom'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { api } from '../api/client'
 import Loading from '../components/Loading'
 import ErrorAlert from '../components/ErrorAlert'
 
 export default function StaffEmails() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const logRequest = useRef(0)
   const [emailLogs, setEmailLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -31,43 +33,53 @@ export default function StaffEmails() {
     to_email: ''
   })
 
+  const prefill = location.state?.prefill
+
   useEffect(() => {
-    loadEmailLogs()
-    
-    // Check if there's prefill data from navigation state
-    if (location.state?.prefill) {
+    if (prefill) {
       setComposeForm({
-        to_email: location.state.prefill.to_email || '',
-        subject: location.state.prefill.subject || '',
-        body: location.state.prefill.body || '',
-        appointment_id: location.state.prefill.appointment_id || '',
+        to_email: prefill.to_email || '',
+        subject: prefill.subject || '',
+        body: prefill.body || '',
+        appointment_id: prefill.appointment_id || '',
         cc: ''
       })
       setShowComposeModal(true)
       // Clear the state to avoid re-opening on refresh
-      window.history.replaceState({}, document.title)
+      navigate(`${location.pathname}${location.search}${location.hash}`, { replace: true, state: null })
     }
-  }, [])
+  }, [prefill, navigate, location.pathname, location.search, location.hash])
 
-  const loadEmailLogs = async () => {
+  const loadEmailLogs = useCallback(async (activeFilters = {}, signal) => {
+    const request = ++logRequest.current
     try {
       setLoading(true)
       setError(null)
       
       // Build query params from filters
       const params = new URLSearchParams()
-      if (filters.event_type) params.append('event_type', filters.event_type)
-      if (filters.status) params.append('status', filters.status)
-      if (filters.to_email) params.append('to_email', filters.to_email)
+      if (activeFilters.event_type) params.append('event_type', activeFilters.event_type)
+      if (activeFilters.status) params.append('status', activeFilters.status)
+      if (activeFilters.to_email) params.append('to_email', activeFilters.to_email)
       
-      const response = await api.get(`/api/staff/emails/?${params.toString()}`)
+      const response = await api.get(`/api/staff/emails/?${params.toString()}`, { signal })
+      if (signal?.aborted || request !== logRequest.current) return
       setEmailLogs(response.data.results || response.data)
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load email logs')
+      if (!signal?.aborted && request === logRequest.current) setError(err.response?.data?.detail || 'Failed to load email logs')
     } finally {
-      setLoading(false)
+      if (!signal?.aborted && request === logRequest.current) setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    const controller = new AbortController()
+    loadEmailLogs({}, controller.signal)
+    return () => {
+      logRequest.current += 1
+      controller.abort()
+    }
+  }, [loadEmailLogs])
 
   const handleFilterChange = (e) => {
     const { name, value } = e.target
@@ -75,7 +87,7 @@ export default function StaffEmails() {
   }
 
   const handleApplyFilters = () => {
-    loadEmailLogs()
+    loadEmailLogs(filters)
   }
 
   const handleComposeChange = (e) => {
@@ -117,7 +129,7 @@ export default function StaffEmails() {
       
       // Reload logs to show the new email
       setTimeout(() => {
-        loadEmailLogs()
+        loadEmailLogs(filters)
         setShowComposeModal(false)
         setSendSuccess(false)
       }, 2000)
@@ -167,7 +179,7 @@ export default function StaffEmails() {
         </button>
       </div>
 
-      {error && <ErrorAlert message={error} />}
+      {error && <ErrorAlert error={error} />}
 
       {/* Filters */}
       <div className="card mb-4">
@@ -316,7 +328,7 @@ export default function StaffEmails() {
               <form onSubmit={handleSendEmail}>
                 <div className="modal-body">
                   {sendError && (
-                    <ErrorAlert message={typeof sendError === 'string' ? sendError : JSON.stringify(sendError)} />
+                    <ErrorAlert error={typeof sendError === 'string' ? sendError : JSON.stringify(sendError)} />
                   )}
                   {sendSuccess && (
                     <div className="alert alert-success">

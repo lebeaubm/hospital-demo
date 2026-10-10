@@ -1,0 +1,176 @@
+.career-application { max-width: 980px; margin: 0 auto; }
+.career-demo-notice {
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--bs-primary-border-subtle);
+  border-left: 4px solid var(--bs-primary);
+  border-radius: 6px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+.career-demo-notice p { margin-top: 0.3rem; font-size: 0.92rem; }
+.career-page-nav { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 1.25rem; }
+.career-page-nav a {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  padding: 0.45rem 0.7rem; border: 1px solid var(--border-color);
+  border-radius: 5px; background: var(--bg-primary); color: var(--text-primary); font-size: 0.82rem;
+}
+.career-page-nav a span { font-weight: 700; color: var(--bs-primary); }
+.career-paper-fields { margin: 0; padding: 0; border: 0; min-width: 0; }
+.career-paper {
+  position: relative; min-height: 1268px; margin-bottom: 1.5rem; padding: 50px 48px 65px;
+  border: 1px solid #dedede; background: #fff; color: #202020;
+  font: 16px/1.4 Arial, Helvetica, sans-serif; box-shadow: 0 3px 14px rgba(0, 0, 0, 0.08);
+  scroll-margin-top: 1rem;
+}
+.paper-heading { text-align: center; margin: 5px 0 28px; }
+.paper-heading h2 { margin: 0 0 8px; font-size: 30px; font-weight: 700; line-height: 1.2; }
+.paper-heading p { margin: 0 0 18px; font-size: 15px; font-weight: 700; }
+.paper-heading h3 { margin: 0; font-size: 31px; font-weight: 700; line-height: 1.2; }
+.career-paper .paper-heading h2, .career-paper .paper-heading h3, .career-paper .paper-centered-heading { color: #202020; }
+.career-paper .paper-section-bar { color: #fff; }
+.paper-section-bar {
+  margin: 24px 0 18px; padding: 7px 12px; background: #292929; color: #fff;
+  font-size: 16px; line-height: 1.25; font-weight: 400; text-align: center; text-transform: uppercase;
+}
+.paper-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 30px; }
+.paper-wide { grid-column: 1 / -1; }
+.paper-field { display: grid; grid-template-columns: 170px minmax(0, 1fr); align-items: end; gap: 10px; min-width: 0; min-height: 31px; }
+.paper-field label { margin: 0; font-weight: 400; }
+.career-paper input:not([type="checkbox"]):not([type="radio"]), .career-paper textarea, .career-paper select {
+  width: 100%; min-width: 0; min-height: 30px; padding: 3px 5px; border: 0; border-bottom: 1px solid #777;
+  border-radius: 0; background: #fff; color: #202020; font: inherit; line-height: 1.25; box-shadow: none;
+}
+.career-paper select { appearance: none; }
+.career-paper input[type="date"][data-empty="true"]:not(:focus)::-webkit-datetime-edit { color: transparent; }
+.career-paper input[type="date"]::-webkit-calendar-picker-indicator { opacity: 0; }
+.career-paper input[type="date"]:focus::-webkit-calendar-picker-indicator { opacity: 1; }
+.career-paper textarea { resize: vertical; }
+.career-paper input:focus-visible, .career-paper textarea:focus-visible, .career-paper select:focus-visible {
+  outline: 2px solid var(--bs-primary); outline-offset: 2px;
+}
+.career-paper input:disabled { opacity: 1; -webkit-text-fill-color: #777; color: #777; cursor: not-allowed; }
+.paper-city-state { display: grid; grid-template-columns: 1fr 0.5fr; gap: 10px; min-width: 0; border-bottom: 1px solid #777; }
+.career-paper .paper-city-state input:not([type="checkbox"]):not([type="radio"]) { border-bottom: 0; }
+.paper-money-input { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: end; gap: 12px; }
+.paper-money-input > span { padding-bottom: 4px; }
+.paper-choice-field { min-width: 0; margin: 0; padding: 4px 0; border: 0; }
+.paper-choice-field legend { float: left; width: auto; margin: 0 18px 0 0; padding: 0; font: inherit; }
+.paper-choice-field legend:empty { display: none; }
+.paper-choices { display: flex; flex-wrap: wrap; gap: 12px 25px; align-items: center; clear: none; }
+.paper-check { display: inline-flex; align-items: flex-start; gap: 10px; margin: 0; font-weight: 400; }
+.career-paper input[type="checkbox"], .career-paper input[type="radio"] {
+  appearance: none; flex: 0 0 auto; width: 15px; height: 15px; margin: 3px 0 0;
+  border: 1.5px solid #444; border-radius: 0; background: #fff;
+}
+.career-paper input[type="checkbox"]:checked, .career-paper input[type="radio"]:checked { background: #292929; box-shadow: inset 0 0 0 3px #fff; }
+.career-paper input[type="checkbox"]:disabled, .career-paper input[type="radio"]:disabled { border-color: #777; cursor: not-allowed; }
+.paper-demo-mask { color: #777; font-size: 0.9em; letter-spacing: 0.08em; }
+.paper-pay-row { display: flex; align-items: end; gap: 25px; }
+.paper-pay-row > .paper-field { flex: 1 1 52%; }
+.paper-pay-row > .paper-choice-field { flex: 1 1 48%; }
+.paper-desired-pay legend { width: 230px; margin-right: 20px; }
+.paper-desired-pay .paper-choices { gap: 25px 80px; }
+.paper-availability { margin: 25px 0 28px; }
+.paper-availability > p { margin-bottom: 10px; }
+.paper-days { display: flex; align-items: center; gap: 10px; padding: 6px 9px; border: 1px solid #555; }
+.paper-days label { position: relative; margin: 0; cursor: pointer; }
+.paper-days label input { position: absolute; inset: 0; width: 100% !important; height: 100% !important; opacity: 0; margin: 0 !important; }
+.paper-days label span { display: inline-block; padding: 4px 6px; border: 1px solid transparent; border-radius: 50%; }
+.paper-days label.selected span { border-color: #292929; }
+.paper-days label:focus-within span { outline: 2px solid var(--bs-primary); outline-offset: 1px; }
+.paper-day-night { display: flex; gap: 2px; align-items: center; margin-left: auto; }
+.paper-eligibility { display: grid; gap: 12px; }
+.paper-eligibility .paper-choice-field legend { width: 60%; margin-right: 15px; }
+.paper-eligibility > .paper-field { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+.paper-previous-dates { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 10px; align-items: end; }
+.paper-date-range { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; border-bottom: 1px solid #777; }
+.career-paper .paper-date-range input[type="date"] { border-bottom: 0; }
+.paper-school { margin: 26px 0 40px; }
+.paper-school .paper-choice-field legend { width: 170px; margin-right: 10px; }
+.paper-employer { margin: 26px 0 40px; }
+.paper-employer > .paper-field:first-child label { font-weight: 700; }
+.paper-employer-continuation { margin-bottom: 100px; }
+.paper-reference { margin: 26px 0 44px; }
+.paper-consents { display: grid; gap: 28px; margin: 30px 0 20px; }
+.paper-consents legend { width: 66%; }
+.paper-military-discharge { display: grid; gap: 10px; }
+.paper-military-discharge .paper-field { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+.paper-original-case { text-transform: none; }
+.paper-centered-heading { margin: 12px 0 12px; text-align: center; font-size: 24px; line-height: 1.2; font-weight: 700; }
+.paper-disability { display: grid; gap: 27px; margin: 24px 0 58px; padding: 0 15px; border: 0; }
+.paper-statement p { margin: 0 0 25px; line-height: 1.5; }
+.paper-statement > .paper-choice-field { margin-bottom: 30px; }
+.paper-race-instructions { margin-top: 30px !important; }
+.paper-race-list { display: grid; gap: 25px; margin: 25px 0 0; padding: 0; border: 0; }
+.paper-race-list label { display: flex; gap: 10px; margin: 0; line-height: 1.5; }
+.paper-race-list input { appearance: none !important; border: 0 !important; border-bottom: 1px solid #666 !important; width: 28px !important; margin-top: 15px !important; }
+.career-paper-5 > .paper-race-list { margin-top: 16px; margin-bottom: 100px; }
+.paper-disclaimer p { margin-bottom: 24px; line-height: 1.6; }
+.paper-signatures { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 25px; margin-top: 260px; }
+.paper-signatures label { display: block; margin-top: 8px; text-align: center; font-weight: 700; }
+.career-demo-submit, .career-demo-success {
+  padding: 1.5rem; background: var(--bg-primary); color: var(--text-primary);
+  border: 1px solid var(--border-color); border-radius: 6px; box-shadow: var(--card-shadow);
+}
+.career-demo-submit p { color: var(--text-secondary); }
+.career-demo-success { text-align: center; }
+
+@media (max-width: 800px) {
+  .career-paper { min-height: 0; padding: 28px 20px 55px; font-size: 14px; }
+  .paper-heading h2 { font-size: 25px; }
+  .paper-heading h3 { font-size: 26px; }
+  .paper-grid { gap: 12px 18px; }
+  .paper-field { grid-template-columns: 130px minmax(0, 1fr); }
+  .paper-school .paper-choice-field legend { width: auto; }
+  .paper-days { flex-wrap: wrap; }
+  .paper-day-night { margin-left: 0; }
+  .paper-desired-pay legend { width: 170px; }
+  .paper-pay-row { gap: 15px; }
+  .paper-choices { gap: 10px 16px; }
+  .paper-consents legend { width: 60%; }
+  .paper-centered-heading { font-size: 22px; }
+  .paper-signatures { margin-top: 140px; gap: 15px; }
+}
+@media (max-width: 600px) {
+  .paper-grid { grid-template-columns: minmax(0, 1fr); }
+  .paper-wide { grid-column: auto; }
+  .paper-field { grid-template-columns: 132px minmax(0, 1fr); }
+  .paper-heading h2 { font-size: 22px; }
+  .paper-heading h3 { font-size: 24px; }
+  .paper-heading p { font-size: 13px; }
+  .paper-section-bar { font-size: 14px; }
+  .paper-eligibility .paper-choice-field legend, .paper-consents legend { float: none; width: 100%; margin-bottom: 10px; }
+  .paper-eligibility > .paper-field { grid-template-columns: minmax(0, 1fr); }
+  .paper-previous-dates { grid-template-columns: minmax(0, 1fr); }
+  .paper-desired-pay legend { float: none; width: auto; margin-bottom: 10px; }
+  .paper-military-discharge .paper-field { grid-template-columns: minmax(0, 1fr); }
+  .paper-pay-row { flex-wrap: wrap; }
+  .paper-pay-row > .paper-field, .paper-pay-row > .paper-choice-field { flex-basis: 100%; }
+  .paper-employer-continuation { margin-bottom: 55px; }
+  .paper-school, .paper-reference, .paper-employer { margin-bottom: 32px; }
+  .paper-disability { padding: 0; }
+  .paper-signatures { grid-template-columns: minmax(0, 1fr); margin-top: 100px; gap: 22px; }
+  .career-paper-5 > .paper-race-list { margin-bottom: 60px; }
+  .career-demo-submit, .career-demo-notice { padding: 1rem; }
+}
+@media print {
+  @page { size: letter; margin: 0.5in; }
+  .navbar, .app-footer, .career-page-nav, .career-demo-notice, .career-demo-submit, .theme-toggle { display: none !important; }
+  main.container { max-width: none; padding: 0; }
+  .career-paper { min-height: 0; margin: 0; padding: 0; border: 0; box-shadow: none; break-after: page; font-size: 9pt; }
+  .paper-heading h2 { font-size: 19pt; }
+  .paper-heading h3 { font-size: 20pt; }
+  .paper-heading p { font-size: 10pt; }
+  .paper-section-bar { print-color-adjust: exact; font-size: 10pt; margin: 15px 0 10px; }
+  .paper-grid { row-gap: 4px; }
+  .paper-field { min-height: 23px; grid-template-columns: 100px minmax(0, 1fr); }
+  .career-paper input:not([type="checkbox"]):not([type="radio"]), .career-paper textarea { min-height: 23px; }
+  .paper-school, .paper-reference, .paper-employer { margin: 18px 0 25px; }
+  .paper-employer-continuation { margin-bottom: 55px; }
+  .paper-centered-heading { font-size: 15pt; }
+  .paper-statement p { margin-bottom: 16px; }
+  .paper-disability { margin-bottom: 35px; }
+  .paper-race-list { gap: 18px; }
+  .paper-signatures { margin-top: 150px; }
+}

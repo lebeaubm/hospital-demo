@@ -44,7 +44,7 @@
 
 6. **backend/core/tests.py**
    - Added `MedicalRecordsTests` class with 11 test methods
-   - All tests passing ✅
+   - All tests passing 
 
 7. **backend/backend/settings.py**
    - Added `MEDIA_URL = '/media/'`
@@ -68,7 +68,7 @@
 
 2. **frontend/src/pages/StaffDashboard.jsx**
    - Added `handleViewRecord()` function
-   - Added "📋 Record" button in appointment actions
+   - Added " Record" button in appointment actions
    - Updated button styling with emojis
 
 ### New Files Created
@@ -138,4 +138,4 @@
 
 **Test Coverage:** 11 tests, 100% passing
 
-**No Secrets Committed:** ✅ All sensitive config uses environment variables
+**No Secrets Committed:**  All sensitive config uses environment variables

@@ -1,0 +1,155 @@
+30-DAY ROADMAP — HOSPITAL DEMO TO PROFESSIONAL MVP
+==================================================
+
+Goal
+----
+Move from a production-ready demo to a professional hospital web platform MVP with stronger patient experience, staff operations, compliance posture, and launch confidence.
+
+Success Targets by Day 30
+-------------------------
+- Production config and monitoring fully in place
+- Security baseline hardened (including staff/admin MFA)
+- Better patient booking + reminder workflow
+- Stronger staff dashboard workflow for daily operations
+- Stable release quality (high regression pass rate)
+
+
+WEEK 1 (Days 1–7): Stability, Security, and Trust
+=================================================
+Objectives
+----------
+1) Production operations baseline
+   - Confirm deployment environment variables and secrets management
+   - Verify HTTPS/SSL, domain config, backup policy, and uptime monitoring
+   - Configure alerting for backend errors, failed payments, and downtime
+
+2) Security hardening
+   - Add MFA for staff and admin accounts
+   - Review auth/session settings and password reset flow
+   - Verify audit logging for sensitive actions
+
+3) Trust and compliance pages
+   - Publish Privacy Policy, Terms, and Billing FAQ
+   - Add clear Contact & Escalation page
+   - Add records request policy and response timeline
+
+Deliverables
+------------
+- Security checklist completed
+- Public trust/compliance pages published
+- Monitoring + alerting active
+
+KPIs
+----
+- 0 high-severity security findings
+- 100% successful startup checks in production
+
+
+WEEK 2 (Days 8–14): Patient Experience Upgrade
+==============================================
+Objectives
+----------
+1) Pre-visit intake
+   - Add online intake forms (reason for visit, insurance fields, consent)
+   - Attach intake data to appointment workflow
+
+2) Appointment reminders
+   - Add reminder notifications (24h and 2h before)
+   - Use email first, optional SMS integration later
+
+3) Better doctor discovery
+   - Improve doctor directory filters (specialty, location, insurance)
+   - Improve doctor profile detail quality
+
+Deliverables
+------------
+- Intake form flow live
+- Reminder job flow active
+- Enhanced doctor directory filters
+
+KPIs
+----
+- Booking flow completion time under 3 minutes
+- Reminder delivery success >95%
+
+
+WEEK 3 (Days 15–21): Staff Productivity and Clinical Workflow
+==============================================================
+Objectives
+----------
+1) Staff queue and operations view
+   - Add “Today’s Patients” queue with status transitions
+   - Add quick actions: confirm, check-in, complete, cancel
+
+2) Clinical documentation efficiency
+   - Add note templates for common visits
+   - Improve note sharing toggle UX and visibility labeling
+
+3) Audit visibility
+   - Add staff-facing audit history for key updates
+   - Ensure who/when/what tracking is visible for records and billing updates
+
+Deliverables
+------------
+- Staff queue dashboard improvements shipped
+- Note template workflow enabled
+- Audit trail viewer available to authorized users
+
+KPIs
+----
+- Staff can complete core visit lifecycle in one dashboard session
+- Reduced manual clicks per appointment workflow
+
+
+WEEK 4 (Days 22–30): Financial Clarity, QA, and Launch Readiness
+=================================================================
+Objectives
+----------
+1) Billing clarity
+   - Add patient-friendly billing timeline and status definitions
+   - Show estimate/co-pay messaging before payment
+
+2) QA and reliability
+   - Run full regression suite (auth, appointments, records, payments)
+   - Add smoke tests for deployment and rollback path
+
+3) Launch readiness
+   - Prepare incident response checklist and support runbook
+   - Complete release notes and go-live checklist
+
+Deliverables
+------------
+- Billing UX improvements in patient portal
+- Regression test report with pass/fail summary
+- Launch playbook + rollback drill completed
+
+KPIs
+----
+- Regression pass rate >95%
+- Successful dry-run deploy + rollback completed in same day
+
+
+PRIORITY BACKLOG (Post-Day 30)
+==============================
+- Telehealth video visit module
+- Insurance eligibility API integration
+- Real-time wait time/status tracking
+- Patient satisfaction surveys and outcome dashboards
+- Localization/multi-language support
+
+
+Suggested Team Split (If needed)
+================================
+- Backend: security, reminders, audit logs, billing logic
+- Frontend: intake UX, dashboard workflows, billing timeline UI
+- QA: regression suite, browser runbook, release checks
+- Ops: monitoring, alerts, deployment pipeline hardening
+
+
+Definition of “Professional” for This Project
+=============================================
+By end of 30 days, the platform should feel reliable, secure, and trustworthy:
+- Patients can easily book, prepare, pay, and track care
+- Staff can operate quickly from one central dashboard
+- Security/compliance expectations are visible and enforced
+- Releases are test-backed and operationally monitored

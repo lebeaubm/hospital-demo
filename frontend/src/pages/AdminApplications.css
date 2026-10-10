@@ -1,0 +1,42 @@
+.career-answer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: 0.85rem 1.25rem;
+  margin-bottom: 0;
+}
+
+.career-answer-grid > div {
+  min-width: 0;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.career-answer-grid dt { color: var(--text-secondary); font-size: 0.82rem; font-weight: 600; }
+.career-answer-grid dd { margin: 0.2rem 0 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+.career-answer-grid dl { margin-top: 0.75rem; }
+.career-protected-answer { display: flex; flex-wrap: wrap; align-items: center; gap: 0.45rem; }
+.career-protected-answer code { font-size: 0.8rem; overflow-wrap: anywhere; }
+.career-answer-entry { padding: 0.8rem 0; border-bottom: 1px solid var(--border-color); }
+.career-answer-entry:first-child { padding-top: 0; }
+.career-answer-entry dl { margin-bottom: 0; }
+
+.career-application-pagination,
+.career-resume-preview-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.career-application-pagination { margin-top: 1rem; }
+.career-resume-preview { border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; }
+.career-resume-preview-heading { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); }
+.career-resume-preview-heading h4 { overflow-wrap: anywhere; }
+
+.career-resume-frame {
+  display: block;
+  width: 100%;
+  height: min(78vh, 900px);
+  border: 0;
+}

@@ -10,8 +10,12 @@ export default function ErrorAlert({ error, onRetry }) {
     // HTTP errors
     if (error.response) {
       const status = error.response.status
+      const requestUrl = error.config?.url || ''
       
       if (status === 401) {
+        if (requestUrl.includes('/api/auth/login/')) {
+          return 'Invalid email or password. Please try again.'
+        }
         return "Your session has expired. Please log in again."
       }
       
@@ -64,6 +68,7 @@ export default function ErrorAlert({ error, onRetry }) {
         {onRetry && (
           <button 
             className="btn btn-sm btn-outline-danger ms-3" 
+            type="button"
             onClick={onRetry}
           >
             Try Again
